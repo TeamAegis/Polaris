@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Polaris</string>
+    <string name="reset_password_deeplink">ResetPasswordDeeplink</string>
+</resources>
