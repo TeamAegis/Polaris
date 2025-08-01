@@ -13,7 +13,7 @@ object Constants {
 
     const val DEBUG_VALUE = "DEBUG AEGIS: "
 
-    const val GEMINI_LIVE_API_MODEL = "gemini-live-2.5-flash-preview"
+    const val GEMINI_LIVE_API_MODEL = "gemini-2.5-flash-preview-native-audio-dialog"
     const val GEMINI_API_MODEL = "gemini-2.5-flash"
 
     fun getSystemInstructions(): String {

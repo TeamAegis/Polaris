@@ -67,7 +67,7 @@ class ConversationalAI() : KoinComponent {
             ),
             "response_modalities" to Value.Array(
                 Value.Str("AUDIO")
-            )
+            ),
         )
 
         val systemInstruction = Value.Object(
@@ -91,7 +91,8 @@ class ConversationalAI() : KoinComponent {
                         Value.Object(
                             "function_declarations" to Value.Array(
                                 values = ConversationalAITools.toolsArray
-                            )
+                            ),
+                            "google_search" to Value.Object()
                         )
                     )
                 )
