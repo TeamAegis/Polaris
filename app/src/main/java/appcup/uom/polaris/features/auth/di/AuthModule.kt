@@ -15,6 +15,7 @@ import appcup.uom.polaris.features.auth.presentation.reset_password.ResetPasswor
 import io.github.jan.supabase.SupabaseClient
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.Module
 
 @Module
@@ -24,8 +25,8 @@ class AuthModule {
     @KoinViewModel
     fun registerViewModel(userRepository: UserRepository) = RegisterViewModel(userRepository)
     @KoinViewModel
-    fun otpConfirmRegistrationViewModel(userRepository: UserRepository) =
-        OtpConfirmRegistrationViewModel(otpConfirmRegistrationNavArgs = OtpConfirmRegistrationNavArgs(""), userRepository = userRepository)
+    fun otpConfirmRegistrationViewModel(@InjectedParam args: OtpConfirmRegistrationNavArgs, userRepository: UserRepository) =
+        OtpConfirmRegistrationViewModel(args = args, userRepository = userRepository)
     @KoinViewModel
     fun forgotPasswordViewModel(userRepository: UserRepository) = ForgotPasswordViewModel(userRepository)
     @KoinViewModel
@@ -34,8 +35,8 @@ class AuthModule {
     @KoinViewModel
     fun changePasswordViewModel(userRepository: UserRepository) = ChangePasswordViewModel(userRepository)
     @KoinViewModel
-    fun otpReauthenticateViewModel(userRepository: UserRepository) =
-        OtpReauthenticateViewModel(args = OtpReauthenticateNavArgs("", ""), userRepository = userRepository)
+    fun otpReauthenticateViewModel(@InjectedParam args: OtpReauthenticateNavArgs, userRepository: UserRepository) =
+        OtpReauthenticateViewModel(args = args , userRepository = userRepository)
     @KoinViewModel
     fun displayNameViewModel(userRepository: UserRepository) = DisplayNameViewModel(userRepository)
     @Factory

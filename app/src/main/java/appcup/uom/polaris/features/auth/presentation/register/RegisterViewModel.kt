@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +18,8 @@ class RegisterViewModel(
     private val _state = MutableStateFlow(RegisterState())
     val state = _state.asStateFlow()
 
-    private val _validationEvent = MutableSharedFlow<ValidationEvent>()
-    val validationEvent = _validationEvent.asSharedFlow()
+    private val _event = MutableSharedFlow<RegisterEvent>()
+    val event = _event.asSharedFlow()
 
     fun onAction(action: RegisterAction) {
         when(action) {
@@ -70,10 +69,10 @@ class RegisterViewModel(
                     }
                     when(res) {
                         is Result.Error<DataError.Local> -> {
-                            _validationEvent.emit(ValidationEvent.Error(res.error.message))
+                            _event.emit(RegisterEvent.Error(res.error.message))
                         }
                         is Result.Success<Unit> -> {
-                            _validationEvent.emit(ValidationEvent.Success)
+                            _event.emit(RegisterEvent.Success)
                         }
                     }
                 }

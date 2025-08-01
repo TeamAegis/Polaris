@@ -41,8 +41,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.DataError
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -56,21 +54,20 @@ fun ChangePasswordScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collect { event ->
+        viewModel.event.collect { event ->
             when(event) {
-                ValidationEvent.Success -> {
+                is ChangePasswordEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                ChangePasswordEvent.PasswordSuccessfullyChanged -> {
                     onBack("Password Successfully Changed")
                 }
-                is ValidationEvent.Error -> {
-                    if (event.message == DataError.Local.UNKNOWN.message) {
-                        navigateToReauthenticate(
-                            "Please reauthenticate using the OTP sent to your email.",
-                            state.value.password,
-                            state.value.confirmPassword
-                        )
-                    } else {
-                        snackbarHostState.showSnackbar(event.message)
-                    }
+                ChangePasswordEvent.ReauthenticationRequired -> {
+                    navigateToReauthenticate(
+                        "Please reauthenticate using the OTP sent to your email.",
+                        state.value.password,
+                        state.value.confirmPassword
+                    )
                 }
             }
         }

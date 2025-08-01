@@ -1,4 +1,4 @@
-package appcup.uom.polaris.features.conversational_ai.presentation
+package appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -13,6 +13,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -26,31 +27,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
-import org.koin.compose.viewmodel.koinViewModel
+import appcup.uom.polaris.core.presentation.components.Robot
+import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIEvent
+import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 
 @Composable
 fun ConversationalAI(
-    viewModel: ConversationalAIViewModel = koinViewModel(),
+    viewModel: ConversationalAIViewModel,
     snackbarHostState: SnackbarHostState
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collect { event ->
+        viewModel.event.collect { event ->
             when (event) {
-                ValidationEvent.Success -> {
-                }
-
-                is ValidationEvent.Error -> {
+                is ConversationalAIEvent.Error -> {
                     snackbarHostState.showSnackbar(event.message)
+                }
+                ConversationalAIEvent.RecordAudioPermissionDenied -> {
+                    snackbarHostState.showSnackbar("Record audio permission denied")
+                }
+                ConversationalAIEvent.RecordAudioPermissionDeniedPermanently -> {
+                    snackbarHostState.showSnackbar("Record audio permission denied. Please enable it from settings.")
                 }
             }
         }
@@ -131,10 +132,12 @@ fun ConversationalAIImpl(
             state.isBotSpeaking -> MaterialTheme.colorScheme.tertiary
             else -> MaterialTheme.colorScheme.secondary
         }
+
         ConversationalAIConnectionState.Idle -> MaterialTheme.colorScheme.secondaryContainer
     }
 
-    val showIdleIndicator = state.connectionState == ConversationalAIConnectionState.Idle && !state.isRecording
+    val showIdleIndicator =
+        state.connectionState == ConversationalAIConnectionState.Idle && !state.isRecording
     val idleAlpha by animateFloatAsState(
         targetValue = if (showIdleIndicator) 1f else 0f,
         animationSpec = tween(500, easing = FastOutSlowInEasing),
@@ -154,7 +157,8 @@ fun ConversationalAIImpl(
                     onAction(ConversationalAIAction.StartRecording)
                 }
             }
-            .size(96.dp),
+            .size(96.dp)
+            .absoluteOffset(x = 16.dp, y = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -206,90 +210,10 @@ fun ConversationalAIImpl(
                 imageVector = Robot,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(24.dp).alpha(idleAlpha)
+                modifier = Modifier
+                    .size(24.dp)
+                    .alpha(idleAlpha)
             )
         }
     }
 }
-
-val Robot: ImageVector
-    get() {
-        if (RobotImpl != null) return RobotImpl!!
-
-        RobotImpl = ImageVector.Builder(
-            name = "Robot",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 960f,
-            viewportHeight = 960f
-        ).apply {
-            path(
-                fill = SolidColor(Color(0xFF000000))
-            ) {
-                moveTo(200f, 840f)
-                quadToRelative(-33f, 0f, -56.5f, -23.5f)
-                reflectiveQuadTo(120f, 760f)
-                verticalLineToRelative(-400f)
-                quadToRelative(0f, -100f, 70f, -170f)
-                reflectiveQuadToRelative(170f, -70f)
-                horizontalLineToRelative(240f)
-                quadToRelative(100f, 0f, 170f, 70f)
-                reflectiveQuadToRelative(70f, 170f)
-                verticalLineToRelative(400f)
-                quadToRelative(0f, 33f, -23.5f, 56.5f)
-                reflectiveQuadTo(760f, 840f)
-                close()
-                moveToRelative(0f, -80f)
-                horizontalLineToRelative(560f)
-                verticalLineToRelative(-400f)
-                quadToRelative(0f, -66f, -47f, -113f)
-                reflectiveQuadToRelative(-113f, -47f)
-                horizontalLineTo(360f)
-                quadToRelative(-66f, 0f, -113f, 47f)
-                reflectiveQuadToRelative(-47f, 113f)
-                close()
-                moveToRelative(160f, -280f)
-                quadToRelative(-33f, 0f, -56.5f, -23.5f)
-                reflectiveQuadTo(280f, 400f)
-                reflectiveQuadToRelative(23.5f, -56.5f)
-                reflectiveQuadTo(360f, 320f)
-                reflectiveQuadToRelative(56.5f, 23.5f)
-                reflectiveQuadTo(440f, 400f)
-                reflectiveQuadToRelative(-23.5f, 56.5f)
-                reflectiveQuadTo(360f, 480f)
-                moveToRelative(240f, 0f)
-                quadToRelative(-33f, 0f, -56.5f, -23.5f)
-                reflectiveQuadTo(520f, 400f)
-                reflectiveQuadToRelative(23.5f, -56.5f)
-                reflectiveQuadTo(600f, 320f)
-                reflectiveQuadToRelative(56.5f, 23.5f)
-                reflectiveQuadTo(680f, 400f)
-                reflectiveQuadToRelative(-23.5f, 56.5f)
-                reflectiveQuadTo(600f, 480f)
-                moveTo(280f, 760f)
-                verticalLineToRelative(-80f)
-                quadToRelative(0f, -33f, 23.5f, -56.5f)
-                reflectiveQuadTo(360f, 600f)
-                horizontalLineToRelative(240f)
-                quadToRelative(33f, 0f, 56.5f, 23.5f)
-                reflectiveQuadTo(680f, 680f)
-                verticalLineToRelative(80f)
-                horizontalLineToRelative(-80f)
-                verticalLineToRelative(-80f)
-                horizontalLineToRelative(-80f)
-                verticalLineToRelative(80f)
-                horizontalLineToRelative(-80f)
-                verticalLineToRelative(-80f)
-                horizontalLineToRelative(-80f)
-                verticalLineToRelative(80f)
-                close()
-                moveToRelative(-80f, 0f)
-                horizontalLineToRelative(560f)
-                close()
-            }
-        }.build()
-
-        return RobotImpl!!
-    }
-
-private var RobotImpl: ImageVector? = null

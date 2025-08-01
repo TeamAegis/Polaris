@@ -16,12 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
-import appcup.uom.polaris.core.presentation.app.App
+import appcup.uom.polaris.core.extras.theme.PolarisDarkColorScheme
+import appcup.uom.polaris.core.extras.theme.PolarisLightColorScheme
 import appcup.uom.polaris.core.extras.theme.PolarisTheme
-import appcup.uom.polaris.core.extras.theme.DarkColorScheme
-import appcup.uom.polaris.core.extras.theme.LightColorScheme
 import appcup.uom.polaris.core.extras.theme.SeedColor
 import appcup.uom.polaris.core.extras.theme.Theme
+import appcup.uom.polaris.core.presentation.app.App
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionResultCallback
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionsBridgeListener
@@ -106,9 +106,11 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
                 rememberDynamicMaterialThemeState(
                     isAmoled = isAmoled.value,
                     isDark = isDarkTheme.value,
-                    style = PaletteStyle.Expressive,
+                    style = PaletteStyle.Vibrant,
                     specVersion = ColorSpec.SpecVersion.SPEC_2025,
-                    seedColor = color.value!!
+                    primary = color.value!!,
+                    secondary = color.value,
+                    tertiary = color.value
                 )
             } else {
                 null
@@ -117,8 +119,10 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
             PolarisTheme(
                 darkTheme = isDarkTheme.value,
                 dynamicColor = color.value == null,
-                lightColorScheme = themeState?.colorScheme ?: LightColorScheme,
-                darkColorScheme = themeState?.colorScheme ?: DarkColorScheme,
+//                lightColorScheme = themeState?.colorScheme ?: LightColorScheme,
+//                darkColorScheme = themeState?.colorScheme ?: DarkColorScheme,
+                lightColorScheme = PolarisLightColorScheme,
+                darkColorScheme = PolarisDarkColorScheme,
             ) {
                 App()
             }
@@ -140,24 +144,18 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
 
     override fun requestRecordAudioPermission(callback: PermissionResultCallback) {
         val permission = Manifest.permission.RECORD_AUDIO
-        when {
-            ContextCompat.checkSelfPermission(
-                this,
-                permission
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                callback.onPermissionGranted()
-            }
 
-            shouldShowRequestPermissionRationale(permission) -> {
-                callback.onPermissionDenied(false)
-            }
-
-            else -> {
-                recordAudioPermissionResultCallback = callback
-                requestRecordAudioPermissionLauncher.launch(permission)
-            }
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            callback.onPermissionGranted()
+            return
+        } else if (!shouldShowRequestPermissionRationale(permission)) {
+            callback.onPermissionDenied(false)
+        } else {
+            callback.onPermissionDenied(true)
+            return
         }
-
+        recordAudioPermissionResultCallback = callback
+        requestRecordAudioPermissionLauncher.launch(permission)
     }
 
     override fun isRecordAudioPermissionGranted(): Boolean {
@@ -166,5 +164,43 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
+    }
+
+    private var cameraPermissionResultCallback: PermissionResultCallback? = null
+
+    private val requestCameraPermissionLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                cameraPermissionResultCallback?.onPermissionGranted()
+            } else {
+                val permanentlyDenied =
+                    !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+                cameraPermissionResultCallback?.onPermissionDenied(permanentlyDenied)
+            }
+
+        }
+
+    override fun requestCameraPermission(callback: PermissionResultCallback) {
+        val permission = Manifest.permission.CAMERA
+
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            callback.onPermissionGranted()
+            return
+        } else if (!shouldShowRequestPermissionRationale(permission)) {
+            callback.onPermissionDenied(false)
+        } else {
+            callback.onPermissionDenied(true)
+            return
+        }
+
+        cameraPermissionResultCallback = callback
+        requestCameraPermissionLauncher.launch(permission)
+    }
+
+    override fun isCameraPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

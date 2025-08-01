@@ -15,16 +15,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
-import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -34,20 +31,6 @@ fun MoreScreen(
     snackbarHostState: SnackbarHostState
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.validationEvent.collectLatest {
-            when (it) {
-                is ValidationEvent.Error -> {
-                    snackbarHostState.showSnackbar(it.message)
-                }
-
-                ValidationEvent.Success -> {
-
-                }
-            }
-        }
-    }
 
     MoreScreenImpl(
         state = state,

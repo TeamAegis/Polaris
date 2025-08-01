@@ -1,4 +1,4 @@
-package appcup.uom.polaris.features.conversational_ai.presentation
+package appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai
 
 sealed class ConversationalAIAction {
     object StartRecording : ConversationalAIAction()

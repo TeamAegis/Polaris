@@ -36,7 +36,7 @@ android {
         buildConfigField("String", "GEMINI_LIVE_API_KEY", geminiLiveApiKey)
 
         applicationId = "appcup.uom.polaris"
-        minSdk = 30
+        minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -127,6 +127,9 @@ dependencies {
 //    supabase
     implementation(project.dependencies.platform(libs.supabase))
     implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.realtime)
+    implementation(libs.supabase.storage)
 
 //    pipecat
     implementation(libs.pipecat.android)
@@ -136,11 +139,22 @@ dependencies {
 
 //    mat
     implementation(libs.androidx.material3.android)
+//    implementation(libs.material3.adaptive.navigation.suite)
 
 //    maps
     implementation(libs.maps.compose)
     implementation(libs.places)
     implementation(libs.play.services.maps)
+
+//    firebase ai
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
+
+//    camera
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.compose)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.camera2)
 
 }
 

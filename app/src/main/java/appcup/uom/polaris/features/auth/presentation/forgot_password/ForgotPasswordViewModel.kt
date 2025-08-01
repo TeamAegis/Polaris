@@ -3,7 +3,6 @@ package appcup.uom.polaris.features.auth.presentation.forgot_password
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +17,8 @@ class ForgotPasswordViewModel(
     private val _state = MutableStateFlow(ForgotPasswordState())
     val state = _state.asStateFlow()
 
-    private val _validationEvent = MutableSharedFlow<ValidationEvent>()
-    val validationEvent = _validationEvent.asSharedFlow()
+    private val _event = MutableSharedFlow<ForgotPasswordEvent>()
+    val event = _event.asSharedFlow()
 
     fun onAction(action: ForgotPasswordAction) {
         when(action) {
@@ -39,10 +38,10 @@ class ForgotPasswordViewModel(
                     }
                     when(result) {
                         is Result.Error -> {
-                            _validationEvent.emit(ValidationEvent.Error(result.error.message))
+                            _event.emit(ForgotPasswordEvent.Error(result.error.message))
                         }
                         is Result.Success -> {
-                            _validationEvent.emit(ValidationEvent.Success)
+                            _event.emit(ForgotPasswordEvent.PasswordResetEmailSent)
                         }
                     }
                 }

@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.EventBus
 import appcup.uom.polaris.core.data.StaticData
@@ -30,8 +29,8 @@ class SettingsViewModel(
     private val _state = MutableStateFlow(SettingsState())
     val state = _state.asStateFlow()
 
-    private val _validationEvent = MutableSharedFlow<ValidationEvent>()
-    val validationEvent = _validationEvent.asSharedFlow()
+    private val _event = MutableSharedFlow<SettingsEvent>()
+    val event = _event.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -169,11 +168,9 @@ class SettingsViewModel(
                     }
                     when (res) {
                         is Result.Error<DataError.Local> -> {
-                            _validationEvent.emit(ValidationEvent.Error(res.error.message))
+                            _event.emit(SettingsEvent.Error(res.error.message))
                         }
-                        is Result.Success<Unit> -> {
-                            _validationEvent.emit(ValidationEvent.Success)
-                        }
+                        else -> {}
                     }
                 }
             }

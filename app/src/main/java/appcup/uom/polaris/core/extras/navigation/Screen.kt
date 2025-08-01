@@ -136,6 +136,32 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
     }
 
     @Serializable
+    object Map : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("Map"),
+                    "description" to Value.Str("This is the map screen of the app."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
+
+    @Serializable
+    object Memories : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("Memories"),
+                    "description" to Value.Str("This is the memories screen of the app."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
+
+    @Serializable
     object Settings : Screen() {
         override fun getScreenDetails(): Value {
             return Value.Object(
@@ -149,7 +175,7 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
     }
 
     @Serializable
-    object More: Screen() {
+    object More : Screen() {
         override fun getScreenDetails(): Value {
             return Value.Object(
                 values = arrayOf(
@@ -165,6 +191,19 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
                             )
                         )
                     )
+                )
+            )
+        }
+    }
+
+    @Serializable
+    object CreateJourney : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("CreateJourney"),
+                    "description" to Value.Str("This is the create journey screen of the app."),
+                    "navigation_arguments" to Value.Null
                 )
             )
         }
@@ -203,6 +242,19 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
                 values = arrayOf(
                     "name" to Value.Str("ChangePassword"),
                     "description" to Value.Str("This is the change password screen of the app. It should not be navigated to."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
+
+    @Serializable
+    object LiveTranslate : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("LiveTranslate"),
+                    "description" to Value.Str("This is the live translate screen of the app. It should not be navigated to."),
                     "navigation_arguments" to Value.Null
                 )
             )

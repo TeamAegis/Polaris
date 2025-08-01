@@ -14,6 +14,7 @@ sealed interface DataError: Error {
         UNKNOWN("An unknown error occurred."),
         EMPTY_FIELD("Please fill in all fields."),
         ACCOUNT_EXISTS("An account with this email already exists."),
+        REAUTHENTICATION_REQUIRED("Please reauthenticate to continue."),
         INVALID_LOGIN_CREDENTIALS("Invalid login credentials."),
         INVALID_OTP("Invalid OTP."),
         INVALID_EMAIL("Please enter a valid email address."),

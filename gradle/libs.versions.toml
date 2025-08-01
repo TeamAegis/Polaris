@@ -47,10 +47,15 @@ materialKolor = "3.0.1"
 mapsCompose = "6.7.0"
 # secrets.properties-gradle-plugin
 secretsGradle = "2.0.1"
+# firebase ai
+firebaseBom = "34.0.0"
+# camera
+camerax = "1.5.0-beta02"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-material3-android = { module = "androidx.compose.material3:material3-android", version.ref = "material3Android" }
+material3-adaptive-navigation-suite = { module = "androidx.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3Android" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -102,6 +107,9 @@ material-icons-extended = { group = "org.jetbrains.compose.material", name = "ma
 # supabase
 supabase = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt" }
 # pipecat
 pipecat-android = { group = "ai.pipecat", name = "client", version.ref = "pipecat-android" }
 # kolor
@@ -110,6 +118,14 @@ material-kolor = { group = "com.materialkolor", name = "material-kolor", version
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+# firebase ai
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-ai = { module = "com.google.firebase:firebase-ai" }
+# camera
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+androidx-camera-compose = { module = "androidx.camera:camera-compose", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
 
 
 [plugins]
