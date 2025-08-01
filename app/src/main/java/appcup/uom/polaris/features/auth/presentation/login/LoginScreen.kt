@@ -43,7 +43,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
@@ -58,13 +57,13 @@ fun LoginScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collectLatest {
+        viewModel.event.collectLatest {
             when(it) {
-                is ValidationEvent.Error -> {
+                is LoginEvent.Error -> {
                     snackbarHostState.showSnackbar(it.message)
                 }
-                ValidationEvent.Success -> {
-
+                LoginEvent.LoginSuccess -> {
+                    snackbarHostState.showSnackbar("Login Success")
                 }
             }
         }

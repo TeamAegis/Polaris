@@ -6,6 +6,17 @@ import android.annotation.SuppressLint
 import android.util.Base64
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SendAudioData
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SendCameraStream
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SendFunctionResponse
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SendUserMessage
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SendUserTextMessage
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.SetMicMute
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.Stop
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.WebsocketClosed
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.WebsocketFailed
+import appcup.uom.polaris.core.extras.transport.GeminiClient.ClientThreadEvent.WebsocketMessage
+import appcup.uom.polaris.core.extras.transport.RealtimeInputRequest.RealtimeInput
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -24,7 +35,7 @@ import kotlin.concurrent.thread
 import kotlin.math.sqrt
 
 private const val API_URL =
-    "https://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
+    "https://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
 
 private const val TAG = "GeminiClient"
 
@@ -62,7 +73,9 @@ private data class RealtimeInputRequest(
 ) {
     @Serializable
     data class RealtimeInput(
-        val mediaChunks: List<InlineData>
+        val audio: InlineData? = null,
+        val video: InlineData? = null,
+        val text: String? = null
     )
 }
 
@@ -79,17 +92,8 @@ private data class ToolResponseRequest(
             val id: String? = null,
             val name: String,
             val response: JsonElement,
-            val willContinue: Boolean? = null,
-            val scheduling: Scheduling? = null
-        ) {
-            @Serializable
-            enum class Scheduling {
-                SCHEDULING_UNSPECIFIED,
-                SILENT,
-                WHEN_IDLE,
-                INTERRUPT
-            }
-        }
+            val willContinue: Boolean? = null
+        )
     }
 }
 
@@ -146,6 +150,11 @@ private data class InlineData(
             mimeType = "audio/pcm;rate=$sampleRateHz",
             data = Base64.encodeToString(data, Base64.NO_WRAP)
         )
+
+        fun ofJpeg(data: ByteArray) = InlineData(
+            mimeType = "image/jpeg",
+            data = Base64.encodeToString(data, Base64.NO_WRAP)
+        )
     }
 }
 
@@ -155,11 +164,15 @@ private data class AppendedMessage(
 )
 
 internal class GeminiClient private constructor(
+    private val onSendUserTextMessage: (String) -> Unit,
     private val onSendUserMessage: (AppendedMessage) -> Unit,
     private val onSendFunctionResponse: (String, String, Value.Object) -> Unit,
+    private val onSendCameraStream: (ByteArray) -> Unit,
     private val onClose: () -> Unit,
     private val setMicMuted: (Boolean) -> Unit,
     private val isMicMuted: () -> Boolean,
+    private val setCameraEnabled: (Boolean) -> Unit,
+    private val isCameraEnabled: () -> Boolean
 ) {
     data class Config(
         val apiKey: String,
@@ -180,8 +193,12 @@ internal class GeminiClient private constructor(
 
     private sealed interface ClientThreadEvent {
         class SendAudioData(val buf: ByteArray) : ClientThreadEvent
+        class SendCameraStream(val buf: ByteArray) : ClientThreadEvent
+        class SendUserTextMessage(val msg: String) : ClientThreadEvent
         class SendUserMessage(val msg: AppendedMessage) : ClientThreadEvent
-        class SendFunctionResponse(val id: String, val name: String, val response: Value.Object) : ClientThreadEvent
+        class SendFunctionResponse(val id: String, val name: String, val response: Value.Object) :
+            ClientThreadEvent
+
         data object Stop : ClientThreadEvent
         data object WebsocketClosed : ClientThreadEvent
         class WebsocketFailed(val t: Throwable) : ClientThreadEvent
@@ -189,6 +206,7 @@ internal class GeminiClient private constructor(
             ClientThreadEvent
 
         class SetMicMute(val muted: Boolean) : ClientThreadEvent
+        class SetCameraEnabled(val enabled: Boolean) : ClientThreadEvent
     }
 
     companion object {
@@ -198,6 +216,7 @@ internal class GeminiClient private constructor(
 
             val events = LinkedBlockingQueue<ClientThreadEvent>()
             val isMicMutedRef = AtomicReference<(() -> Boolean)?>(null)
+            val isCameraEnabledRef = AtomicReference<(() -> Boolean)?>(null)
 
             fun postEvent(event: ClientThreadEvent) = events.put(event)
 
@@ -241,7 +260,7 @@ internal class GeminiClient private constructor(
 
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                         Log.i(TAG, "Websocket onClosed($code, $reason)")
-                        postEvent(ClientThreadEvent.WebsocketClosed)
+                        postEvent(WebsocketClosed)
                     }
 
                     override fun onClosing(
@@ -258,25 +277,25 @@ internal class GeminiClient private constructor(
                         response: Response?
                     ) {
                         Log.e(TAG, "Websocket onFailure", t)
-                        postEvent(ClientThreadEvent.WebsocketFailed(t))
+                        postEvent(WebsocketFailed(t))
                     }
 
                     override fun onMessage(webSocket: WebSocket, text: String) {
-                        onIncomingMessage(webSocket, text)
+                        onIncomingMessage(text)
                     }
 
                     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                        onIncomingMessage(webSocket, bytes.utf8())
+                        onIncomingMessage(bytes.utf8())
                     }
 
                     @SuppressLint("MissingPermission")
-                    fun onIncomingMessage(webSocket: WebSocket, msg: String) {
+                    fun onIncomingMessage(msg: String) {
                         val data =
                             JSON.decodeFromString<IncomingMessage>(
                                 msg
                             )
                         postEvent(
-                            ClientThreadEvent.WebsocketMessage(
+                            WebsocketMessage(
                                 msg = data,
                                 originalText = msg
                             )
@@ -293,6 +312,20 @@ internal class GeminiClient private constructor(
                         )
                     }
                 })
+
+                fun doSendUserTextMessage(msg: String) {
+                    ws.send(
+                        JSON.encodeToString(
+                            RealtimeInputRequest.serializer(),
+                            RealtimeInputRequest(
+                                RealtimeInput(
+                                    text = msg
+                                )
+
+                            )
+                        )
+                    )
+                }
 
                 fun doSendUserMessage(msg: AppendedMessage) {
                     ws.send(
@@ -340,18 +373,15 @@ internal class GeminiClient private constructor(
 
                 while (true) {
                     when (val event = events.take()) {
-                        is ClientThreadEvent.SendAudioData -> {
-
+                        is SendAudioData -> {
                             ws.send(
                                 JSON.encodeToString(
                                     RealtimeInputRequest.serializer(),
                                     RealtimeInputRequest(
-                                        RealtimeInputRequest.RealtimeInput(
-                                            listOf(
-                                                InlineData.ofPcm(
-                                                    inputSampleRate,
-                                                    event.buf
-                                                )
+                                        RealtimeInput(
+                                            audio = InlineData.ofPcm(
+                                                inputSampleRate,
+                                                event.buf
                                             )
                                         )
                                     )
@@ -359,32 +389,50 @@ internal class GeminiClient private constructor(
                             )
                         }
 
-                        is ClientThreadEvent.SendUserMessage -> {
+                        is SendCameraStream -> {
+                            ws.send(
+                                JSON.encodeToString(
+                                    RealtimeInputRequest.serializer(),
+                                    RealtimeInputRequest(
+                                        RealtimeInput(
+                                            video = InlineData.ofJpeg(event.buf)
+                                        )
+                                    )
+                                )
+                            )
+                        }
+
+
+                        is SendUserTextMessage -> {
+                            doSendUserTextMessage(event.msg)
+                        }
+
+                        is SendUserMessage -> {
                             doSendUserMessage(event.msg)
                         }
 
-                        is ClientThreadEvent.SendFunctionResponse -> {
+                        is SendFunctionResponse -> {
                             doSendFunctionResponse(event.id, event.name, event.response)
                         }
 
-                        ClientThreadEvent.Stop -> {
+                        Stop -> {
                             stopAudio()
                             ws.close(1000, "user requested close")
                         }
 
-                        ClientThreadEvent.WebsocketClosed -> {
+                        WebsocketClosed -> {
                             stopAudio()
                             listenerRef.take()?.onSessionEnded("websocket closed", null)
                             return@thread
                         }
 
-                        is ClientThreadEvent.WebsocketFailed -> {
+                        is WebsocketFailed -> {
                             stopAudio()
                             listenerRef.take()?.onSessionEnded("websocket failed", event.t)
                             return@thread
                         }
 
-                        is ClientThreadEvent.WebsocketMessage -> {
+                        is WebsocketMessage -> {
 
                             val data = event.msg
 
@@ -403,7 +451,7 @@ internal class GeminiClient private constructor(
                                 listenerRef.get()?.onConnected()
 
                                 audioInCallback.set { buf ->
-                                    postEvent(ClientThreadEvent.SendAudioData(buf))
+                                    postEvent(SendAudioData(buf))
                                 }
 
                             } else if (data.serverContent != null) {
@@ -478,8 +526,12 @@ internal class GeminiClient private constructor(
                             }
                         }
 
-                        is ClientThreadEvent.SetMicMute -> {
+                        is SetMicMute -> {
                             audioIn.muted = event.muted
+                        }
+
+                        is ClientThreadEvent.SetCameraEnabled -> {
+                            isCameraEnabledRef.set { event.enabled }
                         }
                     }
                 }
@@ -487,19 +539,31 @@ internal class GeminiClient private constructor(
 
             return GeminiClient(
                 onSendUserMessage = { text ->
-                    postEvent(ClientThreadEvent.SendUserMessage(text))
+                    postEvent(SendUserMessage(text))
                 },
                 onSendFunctionResponse = { id, name, response ->
-                    postEvent(ClientThreadEvent.SendFunctionResponse(id, name, response))
+                    postEvent(SendFunctionResponse(id, name, response))
                 },
                 onClose = {
-                    postEvent(ClientThreadEvent.Stop)
+                    postEvent(Stop)
                 },
                 isMicMuted = {
                     isMicMutedRef.get()?.invoke() ?: false
                 },
                 setMicMuted = {
-                    postEvent(ClientThreadEvent.SetMicMute(it))
+                    postEvent(SetMicMute(it))
+                },
+                onSendUserTextMessage = {
+                    postEvent(SendUserTextMessage(it))
+                },
+                onSendCameraStream = {
+                    postEvent(SendCameraStream(it))
+                },
+                setCameraEnabled = {
+                    postEvent(ClientThreadEvent.SetCameraEnabled(it))
+                },
+                isCameraEnabled = {
+                    isCameraEnabledRef.get()?.invoke() ?: false
                 }
             )
         }
@@ -526,6 +590,16 @@ internal class GeminiClient private constructor(
         set(muted) {
             setMicMuted(muted)
         }
+
+    var cameraEnabled: Boolean
+        get() = isCameraEnabled()
+        set(enabled) {
+            setCameraEnabled(enabled)
+        }
+
+    fun sendCameraStream(buf: ByteArray) = onSendCameraStream(buf)
+
+    fun sendUserTextMessage(msg: String) = onSendUserTextMessage(msg)
 
     fun sendUserMessage(role: String, content: String) =
         onSendUserMessage(AppendedMessage(role = role, content = content))

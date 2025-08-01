@@ -135,10 +135,10 @@ class UserRepositoryImpl(
         } catch (_: Exception) {
             try {
                 supabaseClient.auth.reauthenticate()
+                return Result.Error(DataError.Local.REAUTHENTICATION_REQUIRED)
             } catch (_: Exception) {
                 return Result.Error(DataError.Local.UNKNOWN)
             }
-            return Result.Error(DataError.Local.UNKNOWN)
         }
     }
 

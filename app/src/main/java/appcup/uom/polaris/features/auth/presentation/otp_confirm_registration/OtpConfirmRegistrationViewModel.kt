@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.domain.User
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,15 +14,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class OtpConfirmRegistrationViewModel(
-    otpConfirmRegistrationNavArgs: OtpConfirmRegistrationNavArgs,
+    args: OtpConfirmRegistrationNavArgs,
     private val userRepository: UserRepository
 ): ViewModel() {
-    val email = otpConfirmRegistrationNavArgs.email
+    val email = args.email
     private val _state = MutableStateFlow(OtpConfirmRegistrationState())
     val state = _state.asStateFlow()
 
-    private val _validationEvent = MutableSharedFlow<ValidationEvent>()
-    val validationEvent = _validationEvent.asSharedFlow()
+    private val _event = MutableSharedFlow<OtpConfirmRegistrationEvent>()
+    val event = _event.asSharedFlow()
 
     fun onAction(action: OtpConfirmRegistrationAction) {
         when(action) {
@@ -41,10 +40,11 @@ class OtpConfirmRegistrationViewModel(
                     }
                     when(res) {
                         is Result.Error<DataError.Local> -> {
-                            _validationEvent.emit(ValidationEvent.Error(res.error.message))
+                            _event.emit(OtpConfirmRegistrationEvent.Error(res.error.message))
                         }
+
                         is Result.Success<User> -> {
-                            _validationEvent.emit(ValidationEvent.Success)
+                            _event.emit(OtpConfirmRegistrationEvent.Success)
                         }
                     }
                 }

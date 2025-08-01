@@ -23,8 +23,8 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -34,14 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
-import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,14 +53,13 @@ fun DisplayNameScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.onAction(DisplayNameAction.OnDisplayNameChanged(StaticData.user.name))
-        viewModel.validationEvent.collectLatest {
+        viewModel.event.collectLatest {
             when(it) {
-                is ValidationEvent.Error -> {
-                    snackbarHostState.showSnackbar(it.message)
-                }
-                ValidationEvent.Success -> {
+                DisplayNameEvent.DisplayNameSuccessfullyChanged -> {
                     snackbarHostState.showSnackbar("Display Name Changed")
+                }
+                is DisplayNameEvent.Error -> {
+                    snackbarHostState.showSnackbar(it.message)
                 }
             }
         }

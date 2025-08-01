@@ -36,27 +36,25 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.features.auth.presentation.components.OtpInputField
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun OtpConfirmRegistrationScreen(
-    viewModel: OtpConfirmRegistrationViewModel = koinViewModel(),
+    viewModel: OtpConfirmRegistrationViewModel,
     onBack: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collect { event ->
+        viewModel.event.collect { event ->
             when(event) {
-                ValidationEvent.Success -> {
-                    onBack()
-                }
-                is ValidationEvent.Error -> {
+                is OtpConfirmRegistrationEvent.Error -> {
                     snackbarHostState.showSnackbar(event.message)
+                }
+                OtpConfirmRegistrationEvent.Success -> {
+
                 }
             }
         }

@@ -2,12 +2,14 @@ package appcup.uom.polaris.features.conversational_ai.utils.function_call
 
 import androidx.navigation3.runtime.NavBackStack
 import appcup.uom.polaris.core.extras.navigation.Screen
+import appcup.uom.polaris.core.extras.navigation.rebaseTo
 import appcup.uom.polaris.core.presentation.components.BottomBarItem
 import appcup.uom.polaris.features.conversational_ai.domain.Value
 import coil3.toUri
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import kotlin.Exception
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
@@ -24,7 +26,7 @@ class FunctionCallNavigationHandler(
         try {
             val screen = getScreen(args)
             onResult(mapOf("details" to screen.getScreenDetails()))
-        } catch (_: IllegalArgumentException) {
+        } catch (_: Exception) {
             onResult(mapOf("result" to Value.Str("failure, screen not found")))
         }
     }
@@ -61,13 +63,13 @@ class FunctionCallNavigationHandler(
             screens.forEach { kClass ->
                 val screenInstance = try {
                     if (navigationArguments == null) {
-                        throw IllegalArgumentException("Navigation arguments not found")
+                        throw Exception("Navigation arguments not found")
                     } else {
                         val jsonString =
                             Json.encodeToString(Value.serializer(), navigationArguments)
                         Json.decodeFromString(kClass.serializer(), jsonString.toUri().toString())
                     }
-                } catch (_: IllegalArgumentException) {
+                } catch (_: Exception) {
                     try {
                         kClass.objectInstance
                     } catch (_: Exception) {
@@ -84,9 +86,9 @@ class FunctionCallNavigationHandler(
                             onResult(mapOf("result" to Value.Str("success")))
                             return@forEach
                         }
-                        navBackStack.clear()
-                        navBackStack.add(Screen.Home)
-                        navBackStack.add(screenInstance)
+
+                        navBackStack.rebaseTo(listOf(Screen.Home, screenInstance))
+
                         onResult(mapOf("result" to Value.Str("success")))
                     } else if (navBackStack.last() == screenInstance::class) {
                         navBackStack.removeLastOrNull()
@@ -116,10 +118,10 @@ class FunctionCallNavigationHandler(
         screens.forEach { kClass ->
             val screenInstance = try {
                 kClass.createInstance() as? Screen
-            } catch (_: IllegalArgumentException) {
+            } catch (_: Exception) {
                 try {
                     kClass.objectInstance
-                } catch (_: IllegalArgumentException) {
+                } catch (_: Exception) {
                     null
                 }
             }
@@ -127,7 +129,7 @@ class FunctionCallNavigationHandler(
                 return screenInstance
             }
         }
-        throw IllegalArgumentException("Screen not found")
+        throw Exception("Screen not found")
     }
 
     private fun getScreenName(args: Value.Object): String? {

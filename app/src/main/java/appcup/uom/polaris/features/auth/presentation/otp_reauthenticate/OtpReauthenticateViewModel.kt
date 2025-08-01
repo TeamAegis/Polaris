@@ -2,10 +2,8 @@ package appcup.uom.polaris.features.auth.presentation.otp_reauthenticate
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-//import androidx.navigation.toRoute
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.domain.User
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,8 +20,8 @@ class OtpReauthenticateViewModel(
     private val _state = MutableStateFlow(OtpReauthenticateState())
     val state = _state.asStateFlow()
 
-    private val _validationEvent = MutableSharedFlow<ValidationEvent>()
-    val validationEvent = _validationEvent.asSharedFlow()
+    private val _event = MutableSharedFlow<OtpReauthenticateEvent>()
+    val event = _event.asSharedFlow()
 
     fun onAction(action: OtpReauthenticateAction) {
         when(action) {
@@ -42,10 +40,10 @@ class OtpReauthenticateViewModel(
                     }
                     when(res) {
                         is Result.Error<DataError.Local> -> {
-                            _validationEvent.emit(ValidationEvent.Error(res.error.message))
+                            _event.emit(OtpReauthenticateEvent.Error(res.error.message))
                         }
                         is Result.Success<User> -> {
-                            _validationEvent.emit(ValidationEvent.Success)
+                            _event.emit(OtpReauthenticateEvent.Success)
                         }
                     }
                 }

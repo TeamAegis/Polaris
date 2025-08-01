@@ -37,7 +37,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
@@ -51,12 +50,12 @@ fun ForgotPasswordScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collectLatest {
+        viewModel.event.collectLatest {
             when(it) {
-                is ValidationEvent.Error -> {
+                is ForgotPasswordEvent.Error -> {
                     snackbarHostState.showSnackbar(it.message)
                 }
-                ValidationEvent.Success -> {
+                ForgotPasswordEvent.PasswordResetEmailSent -> {
                     snackbarHostState.showSnackbar("Password reset email sent")
                 }
             }

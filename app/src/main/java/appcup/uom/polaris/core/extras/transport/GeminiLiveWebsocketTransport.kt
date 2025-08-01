@@ -29,6 +29,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioManager
 import android.util.Log
+import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.features.conversational_ai.utils.toByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
@@ -67,7 +69,7 @@ class GeminiLiveWebsocketTransport(
 
         fun buildConfig(
             apiKey: String,
-            model: String = "models/gemini-live-2.5-flash-preview",
+            model: String = "models/${Constants.GEMINI_LIVE_API_MODEL}",
             initialUserMessage: String? = null,
             generationConfig: Value.Object = Value.Object(),
             systemInstruction: Value? = null,
@@ -270,6 +272,7 @@ class GeminiLiveWebsocketTransport(
         resolvedPromiseOk(thread, Unit)
     }
 
+
     override fun sendMessage(message: MsgClientToServer): Future<Unit, RTVIError> {
 
         when (message.type) {
@@ -332,7 +335,18 @@ class GeminiLiveWebsocketTransport(
 
                 return resolvedPromiseOk(thread, Unit)
             }
-
+            "user-message" -> {
+                try {
+                    client?.sendUserTextMessage(message.data.toString())
+                    return resolvedPromiseOk(thread, Unit)
+                } catch (e: Exception) {
+                    return resolvedPromiseErr(thread, RTVIError.ExceptionThrown(e))
+                }
+            }
+            "camera-stream" -> {
+                client?.sendCameraStream(message.data!!.toByteArray())
+                return resolvedPromiseOk(thread, Unit)
+            }
             else -> {
                 return operationNotSupported()
             }
@@ -393,7 +407,13 @@ class GeminiLiveWebsocketTransport(
 
     override fun expiry() = null
 
-    override fun enableCam(enable: Boolean) = operationNotSupported<Unit>()
+    override fun enableCam(enable: Boolean): Future<Unit, RTVIError> {
+        client?.cameraEnabled = enable
+        thread.runOnThread {
+            transportContext.callbacks.onInputsUpdated(camera = enable, mic = true)
+        }
+        return resolvedPromiseOk(thread, Unit)
+    }
 
     override fun tracks() = Tracks(
         local = ParticipantTracks(null, null),

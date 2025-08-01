@@ -36,27 +36,25 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.features.auth.presentation.components.OtpInputField
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun OtpReauthenticateScreen(
-    viewModel: OtpReauthenticateViewModel = koinViewModel(),
+    viewModel: OtpReauthenticateViewModel,
     onBack: (String?) -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collect { event ->
+        viewModel.event.collect { event ->
             when(event) {
-                ValidationEvent.Success -> {
-                    onBack("Password changed successfully")
-                }
-                is ValidationEvent.Error -> {
+                is OtpReauthenticateEvent.Error -> {
                     snackbarHostState.showSnackbar(event.message)
+                }
+                OtpReauthenticateEvent.Success -> {
+                    onBack("Password changed successfully")
                 }
             }
         }

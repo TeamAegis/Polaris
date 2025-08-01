@@ -36,9 +36,9 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -66,7 +66,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.extras.theme.SeedColor
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
@@ -84,14 +83,10 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collectLatest {
+        viewModel.event.collectLatest {
             when (it) {
-                is ValidationEvent.Error -> {
+                is SettingsEvent.Error -> {
                     snackbarHostState.showSnackbar(it.message)
-                }
-
-                ValidationEvent.Success -> {
-
                 }
             }
         }
@@ -369,9 +364,12 @@ fun SettingsGroupTitle(title: String) {
 
 @Composable
 fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors().copy(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(content = content)
     }
@@ -490,7 +488,7 @@ fun ColorPickerItem(
                 Icons.Default.Done,
                 contentDescription = "Selected Color",
                 tint = if (color != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
-            ) // Or a contrasting color
+            )
         }
     }
 }

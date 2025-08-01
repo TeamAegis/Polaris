@@ -41,7 +41,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.domain.ValidationEvent
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -54,13 +53,13 @@ fun ResetPasswordScreen(
     val state = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.validationEvent.collect { event ->
+        viewModel.event.collect { event ->
             when(event) {
-                ValidationEvent.Success -> {
-                    onBack("Password reset successfully")
-                }
-                is ValidationEvent.Error -> {
+                is ResetPasswordEvent.Error -> {
                     snackbarHostState.showSnackbar(event.message)
+                }
+                ResetPasswordEvent.Success -> {
+                    onBack("Password reset successfully")
                 }
             }
         }

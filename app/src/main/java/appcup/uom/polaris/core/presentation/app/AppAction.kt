@@ -1,4 +1,6 @@
 package appcup.uom.polaris.core.presentation.app
 
-class AppAction {
+sealed interface AppAction {
+    data class OnFabMenuExpanded(val isFabMenuExpanded: Boolean) : AppAction
+    object RequestCameraPermission : AppAction
 }
