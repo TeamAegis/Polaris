@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
     suspend fun initialize(): Result<Unit, DataError.Local>
-    suspend fun getChatHistory(): Flow<List<Message>>
+    fun getChatHistory(): Flow<List<Message>>
     suspend fun sendMessage(message: String): Result<Unit, DataError.Local>
     suspend fun clearChatHistory(): Result<Unit, DataError.Local>
 

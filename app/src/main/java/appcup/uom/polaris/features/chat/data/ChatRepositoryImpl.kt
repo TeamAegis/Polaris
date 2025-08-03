@@ -15,10 +15,10 @@ import com.google.firebase.ai.type.content
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter.FilterOperation
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
-import io.github.jan.supabase.realtime.selectAsFlow
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresListDataFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
@@ -37,7 +37,7 @@ class ChatRepositoryImpl(
         try {
             val messages = supabaseClient.from("messages").select {
                 filter {
-                    Message::id eq StaticData.user.id
+                    Message::userId eq StaticData.user.id
                 }
             }.decodeList<Message>()
 
@@ -56,12 +56,19 @@ class ChatRepositoryImpl(
     }
 
     @OptIn(ExperimentalUuidApi::class, SupabaseExperimental::class)
-    override suspend fun getChatHistory(): Flow<List<Message>> {
-        return supabaseClient.from("messages").selectAsFlow(
-            Message::id,
-            filter = FilterOperation("user_id", FilterOperator.EQ, StaticData.user.id)
+    override fun getChatHistory(): Flow<List<Message>> = flow {
+        val channel = supabaseClient.channel("chat_channel_${StaticData.user.id}")
+        val messageFlow = channel.postgresListDataFlow(
+            schema = "public",
+            table = "messages",
+            primaryKey = Message::id
         )
+        channel.subscribe()
+        messageFlow.collect { messages ->
+            emit(messages)
+        }
     }
+
 
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     override suspend fun sendMessage(message: String): Result<Unit, DataError.Local> {
@@ -148,7 +155,7 @@ class ChatRepositoryImpl(
                     Message::userId eq StaticData.user.id
                 }
             }
-            initialize()
+            chat = generativeModel.startChat()
             Result.Success(Unit)
         } catch (e: Exception) {
             println(Constants.DEBUG_VALUE + e.message)
