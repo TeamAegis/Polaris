@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.StrokeCap
 
 val Robot: ImageVector
     get() {
@@ -280,3 +281,67 @@ val PhotoPrints: ImageVector
 
 private var _Photo_prints: ImageVector? = null
 
+val AudioWaves: ImageVector
+    get(){
+        if (_audio_waves != null) return _audio_waves!!
+        _audio_waves = ImageVector.Builder(
+            name = "audio_waves",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 960f,
+            viewportHeight = 960f
+        ).apply{
+            path(
+                fill = SolidColor(Color(0xFF000000))
+            ) {
+                moveTo(12f, 0f)
+                horizontalLineTo(12f)
+                arcTo(12f, 12f, 0f, false, true, 24f, 12f)
+                verticalLineTo(12f)
+                arcTo(12f, 12f, 0f, false, true, 12f, 24f)
+                horizontalLineTo(12f)
+                arcTo(12f, 12f, 0f, false, true, 0f, 12f)
+                verticalLineTo(12f)
+                arcTo(12f, 12f, 0f, false, true, 12f, 0f)
+                close()
+            }
+            path(
+                fill = SolidColor(Color(0xFFFFFFFF))
+            ) {
+                moveTo(8.80195f, 18.1f)
+                verticalLineTo(4.89998f)
+                curveTo(8.80195f, 4.45928f, 9.1593f, 4.10196f, 9.6f, 4.10193f)
+                curveTo(10.0407f, 4.10193f, 10.398f, 4.45925f, 10.398f, 4.89998f)
+                verticalLineTo(18.1f)
+                curveTo(10.398f, 18.5407f, 10.0407f, 18.898f, 9.6f, 18.898f)
+                curveTo(9.1593f, 18.898f, 8.80195f, 18.5407f, 8.80195f, 18.1f)
+                close()
+                moveTo(13.602f, 15.2571f)
+                verticalLineTo(8.14959f)
+                curveTo(13.602f, 7.70888f, 13.9592f, 7.35155f, 14.4f, 7.35154f)
+                curveTo(14.8408f, 7.35154f, 15.198f, 7.70887f, 15.198f, 8.14959f)
+                verticalLineTo(15.2571f)
+                curveTo(15.198f, 15.6977f, 14.8406f, 16.0551f, 14.4f, 16.0551f)
+                curveTo(13.9594f, 16.0551f, 13.602f, 15.6977f, 13.602f, 15.2571f)
+                close()
+                moveTo(4.00195f, 13.1242f)
+                verticalLineTo(10.0785f)
+                curveTo(4.00195f, 9.63777f, 4.35928f, 9.28045f, 4.8f, 9.28045f)
+                curveTo(5.24073f, 9.28045f, 5.59805f, 9.63777f, 5.59805f, 10.0785f)
+                verticalLineTo(13.1242f)
+                curveTo(5.59805f, 13.5649f, 5.24073f, 13.9223f, 4.8f, 13.9223f)
+                curveTo(4.35928f, 13.9223f, 4.00195f, 13.5649f, 4.00195f, 13.1242f)
+                close()
+                moveTo(18.402f, 13.1242f)
+                verticalLineTo(10.0785f)
+                curveTo(18.402f, 9.63777f, 18.7592f, 9.28045f, 19.2f, 9.28045f)
+                curveTo(19.6408f, 9.28045f, 19.998f, 9.63777f, 19.998f, 10.0785f)
+                verticalLineTo(13.1242f)
+                curveTo(19.998f, 13.5649f, 19.6408f, 13.9223f, 19.2f, 13.9223f)
+                curveTo(18.7592f, 13.9223f, 18.402f, 13.5649f, 18.402f, 13.1242f)
+                close()
+            }
+        }.build()
+        return _audio_waves!!
+    }
+private var _audio_waves: ImageVector? = null;

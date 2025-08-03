@@ -11,7 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 
-
+// Choosen Colour scheme
 val primaryColor = Color(0xFFF38181)
 val surfaceColor = Color(0xFFFAFAFA)
 val onSurfaceColor = Color(0xFF554949)

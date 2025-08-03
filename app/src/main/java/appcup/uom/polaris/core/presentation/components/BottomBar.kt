@@ -40,13 +40,13 @@ fun BottomBar(
 
     Box(
         modifier = Modifier
-            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
             .dropShadow(
                 shape = RoundedCornerShape(16.dp),
                 shadow = Shadow(
-                    radius = 15.dp,
+                    radius = 10.dp,
                     alpha = 0.25f,
-                    offset = DpOffset(0.dp, 4.dp)
+                    offset = DpOffset(0.dp, 0.dp)
                 )
             )
     ) {
