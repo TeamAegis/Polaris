@@ -13,4 +13,7 @@ plugins {
 //    sqldelight
 //    alias(libs.plugins.sqldelight) apply true
 
+//    google-services
+    alias(libs.plugins.google.services) apply false
+
 }

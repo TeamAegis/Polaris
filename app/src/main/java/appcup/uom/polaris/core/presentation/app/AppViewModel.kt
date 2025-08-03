@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class AppViewModel(
     private val supabaseClient: SupabaseClient,
@@ -108,9 +110,10 @@ class AppViewModel(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun setUser(user: UserInfo) {
         StaticData.user = User(
-            id = user.id,
+            id = Uuid.parse(user.id),
             name = user.userMetadata!!.getOrElse("name") { "" }.toString()
                 .removeSurrounding("\""),
             email = user.email!!

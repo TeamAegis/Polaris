@@ -11,6 +11,9 @@ plugins {
     alias(libs.plugins.ksp)
 //    secrets-gradle-plugin
     alias(libs.plugins.secrets.gradle)
+
+//    google-services
+    alias(libs.plugins.google.services)
 }
 
 android {

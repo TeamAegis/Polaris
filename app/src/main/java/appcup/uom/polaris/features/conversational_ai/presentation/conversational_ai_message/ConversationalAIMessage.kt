@@ -2,12 +2,15 @@ package appcup.uom.polaris.features.conversational_ai.presentation.conversationa
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -16,17 +19,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIEvent
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 
@@ -81,23 +88,33 @@ fun ConversationalAIMessageImpl(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(text = "Live Agent", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+            Text(
+                text = "Live Agent",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth().defaultMinSize(
-                    minHeight = 100.dp
-                ),
                 value = state.message,
                 onValueChange = {
                     onAction(ConversationalAIMessageAction.OnMessageChanged(it))
                 },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 100.dp)
+                    .clip(RoundedCornerShape(16.dp)),
                 label = {
-                    Text(text = "Message")
+                    Text("Message")
                 },
+                shape = RoundedCornerShape(16.dp),
                 minLines = 3,
                 maxLines = 5,
                 keyboardOptions = KeyboardOptions(
@@ -109,29 +126,41 @@ fun ConversationalAIMessageImpl(
                     onSend = {
                         onAction(ConversationalAIMessageAction.SendMessage)
                     }
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
+
             Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onAction(ConversationalAIMessageAction.SendMessage)
-                }) {
+                onClick = { onAction(ConversationalAIMessageAction.SendMessage) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
                 if (state.isLoading) {
-                    Text(text = "Sending...")
-                    Spacer(modifier = Modifier.width(16.dp))
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier
-                            .height(16.dp)
-                            .width(16.dp),
-                        strokeWidth = 2.dp,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "Sending...")
+                        Spacer(modifier = Modifier.width(12.dp))
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 } else {
-                    Text(text = "Send")
+                    Text("Send")
                 }
             }
         }
-
     }
 }

@@ -1,7 +1,5 @@
 package appcup.uom.polaris.features.polaris.presentation.create_journey
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +9,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -26,20 +23,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisTopAppBar
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
+import appcup.uom.polaris.features.chat.presentation.chat.ChatBottomSheet
+import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai_message.ConversationalAIMessage
 import org.koin.androidx.compose.koinViewModel
@@ -48,6 +44,7 @@ import org.koin.androidx.compose.koinViewModel
 fun CreateJourneyScreen(
     viewModel: CreateJourneyViewModel = koinViewModel(),
     conversationAIViewModel: ConversationalAIViewModel,
+    chatViewModel: ChatViewModel,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
 ) {
@@ -56,6 +53,7 @@ fun CreateJourneyScreen(
     CreateJourneyScreenImpl(
         state = state.value,
         conversationAIViewModel = conversationAIViewModel,
+        chatViewModel = chatViewModel,
         snackbarHostState = snackbarHostState,
     ) { action ->
         when (action) {
@@ -75,12 +73,14 @@ fun CreateJourneyScreen(
 fun CreateJourneyScreenImpl(
     state: CreateJourneyState,
     conversationAIViewModel: ConversationalAIViewModel,
+    chatViewModel: ChatViewModel,
     snackbarHostState: SnackbarHostState,
     onAction: (CreateJourneyAction) -> Unit
 ) {
 
     val chatWithAIBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val sendMessageToLiveAgentBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sendMessageToLiveAgentBottomSheetState =
+        rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
 
     Scaffold(
@@ -89,42 +89,23 @@ fun CreateJourneyScreenImpl(
             .statusBarsPadding()
             .fillMaxSize(),
         topBar = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .dropShadow(
-                            shape = RoundedCornerShape(16.dp),
-                            shadow = Shadow(
-                                radius = 15.dp,
-                                alpha = 0.25f,
-                                offset = DpOffset(0.dp, 4.dp)
-                            )
-                        )
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                            .clickable {
-                                onAction(CreateJourneyAction.OnBackClicked)
+            PolarisTopAppBar(
+                "Create Journey",
+                navigationIcon = {
+                    PolarisIconButton(
+                        icon =
+                            {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
-                            .padding(12.dp)
 
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        onAction(CreateJourneyAction.OnBackClicked)
                     }
-                }
-
-                Text("Create Journey", fontSize = MaterialTheme.typography.titleLarge.fontSize)
-            }
-
+                })
         }
     ) { contentPadding ->
         Box(
@@ -142,25 +123,22 @@ fun CreateJourneyScreenImpl(
             }
 
             if (state.isSendMessageToAIBottomSheetOpen) {
-//                scope
-//                    .launch { bottomSheetState.hide() }
-//                    .invokeOnCompletion {
-//                        if (!bottomSheetState.isVisible) {
-//                            openBottomSheet = false
-//                        }
-//                    }
-                ModalBottomSheet(
-                    onDismissRequest = {
+                ChatBottomSheet(
+                    onDismiss = {
                         onAction(CreateJourneyAction.OnSendMessageToAIBottomSheetClicked)
                     },
-                    sheetState = chatWithAIBottomSheetState,
-                ) {
-
-                }
+                    viewModel = chatViewModel,
+                    snackbarHostState = snackbarHostState,
+                    sheetState = chatWithAIBottomSheetState
+                )
             }
 
             if (state.isSendMessageToLiveAgentBottomSheetOpen) {
-                ConversationalAIMessage(conversationAIViewModel, snackbarHostState, sendMessageToLiveAgentBottomSheetState) {
+                ConversationalAIMessage(
+                    conversationAIViewModel,
+                    snackbarHostState,
+                    sendMessageToLiveAgentBottomSheetState
+                ) {
                     onAction(CreateJourneyAction.OnSendMessageToLiveAgentBottomSheetClicked)
                 }
             }
@@ -169,14 +147,7 @@ fun CreateJourneyScreenImpl(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = -ScreenOffset)
-                    .dropShadow(
-                        shape = RoundedCornerShape(16.dp),
-                        shadow = Shadow(
-                            radius = 15.dp,
-                            alpha = 0.25f,
-                            offset = DpOffset(0.dp, 4.dp)
-                        )
-                    ),
+                    .polarisDropShadow(),
                 expanded = state.isToolbarExpanded,
                 trailingContent = {
                     Row {

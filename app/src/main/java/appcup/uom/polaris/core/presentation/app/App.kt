@@ -83,6 +83,8 @@ import appcup.uom.polaris.features.auth.presentation.otp_reauthenticate.OtpReaut
 import appcup.uom.polaris.features.auth.presentation.register.RegisterScreen
 import appcup.uom.polaris.features.auth.presentation.reset_password.ResetPasswordScreen
 import appcup.uom.polaris.features.auth.presentation.start.StartScreen
+import appcup.uom.polaris.features.chat.presentation.chat.ChatScreen
+import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAI
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
@@ -105,6 +107,12 @@ fun App(
         rememberNavBackStack(if (state.value.isAuthenticated) Screen.Home else Screen.Start)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    val chatViewModel: ChatViewModel? = if (state.value.isAuthenticated) {
+        koinViewModel()
+    } else {
+        null
+    }
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
@@ -154,6 +162,8 @@ fun App(
     val conversationAIState = conversationAIViewModel.state.collectAsStateWithLifecycle()
 
 
+
+
     Scaffold(
         modifier = Modifier.imePadding(),
         bottomBar = {
@@ -169,7 +179,7 @@ fun App(
         },
         floatingActionButton = {
             if (state.value.isAuthenticated) {
-                if (conversationAIState.value.isRecording || !isBottomBarVisible.value) {
+                if ((conversationAIState.value.isRecording || !isBottomBarVisible.value) && backStack.last() !is Screen.Chat) {
                     ConversationalAI(
                         viewModel = conversationAIViewModel,
                         snackbarHostState = snackbarHostState
@@ -358,6 +368,7 @@ fun App(
                 entry<Screen.CreateJourney> {
                     CreateJourneyScreen(
                         conversationAIViewModel = conversationAIViewModel,
+                        chatViewModel = chatViewModel!!,
                         snackbarHostState = snackbarHostState,
                         onBack = { backStack.removeLastOrNull() }
                     )
@@ -374,6 +385,7 @@ fun App(
                 entry<Screen.More> {
                     MoreScreen(
                         navigateToSettings = { backStack.add(Screen.Settings) },
+                        navigateToChat = { backStack.add(Screen.Chat) },
                         snackbarHostState = snackbarHostState
                     )
                 }
@@ -418,6 +430,14 @@ fun App(
                                 scope.launch { snackbarHostState.showSnackbar(message) }
                             }
                         },
+                        snackbarHostState = snackbarHostState
+                    )
+                }
+
+                entry<Screen.Chat> {
+                    ChatScreen(
+                        viewModel = chatViewModel!!,
+                        onBack = { backStack.removeLastOrNull() },
                         snackbarHostState = snackbarHostState
                     )
                 }

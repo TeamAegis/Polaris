@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,10 +18,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.StaticData
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -28,6 +31,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MoreScreen(
     viewModel: MoreViewModel = koinViewModel(),
     navigateToSettings: () -> Unit,
+    navigateToChat: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -38,6 +42,9 @@ fun MoreScreen(
             when (action) {
                 MoreActions.OnSettingsClicked -> {
                     navigateToSettings()
+                }
+                MoreActions.OnChatClicked -> {
+                    navigateToChat()
                 }
             }
         }
@@ -84,8 +91,22 @@ fun MoreScreenImpl(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Settings Navigation
-            Button(onClick = { onAction(MoreActions.OnSettingsClicked) },
-                modifier = Modifier.fillMaxWidth()) { Text("Settings") }
+            Button(
+                onClick = { onAction(MoreActions.OnSettingsClicked) },
+                modifier = Modifier.fillMaxWidth()
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text("Settings") }
+
+            // chat navigation
+            Button(
+                onClick = { onAction(MoreActions.OnChatClicked) },
+                modifier = Modifier.fillMaxWidth()
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text("Chat") }
         }
     }
 
