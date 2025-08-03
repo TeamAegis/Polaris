@@ -400,7 +400,7 @@ fun App(
                 }
 
                 entry<Screen.LiveTranslate> {
-                    LiveTranslateScreen(viewModel = conversationAIViewModel)
+                    LiveTranslateScreen(viewModel = conversationAIViewModel, onBack = { backStack.removeLastOrNull() })
                 }
 
                 entry<Screen.OtpConfirmRegistration> { screen ->

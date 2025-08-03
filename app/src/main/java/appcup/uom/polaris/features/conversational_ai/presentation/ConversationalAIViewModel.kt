@@ -256,6 +256,9 @@ class ConversationalAIViewModel(
                         ConversationalAIConnectionState.Idle
                     )
                 )
+                viewModelScope.launch {
+                    _event.emit(ConversationalAIEvent.OnStopRecording)
+                }
             },
             onRemoteAudioLevel = { level ->
                 onAction(ConversationalAIAction.OnBotAudioLevel(level.coerceIn(0f, 1f)))

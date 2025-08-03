@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIEvent
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 import kotlinx.coroutines.delay
 import kotlin.uuid.ExperimentalUuidApi
@@ -38,8 +39,17 @@ import kotlin.uuid.Uuid
 @Composable
 fun LiveTranslateScreen(
     viewModel: ConversationalAIViewModel,
+    onBack: () -> Unit,
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.event.collect {
+            if (it is ConversationalAIEvent.OnStopRecording) {
+                onBack()
+            }
+        }
+    }
+
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(lifecycleOwner) {
