@@ -260,5 +260,18 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
             )
         }
     }
+
+    @Serializable
+    object Chat : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("Chat"),
+                    "description" to Value.Str("This is the chat screen of the app. It should not be navigated to."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
 }
 

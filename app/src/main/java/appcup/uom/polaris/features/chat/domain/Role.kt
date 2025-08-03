@@ -1,4 +1,4 @@
-package appcup.uom.polaris.features.conversational_ai.domain
+package appcup.uom.polaris.features.chat.domain
 
 enum class Role() {
     USER,

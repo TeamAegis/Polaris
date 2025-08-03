@@ -13,6 +13,7 @@ sealed interface DataError: Error {
     enum class Local(val message: String) : DataError {
         UNKNOWN("An unknown error occurred."),
         EMPTY_FIELD("Please fill in all fields."),
+        MESSAGE_EMPTY("Message cannot be empty."),
         ACCOUNT_EXISTS("An account with this email already exists."),
         REAUTHENTICATION_REQUIRED("Please reauthenticate to continue."),
         INVALID_LOGIN_CREDENTIALS("Invalid login credentials."),

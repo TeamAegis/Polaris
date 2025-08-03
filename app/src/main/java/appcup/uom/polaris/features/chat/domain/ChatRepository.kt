@@ -1,12 +1,14 @@
-package appcup.uom.polaris.features.conversational_ai.domain
+package appcup.uom.polaris.features.chat.domain
 
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import kotlinx.coroutines.flow.Flow
 
-interface ConversationalAIRepository {
+interface ChatRepository {
     suspend fun initialize(): Result<Unit, DataError.Local>
     suspend fun getChatHistory(): Flow<List<Message>>
-    suspend fun sendUserMessage(message: String): Result<Unit, DataError.Local>
+    suspend fun sendMessage(message: String): Result<Unit, DataError.Local>
+    suspend fun clearChatHistory(): Result<Unit, DataError.Local>
+
 
 }

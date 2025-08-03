@@ -1,7 +1,10 @@
 package appcup.uom.polaris.features.auth.domain
 
-data class User(
-    val id: String,
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+data class User @OptIn(ExperimentalUuidApi::class) constructor(
+    val id: Uuid,
     val name: String,
     val email: String
 )

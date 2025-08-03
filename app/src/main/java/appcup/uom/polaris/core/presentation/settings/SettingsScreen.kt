@@ -37,13 +37,10 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -67,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.extras.theme.SeedColor
+import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -103,9 +102,11 @@ fun SettingsScreen(
                 SettingsAction.OnChangeDisplayNameClicked -> {
                     navigateToChangeDisplayName()
                 }
+
                 SettingsAction.OnChangePasswordClicked -> {
                     navigateToChangePassword()
                 }
+
                 else -> {
                     viewModel.onAction(action)
                 }
@@ -134,32 +135,34 @@ fun SettingsScreenImpl(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text(text = "Settings") },
+            PolarisLargeTopAppBar(
+                title = "Settings",
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
-                    IconButton(onClick = { onAction(SettingsAction.OnBackClicked) }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                    PolarisIconButton(
+                        icon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    ) {
+                        onAction(SettingsAction.OnBackClicked)
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        onAction(SettingsAction.OnLogoutClicked)
-
-                    }, enabled = !state.isLoading) {
-                        if (!state.isLoading)
+                    PolarisIconButton(
+                        icon = {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = "Logout"
+                                contentDescription = "Logout",
+                                tint = MaterialTheme.colorScheme.error
                             )
-                        else
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
+                        },
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ) {
+                        onAction(SettingsAction.OnLogoutClicked)
                     }
                 }
             )

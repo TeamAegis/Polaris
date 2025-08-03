@@ -6,13 +6,17 @@ import android.content.Context
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
+import androidx.compose.ui.geometry.Offset
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -38,6 +42,7 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 
 class ConversationalAIViewModel(
+    private val conversationalAI: ConversationalAI,
     private val permissionBridge: PermissionBridge
 ) : ViewModel() {
     private val _state = MutableStateFlow(ConversationalAIState())
@@ -48,8 +53,6 @@ class ConversationalAIViewModel(
 
     private val _event = MutableSharedFlow<ConversationalAIEvent>()
     val event = _event.asSharedFlow()
-
-    private val conversationalAI = ConversationalAI()
 
     init {
         _state.update {
@@ -177,7 +180,6 @@ class ConversationalAIViewModel(
 
         }
     }
-
     private fun sendMessage() {
         viewModelScope.launch {
             val res = conversationalAI.sendUserMessage(_messageState.value.message)
@@ -288,11 +290,18 @@ class ConversationalAIViewModel(
 
 
     //    live translate
+    private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
+    private var cameraControl: CameraControl? = null
+
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
     private val cameraPreviewUseCase = Preview.Builder().build().apply {
         setSurfaceProvider { newSurfaceRequest ->
             _surfaceRequest.update { newSurfaceRequest }
+            surfaceMeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                newSurfaceRequest.resolution.width.toFloat(),
+                newSurfaceRequest.resolution.height.toFloat()
+            )
         }
     }
 
@@ -374,21 +383,23 @@ class ConversationalAIViewModel(
             }
             startConversation {
                 conversationalAI.enableCamera(true)
-                processCameraProvider.bindToLifecycle(
+                val camera = processCameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     cameraPreviewUseCase,
                     imageAnalyzer
                 )
+                cameraControl = camera.cameraControl
             }
         } else {
             conversationalAI.enableCamera(true)
-            processCameraProvider.bindToLifecycle(
+            val camera = processCameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 CameraSelector.DEFAULT_BACK_CAMERA,
                 cameraPreviewUseCase,
                 imageAnalyzer
             )
+            cameraControl = camera.cameraControl
         }
 
         try {
@@ -396,6 +407,15 @@ class ConversationalAIViewModel(
         } finally {
             conversationalAI.enableCamera(false)
             processCameraProvider.unbindAll()
+            cameraControl = null
+        }
+    }
+
+    fun tapToFocus(tapPosition: Offset) {
+        val point = surfaceMeteringPointFactory?.createPoint(tapPosition.x, tapPosition.y)
+        if (point != null) {
+            val meteringAction = FocusMeteringAction.Builder(point).build()
+            cameraControl?.startFocusAndMetering(meteringAction)
         }
     }
 

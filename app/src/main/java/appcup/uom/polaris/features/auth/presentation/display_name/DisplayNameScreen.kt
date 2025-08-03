@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -18,8 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,6 +39,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,10 +56,11 @@ fun DisplayNameScreen(
 
     LaunchedEffect(Unit) {
         viewModel.event.collectLatest {
-            when(it) {
+            when (it) {
                 DisplayNameEvent.DisplayNameSuccessfullyChanged -> {
                     snackbarHostState.showSnackbar("Display Name Changed")
                 }
+
                 is DisplayNameEvent.Error -> {
                     snackbarHostState.showSnackbar(it.message)
                 }
@@ -69,8 +72,13 @@ fun DisplayNameScreen(
         state = state.value,
         onAction = { action ->
             when (action) {
-                DisplayNameAction.OnBackClicked -> { onBack() }
-                else -> { viewModel.onAction(action) }
+                DisplayNameAction.OnBackClicked -> {
+                    onBack()
+                }
+
+                else -> {
+                    viewModel.onAction(action)
+                }
             }
         }
     )
@@ -92,12 +100,20 @@ fun DisplayNameScreenImpl(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text(text = "Change Display Name") },
+            PolarisLargeTopAppBar(
+                title = "Change Display Name",
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
-                    IconButton(onClick = { onAction(DisplayNameAction.OnBackClicked) }) {
-                        Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+                    PolarisIconButton(
+                        icon = {
+                            Icon(
+                                tint = MaterialTheme.colorScheme.primary,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null
+                            )
+                        }
+                    ) {
+                        onAction(DisplayNameAction.OnBackClicked)
                     }
                 }
             )
@@ -161,6 +177,9 @@ fun DisplayNameScreenImpl(
                 }, modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 0.dp, 16.dp, 48.dp)
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 if (state.isLoading) {
                     Text(text = "Saving...")
