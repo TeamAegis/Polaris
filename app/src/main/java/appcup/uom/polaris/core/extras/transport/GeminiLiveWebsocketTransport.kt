@@ -73,7 +73,7 @@ class GeminiLiveWebsocketTransport(
             initialUserMessage: String? = null,
             generationConfig: Value.Object = Value.Object(),
             systemInstruction: Value? = null,
-            tools: Value.Array = Value.Array()
+            tools: Value.Array = Value.Array(),
         ): List<ServiceConfig> = listOf(
             ServiceConfig(
                 SERVICE_LLM, listOf(
@@ -86,7 +86,10 @@ class GeminiLiveWebsocketTransport(
                             "model" to Value.Str(model),
                             "generation_config" to generationConfig,
                             "system_instruction" to (systemInstruction ?: Value.Null),
-                            "tools" to tools
+                            "tools" to tools,
+                            "proactivity" to Value.Object(
+                                "proactiveAudio" to Value.Bool(true)
+                            )
                         )
                     )
                 )
