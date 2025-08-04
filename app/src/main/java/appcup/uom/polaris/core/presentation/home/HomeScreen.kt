@@ -18,7 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.presentation.components.Chatbar
+import appcup.uom.polaris.core.presentation.components.ChatBar
 import appcup.uom.polaris.core.presentation.components.searchBar
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,7 +60,7 @@ fun HomeScreenImpl(
                     },
                     placeHolder = "Search..."
                 )
-                Chatbar(
+                ChatBar(
                     query = query,
                     onQueryChange = {
                             newQuery -> query = newQuery

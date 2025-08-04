@@ -8,10 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.core.extras.theme.map_style
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
@@ -49,18 +52,23 @@ fun MapScreenImpl(
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(singapore, 10f)
         }
+
         GoogleMap(
             contentPadding = contentPadding,
             modifier = Modifier.Companion
                 .fillMaxSize(),
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(mapStyleOptions = MapStyleOptions(map_style))
         ) {
             Marker(
                 state = singaporeMarkerState,
                 title = "Singapore",
                 snippet = "Marker in Singapore"
             )
+
         }
+
+
     }
 
     LoadingOverlay(isLoading = state.isLoading)

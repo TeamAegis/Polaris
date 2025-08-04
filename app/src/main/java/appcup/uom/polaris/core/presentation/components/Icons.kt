@@ -1,6 +1,7 @@
 package appcup.uom.polaris.core.presentation.components
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
@@ -284,29 +285,17 @@ private var _Photo_prints: ImageVector? = null
 val AudioWaves: ImageVector
     get(){
         if (_audio_waves != null) return _audio_waves!!
+
         _audio_waves = ImageVector.Builder(
-            name = "audio_waves",
+            name = "Robot",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
-            viewportWidth = 960f,
-            viewportHeight = 960f
-        ).apply{
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
             path(
-                fill = SolidColor(Color(0xFF000000))
-            ) {
-                moveTo(12f, 0f)
-                horizontalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 24f, 12f)
-                verticalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 12f, 24f)
-                horizontalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 0f, 12f)
-                verticalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 12f, 0f)
-                close()
-            }
-            path(
-                fill = SolidColor(Color(0xFFFFFFFF))
+                fill = SolidColor(Color(0xFF000000)),
+                pathFillType = PathFillType.NonZero
             ) {
                 moveTo(8.80195f, 18.1f)
                 verticalLineTo(4.89998f)

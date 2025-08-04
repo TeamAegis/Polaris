@@ -40,7 +40,7 @@ fun searchBar(
                 )
             )
     ) {
-        CustomChatbar(
+        CustomSearchBar(
             query = query,
             onQueryChange = onQueryChange,
             placeHolder = placeHolder,
