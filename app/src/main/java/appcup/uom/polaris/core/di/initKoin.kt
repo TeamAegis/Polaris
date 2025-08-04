@@ -1,6 +1,7 @@
 package appcup.uom.polaris.core.di
 
 import appcup.uom.polaris.features.auth.di.AuthModule
+import appcup.uom.polaris.features.chat.di.ChatModule
 import appcup.uom.polaris.features.conversational_ai.di.ConversationalAIModule
 import appcup.uom.polaris.features.polaris.di.PolarisModule
 import org.koin.core.context.startKoin
@@ -14,7 +15,8 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             AppModule().module,
             AuthModule().module,
             ConversationalAIModule().module,
-            PolarisModule().module
+            PolarisModule().module,
+            ChatModule().module,
         )
     }
 }

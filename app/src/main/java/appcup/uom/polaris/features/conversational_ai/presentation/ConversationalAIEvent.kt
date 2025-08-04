@@ -4,4 +4,5 @@ sealed class ConversationalAIEvent {
     data class Error(val message: String) : ConversationalAIEvent()
     object RecordAudioPermissionDenied : ConversationalAIEvent()
     object RecordAudioPermissionDeniedPermanently : ConversationalAIEvent()
+    object OnStopRecording : ConversationalAIEvent()
 }

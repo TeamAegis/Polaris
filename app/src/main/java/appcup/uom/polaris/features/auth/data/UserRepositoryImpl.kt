@@ -12,6 +12,8 @@ import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class UserRepositoryImpl(
     private val supabaseClient: SupabaseClient
@@ -161,11 +163,12 @@ class UserRepositoryImpl(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun logout(): Result<Unit, DataError.Local> {
         try {
             supabaseClient.auth.signOut()
             StaticData.user = User(
-                id = "",
+                id = Uuid.NIL,
                 name = "",
                 email = ""
             )
@@ -175,19 +178,21 @@ class UserRepositoryImpl(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun getUser(): Result<User, DataError.Local> {
         val user = supabaseClient.auth.currentUserOrNull()
         return if (user == null) {
             Result.Error(DataError.Local.UNKNOWN)
         } else {
             Result.Success(User(
-                id = user.id,
+                id = Uuid.parse(user.id),
                 name = user.userMetadata!!.getOrElse("name", {""}).toString().removeSurrounding("\""),
                 email = user.email!!
             ))
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun updateDisplayName(name: String): Result<Unit, DataError.Local> {
         if (name.isBlank()) {
             return Result.Error(DataError.Local.EMPTY_FIELD)

@@ -53,6 +53,7 @@ fun ConversationalAI(
                 ConversationalAIEvent.RecordAudioPermissionDeniedPermanently -> {
                     snackbarHostState.showSnackbar("Record audio permission denied. Please enable it from settings.")
                 }
+                else -> {}
             }
         }
     }

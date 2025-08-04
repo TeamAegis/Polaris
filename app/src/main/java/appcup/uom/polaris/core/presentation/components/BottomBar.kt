@@ -21,11 +21,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavBackStack
@@ -41,14 +38,7 @@ fun BottomBar(
     Box(
         modifier = Modifier
             .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
-            .dropShadow(
-                shape = RoundedCornerShape(16.dp),
-                shadow = Shadow(
-                    radius = 10.dp,
-                    alpha = 0.25f,
-                    offset = DpOffset(0.dp, 0.dp)
-                )
-            )
+            .polarisDropShadow()
     ) {
         CustomBottomNavigation(navBackStack = navBackStack)
     }

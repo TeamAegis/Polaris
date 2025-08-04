@@ -51,6 +51,8 @@ secretsGradle = "2.0.1"
 firebaseBom = "34.0.0"
 # camera
 camerax = "1.5.0-beta02"
+# google-services
+googleServices = "4.4.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -139,6 +141,8 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 # secrets.properties-gradle-plugin
 secrets-gradle = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradle" }
+# google-services
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 
 [bundles]
 ktor = [
