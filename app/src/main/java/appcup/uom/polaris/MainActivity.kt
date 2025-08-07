@@ -129,6 +129,50 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
         }
     }
 
+    private var locationPermissionResultCallback: PermissionResultCallback? = null
+
+    private val requestLocationPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+            val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+            if (fineGranted || coarseGranted) {
+                locationPermissionResultCallback?.onPermissionGranted()
+            } else {
+                val finePermanentlyDenied =
+                    !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+                val coarsePermanentlyDenied =
+                    !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+                val permanentlyDenied = finePermanentlyDenied && coarsePermanentlyDenied
+
+                locationPermissionResultCallback?.onPermissionDenied(permanentlyDenied)
+            }
+        }
+
+    override fun requestLocationPermission(callback: PermissionResultCallback) {
+        val fine = Manifest.permission.ACCESS_FINE_LOCATION
+        val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
+
+        val fineGranted = ContextCompat.checkSelfPermission(this, fine) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(this, coarse) == PackageManager.PERMISSION_GRANTED
+
+        if (fineGranted || coarseGranted) {
+            callback.onPermissionGranted()
+            return
+        }
+
+        locationPermissionResultCallback = callback
+
+        requestLocationPermissionsLauncher.launch(arrayOf(fine, coarse))
+    }
+
+    override fun isLocationPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+
+
     private var recordAudioPermissionResultCallback: PermissionResultCallback? = null
     private val requestRecordAudioPermissionLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->

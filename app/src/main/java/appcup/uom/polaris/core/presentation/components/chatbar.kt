@@ -39,7 +39,7 @@ fun ChatBar(
 ) {
     Box(
         modifier = modifier
-            .padding(top= 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
             .dropShadow(
                 shape = RoundedCornerShape(roundness),
                 shadow = Shadow(
@@ -72,7 +72,7 @@ fun CustomChatBar(
         placeholder = { Text(placeHolder, color = Color.Gray) },
 
         trailingIcon = {
-            Row (
+            Row(
                 modifier = Modifier
                     .padding(end = 5.dp)
             ) {

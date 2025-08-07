@@ -33,10 +33,16 @@ android {
             path = "local.properties",
             propertyName = "GEMINI_LIVE_API_KEY"
         )
+        val mapsAppApiKey = project.loadLocalProperty(
+            path = "local.properties",
+            propertyName = "MAPS_API_KEY"
+        )
+
 
         buildConfigField("String", "SUPABASE_API_KEY", supabaseApiKey)
         buildConfigField("String", "SUPABASE_URL", supabaseUrl)
         buildConfigField("String", "GEMINI_LIVE_API_KEY", geminiLiveApiKey)
+        buildConfigField("String", "MAPS_APP_API_KEY", mapsAppApiKey)
 
         applicationId = "appcup.uom.polaris"
         minSdk = 31
@@ -147,6 +153,7 @@ dependencies {
 //    maps
     implementation(libs.maps.compose)
     implementation(libs.places)
+    implementation(libs.places.compose)
     implementation(libs.play.services.maps)
 
 //    firebase ai

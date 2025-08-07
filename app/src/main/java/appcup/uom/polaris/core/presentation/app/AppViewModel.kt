@@ -33,7 +33,8 @@ class AppViewModel(
     init {
         _state.update {
             it.copy(
-                hasCameraPermission = permissionBridge.isCameraPermissionGranted()
+                hasCameraPermission = permissionBridge.isCameraPermissionGranted(),
+                hasLocationPermission = permissionBridge.isFineLocationPermissionGranted()
             )
         }
 
@@ -102,6 +103,36 @@ class AppViewModel(
                         _state.update {
                             it.copy(
                                 hasCameraPermission = false
+                            )
+                        }
+                    }
+                })
+            }
+
+            AppAction.RequestLocationPermission -> {
+                permissionBridge.requestFineLocationPermission(object : PermissionResultCallback {
+                    override fun onPermissionGranted() {
+                        viewModelScope.launch {
+                            _event.emit(AppEvent.LocationPermissionGranted)
+                        }
+                        _state.update {
+                            it.copy(hasLocationPermission = true)
+                        }
+                    }
+
+                    override fun onPermissionDenied(isPermanentDenied: Boolean) {
+                        if (isPermanentDenied) {
+                            viewModelScope.launch {
+                                _event.emit(AppEvent.LocationPermissionDeniedPermanent)
+                            }
+                        } else {
+                            viewModelScope.launch {
+                                _event.emit(AppEvent.LocationPermissionDenied)
+                            }
+                        }
+                        _state.update {
+                            it.copy(
+                                hasLocationPermission = false
                             )
                         }
                     }

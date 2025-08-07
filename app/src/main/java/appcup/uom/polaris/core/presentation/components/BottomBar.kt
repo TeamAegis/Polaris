@@ -28,10 +28,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavBackStack
 import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.extras.navigation.rebaseTo
+import appcup.uom.polaris.core.presentation.app.AppState
 
 @Composable
 fun BottomBar(
-    navBackStack: NavBackStack
+    navBackStack: NavBackStack,
+    state: AppState,
+    onLocationPermissionRequest: () -> Unit
 ) {
 
 
@@ -40,7 +43,7 @@ fun BottomBar(
             .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
             .polarisDropShadow()
     ) {
-        CustomBottomNavigation(navBackStack = navBackStack)
+        CustomBottomNavigation(navBackStack = navBackStack, state = state, onLocationPermissionRequest = onLocationPermissionRequest)
     }
 }
 
@@ -72,6 +75,8 @@ fun NavBackStack.BottomBarVisibility(visible: MutableState<Boolean>) {
 @Composable
 fun CustomBottomNavigation(
     navBackStack: NavBackStack,
+    state: AppState,
+    onLocationPermissionRequest: () -> Unit,
 ) {
     val currentDestination = navBackStack.last()
 
@@ -93,6 +98,11 @@ fun CustomBottomNavigation(
                     if (selected) {
                         navBackStack.removeLastOrNull()
                         navBackStack.add(barItem.screen)
+                        return@CustomBottomNavigationItem
+                    }
+
+                    if (barItem == BottomBarItem.Map && !state.hasLocationPermission) {
+                        onLocationPermissionRequest()
                         return@CustomBottomNavigationItem
                     }
 

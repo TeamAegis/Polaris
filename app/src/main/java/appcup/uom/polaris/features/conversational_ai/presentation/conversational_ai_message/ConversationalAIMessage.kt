@@ -61,6 +61,7 @@ fun ConversationalAIMessage(
                 ConversationalAIEvent.RecordAudioPermissionDeniedPermanently -> {
                     snackbarHostState.showSnackbar("Record audio permission denied. Please enable it from settings.")
                 }
+
                 else -> {}
             }
         }
@@ -114,6 +115,9 @@ fun ConversationalAIMessageImpl(
                     .clip(RoundedCornerShape(16.dp)),
                 label = {
                     Text("Message")
+                },
+                placeholder = {
+                    Text("Type a message...")
                 },
                 shape = RoundedCornerShape(16.dp),
                 minLines = 3,

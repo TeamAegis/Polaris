@@ -138,7 +138,20 @@ fun App(
                 }
 
                 AppEvent.CameraPermissionGranted -> {
-                    backStack.add(Screen.LiveTranslate)
+
+                }
+                AppEvent.LocationPermissionDenied -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Location permission denied")
+                    }
+                }
+                AppEvent.LocationPermissionDeniedPermanent -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Location permission denied. Please enable it from settings.")
+                    }
+                }
+                AppEvent.LocationPermissionGranted -> {
+
                 }
             }
         }
@@ -173,7 +186,11 @@ fun App(
                     enter = slideInVertically(initialOffsetY = { it }),
                     exit = slideOutVertically(targetOffsetY = { it })
                 ) {
-                    BottomBar(navBackStack = backStack)
+                    BottomBar(navBackStack = backStack, state = state.value, onLocationPermissionRequest = {
+                        if(!state.value.hasLocationPermission) {
+                            viewModel.onAction(AppAction.RequestLocationPermission)
+                        }
+                    })
                 }
             }
         },
@@ -251,7 +268,11 @@ fun App(
                                     viewModel.onAction(AppAction.OnFabMenuExpanded(false))
                                     when (item) {
                                         FabMenuItem.LiveTranslate -> {
-                                            viewModel.onAction(AppAction.RequestCameraPermission)
+                                            if (!state.value.hasCameraPermission) {
+                                                viewModel.onAction(AppAction.RequestCameraPermission)
+                                            } else {
+                                                backStack.add(Screen.LiveTranslate)
+                                            }
                                         }
 
                                         FabMenuItem.VoiceAssistant -> {
@@ -259,7 +280,11 @@ fun App(
                                         }
 
                                         FabMenuItem.CreateJourney -> {
-                                            backStack.add(Screen.CreateJourney)
+                                            if(!state.value.hasLocationPermission) {
+                                                viewModel.onAction(AppAction.RequestLocationPermission)
+                                            } else {
+                                                backStack.add(Screen.CreateJourney)
+                                            }
                                         }
                                     }
                                 },

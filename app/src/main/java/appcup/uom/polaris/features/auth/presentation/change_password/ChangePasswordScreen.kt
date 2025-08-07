@@ -23,7 +23,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import org.koin.compose.viewmodel.koinViewModel
@@ -136,7 +136,7 @@ fun ChangePasswordScreenImpl(
                 .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.password,
                 onValueChange = {
                     onAction(ChangePasswordAction.OnPasswordChanged(it))
@@ -153,9 +153,7 @@ fun ChangePasswordScreenImpl(
                     Icon(imageVector = Icons.Default.Password, contentDescription = null)
                 },
                 singleLine = true,
-                label = {
-                    Text(text = "Password")
-                },
+                label = "Password",
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (state.isPasswordVisible)
@@ -171,7 +169,7 @@ fun ChangePasswordScreenImpl(
                 }
             )
 
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.confirmPassword,
                 onValueChange = {
                     onAction(ChangePasswordAction.OnConfirmPasswordChanged(it))
@@ -188,9 +186,7 @@ fun ChangePasswordScreenImpl(
                     Icon(imageVector = Icons.Default.Password, contentDescription = null)
                 },
                 singleLine = true,
-                label = {
-                    Text(text = "Confirm Password")
-                },
+                label = "Confirm Password",
                 visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (state.isConfirmPasswordVisible)

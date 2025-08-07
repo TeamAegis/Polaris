@@ -1,6 +1,9 @@
 package appcup.uom.polaris.features.conversational_ai.utils
 
 interface PermissionsBridgeListener {
+    fun requestLocationPermission(callback: PermissionResultCallback)
+    fun isLocationPermissionGranted(): Boolean
+
     fun requestRecordAudioPermission(callback: PermissionResultCallback)
     fun isRecordAudioPermissionGranted(): Boolean
 
@@ -14,6 +17,14 @@ class PermissionBridge {
 
     fun setListener(listener: PermissionsBridgeListener) {
         this.listener = listener
+    }
+
+    fun requestFineLocationPermission(callback: PermissionResultCallback) {
+        listener?.requestLocationPermission(callback) ?: error("Callback handler not set")
+    }
+
+    fun isFineLocationPermissionGranted(): Boolean {
+        return listener?.isLocationPermissionGranted() ?: false
     }
 
     fun requestRecordAudioPermission(callback: PermissionResultCallback) {

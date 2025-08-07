@@ -13,6 +13,8 @@ import appcup.uom.polaris.core.presentation.more.MoreViewModel
 import appcup.uom.polaris.core.presentation.settings.SettingsViewModel
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
+import appcup.uom.polaris.features.polaris.data.LocationManager
+import com.google.android.libraries.places.api.net.PlacesClient
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -60,8 +62,8 @@ class AppModule {
         HomeViewModel(userRepository = userRepository)
 
     @KoinViewModel
-    fun mapViewModel(userRepository: UserRepository) =
-        MapViewModel(userRepository = userRepository)
+    fun mapViewModel(locationManager: LocationManager, placesClient: PlacesClient) =
+        MapViewModel(locationManager = locationManager, placesClient = placesClient)
 
     @KoinViewModel
     fun memoriesViewModel(userRepository: UserRepository) =

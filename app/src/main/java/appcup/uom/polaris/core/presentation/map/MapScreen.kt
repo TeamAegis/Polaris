@@ -1,6 +1,7 @@
 package appcup.uom.polaris.core.presentation.map
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -10,14 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.extras.theme.map_style
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorAction
+import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.MapSearchBar
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace
+import com.google.android.libraries.places.compose.autocomplete.models.toPlaceDetails
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberUpdatedMarkerState
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -26,11 +28,13 @@ fun MapScreen(
     snackbarHostState: SnackbarHostState
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val searchState by viewModel.searchState.collectAsStateWithLifecycle()
 
     MapScreenImpl(
         state = state,
+        searchState = searchState,
         onAction = { action ->
-
+            viewModel.onAction(action)
         }
     )
 }
@@ -40,35 +44,54 @@ fun MapScreen(
 @Composable
 fun MapScreenImpl(
     state: MapState,
+    searchState: TextFieldState,
     onAction: (MapActions) -> Unit
 ) {
     Scaffold(
-        topBar = {},
-        modifier = Modifier.Companion
+        topBar = {
+            MapSearchBar(
+                textFieldState = searchState,
+                onQueryChange = {
+                    onAction(MapActions.OnSearchQueryChanged(it))
+                },
+                onSearch = { autocompletePlace: AutocompletePlace? ->
+
+                },
+                predictions = state.predictions.map { it.toPlaceDetails() },
+                selectedPlace = state.selectedPlace,
+                modifier = Modifier
+                    .fillMaxSize(),
+                onSelected = { autocompletePlace: AutocompletePlace ->
+                    onAction(MapActions.OnSelectedPlaceChanged(autocompletePlace))
+                },
+            )
+        },
+        modifier = Modifier
             .fillMaxSize()
     ) { contentPadding ->
-        val singapore = LatLng(1.35, 103.87)
-        val singaporeMarkerState = rememberUpdatedMarkerState(position = singapore)
-        val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(singapore, 10f)
-        }
-
         GoogleMap(
             contentPadding = contentPadding,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxSize(),
-            cameraPositionState = cameraPositionState,
+            cameraPositionState = state.currentCameraPositionState,
+            uiSettings = MapUiSettings(
+//                compassEnabled = false,
+                indoorLevelPickerEnabled = false,
+                mapToolbarEnabled = false,
+//                myLocationButtonEnabled = false,
+                rotationGesturesEnabled = false,
+                scrollGesturesEnabled = false,
+                scrollGesturesEnabledDuringRotateOrZoom = false,
+                tiltGesturesEnabled = false,
+//                zoomControlsEnabled = false,
+                zoomGesturesEnabled = false,
+            ),
             properties = MapProperties(mapStyleOptions = MapStyleOptions(map_style))
         ) {
             Marker(
-                state = singaporeMarkerState,
-                title = "Singapore",
-                snippet = "Marker in Singapore"
+                state = state.currentMarkerState
             )
-
         }
-
-
     }
 
     LoadingOverlay(isLoading = state.isLoading)

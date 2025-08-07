@@ -9,7 +9,8 @@ import appcup.uom.polaris.core.presentation.components.Robot
 data class AppState(
     val isAuthenticated: Boolean = false,
     val isFabMenuExpanded: Boolean = false,
-    val hasCameraPermission: Boolean = false
+    val hasCameraPermission: Boolean = false,
+    val hasLocationPermission: Boolean = false
 )
 
 enum class FabMenuItem(val imageVector: ImageVector, val label: String) {
