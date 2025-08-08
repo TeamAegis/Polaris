@@ -1,6 +1,7 @@
 package appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components
 
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import appcup.uom.polaris.features.polaris.domain.Waypoint
+import androidx.core.net.toUri
 
 @Composable
 fun WaypointCard(
@@ -101,17 +103,25 @@ fun WaypointCard(
 
             // Phone number
             waypoint.phoneNumber?.let {
+                val phoneNumber = it
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Phone,
                         contentDescription = "Phone",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall
+                        text = phoneNumber,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_DIAL, "tel:$phoneNumber".toUri())
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+                        }
                     )
                 }
             }

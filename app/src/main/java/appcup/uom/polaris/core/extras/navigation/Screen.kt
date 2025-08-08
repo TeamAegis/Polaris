@@ -123,19 +123,6 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
     }
 
     @Serializable
-    object Home : Screen() {
-        override fun getScreenDetails(): Value {
-            return Value.Object(
-                values = arrayOf(
-                    "name" to Value.Str("Home"),
-                    "description" to Value.Str("This is the home screen of the app."),
-                    "navigation_arguments" to Value.Null
-                )
-            )
-        }
-    }
-
-    @Serializable
     object Map : Screen() {
         override fun getScreenDetails(): Value {
             return Value.Object(

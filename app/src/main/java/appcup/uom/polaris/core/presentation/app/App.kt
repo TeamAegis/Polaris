@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -69,7 +68,6 @@ import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.extras.navigation.rebaseTo
 import appcup.uom.polaris.core.presentation.components.BottomBar
 import appcup.uom.polaris.core.presentation.components.BottomBarVisibility
-import appcup.uom.polaris.core.presentation.home.HomeScreen
 import appcup.uom.polaris.core.presentation.map.MapScreen
 import appcup.uom.polaris.core.presentation.memories.MemoriesScreen
 import appcup.uom.polaris.core.presentation.more.MoreScreen
@@ -106,7 +104,7 @@ fun App(
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
     val backStack =
-        rememberNavBackStack(if (state.value.isAuthenticated) Screen.Home else Screen.Start)
+        rememberNavBackStack(if (state.value.isAuthenticated) Screen.Map else Screen.Start)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -120,7 +118,7 @@ fun App(
         viewModel.event.collect { event ->
             when (event) {
                 AppEvent.Authenticated -> {
-                    backStack.rebaseTo(listOf(Screen.Home))
+                    backStack.rebaseTo(listOf(Screen.Map))
                 }
 
                 AppEvent.Unauthenticated -> {
@@ -142,16 +140,19 @@ fun App(
                 AppEvent.CameraPermissionGranted -> {
 
                 }
+
                 AppEvent.LocationPermissionDenied -> {
                     scope.launch {
                         snackbarHostState.showSnackbar("Location permission denied")
                     }
                 }
+
                 AppEvent.LocationPermissionDeniedPermanent -> {
                     scope.launch {
                         snackbarHostState.showSnackbar("Location permission denied. Please enable it from settings.")
                     }
                 }
+
                 AppEvent.LocationPermissionGranted -> {
 
                 }
@@ -180,7 +181,9 @@ fun App(
 
 
     Scaffold(
-        modifier = Modifier.imePadding().navigationBarsPadding(),
+        modifier = Modifier
+            .imePadding()
+            .navigationBarsPadding(),
         bottomBar = {
             Column {
                 AnimatedVisibility(
@@ -188,11 +191,14 @@ fun App(
                     enter = slideInVertically(initialOffsetY = { it }),
                     exit = slideOutVertically(targetOffsetY = { it })
                 ) {
-                    BottomBar(navBackStack = backStack, state = state.value, onLocationPermissionRequest = {
-                        if(!state.value.hasLocationPermission) {
-                            viewModel.onAction(AppAction.RequestLocationPermission)
-                        }
-                    })
+                    BottomBar(
+                        navBackStack = backStack,
+                        state = state.value,
+                        onLocationPermissionRequest = {
+                            if (!state.value.hasLocationPermission) {
+                                viewModel.onAction(AppAction.RequestLocationPermission)
+                            }
+                        })
                 }
             }
         },
@@ -282,11 +288,15 @@ fun App(
                                         }
 
                                         FabMenuItem.CreateJourney -> {
-                                            if(!state.value.hasLocationPermission) {
+                                            if (!state.value.hasLocationPermission) {
                                                 viewModel.onAction(AppAction.RequestLocationPermission)
                                             } else {
                                                 scope.launch {
-                                                    EventBus.emit(Event.OnCreateJourneyBottomSheetVisibilityChanged(true))
+                                                    EventBus.emit(
+                                                        Event.OnCreateJourneyBottomSheetVisibilityChanged(
+                                                            true
+                                                        )
+                                                    )
                                                 }
                                                 backStack.add(Screen.CreateJourney)
                                             }
@@ -391,10 +401,6 @@ fun App(
                     )
                 }
 
-                entry<Screen.Home> {
-                    HomeScreen(snackbarHostState = snackbarHostState)
-                }
-
                 entry<Screen.CreateJourney> {
                     CreateJourneyScreen(
                         conversationAIViewModel = conversationAIViewModel,
@@ -430,7 +436,9 @@ fun App(
                 }
 
                 entry<Screen.LiveTranslate> {
-                    LiveTranslateScreen(viewModel = conversationAIViewModel, onBack = { backStack.removeLastOrNull() })
+                    LiveTranslateScreen(
+                        viewModel = conversationAIViewModel,
+                        onBack = { backStack.removeLastOrNull() })
                 }
 
                 entry<Screen.OtpConfirmRegistration> { screen ->

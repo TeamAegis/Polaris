@@ -6,7 +6,6 @@ import appcup.uom.polaris.core.data.AppSecrets
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.createPreferencesDataStore
 import appcup.uom.polaris.core.presentation.app.AppViewModel
-import appcup.uom.polaris.core.presentation.home.HomeViewModel
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesViewModel
 import appcup.uom.polaris.core.presentation.more.MoreViewModel
@@ -56,10 +55,6 @@ class AppModule {
     @KoinViewModel
     fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>) =
         SettingsViewModel(userRepository = userRepository, prefs = prefs)
-
-    @KoinViewModel
-    fun homeViewModel(userRepository: UserRepository) =
-        HomeViewModel(userRepository = userRepository)
 
     @KoinViewModel
     fun mapViewModel(locationManager: LocationManager, placesClient: PlacesClient) =

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
@@ -52,7 +51,6 @@ enum class BottomBarItem(
     val icon: ImageVector,
     val label: String
 ) {
-    Home(Screen.Home, Icons.Default.Home, "Home"),
     Map(Screen.Map, Icons.Default.Map, "Map"),
     Memories(Screen.Memories, PhotoPrints, "Memories"),
     Search(Screen.More, Icons.Default.MoreHoriz, "More"),
@@ -63,7 +61,6 @@ fun NavBackStack.BottomBarVisibility(visible: MutableState<Boolean>) {
     val currentDestination = this.lastOrNull()
 
     when (currentDestination) {
-        Screen.Home -> visible.value = true
         Screen.Map -> visible.value = true
         Screen.Memories -> visible.value = true
         Screen.More -> visible.value = true
@@ -106,7 +103,7 @@ fun CustomBottomNavigation(
                         return@CustomBottomNavigationItem
                     }
 
-                    navBackStack.rebaseTo(listOf(Screen.Home, barItem.screen))
+                    navBackStack.rebaseTo(listOf(Screen.Map, barItem.screen))
                 }
             )
         }

@@ -163,13 +163,15 @@ fun WaypointSelectorBottomSheetImpl(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        onAction(WaypointSelectorAction.SetToCurrentLocation)
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Filled.LocationOn, "Current Location")
+                if (!state.expanded) {
+                    FloatingActionButton(
+                        onClick = {
+                            onAction(WaypointSelectorAction.SetToCurrentLocation)
+                        },
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Filled.LocationOn, "Current Location")
+                    }
                 }
             },
             bottomBar = {
@@ -191,7 +193,12 @@ fun WaypointSelectorBottomSheetImpl(
                     zoomControlsEnabled = false,
                 ),
                 onMapClick = { location ->
-                    onAction(WaypointSelectorAction.OnMapClick(location.latitude, location.longitude))
+                    onAction(
+                        WaypointSelectorAction.OnMapClick(
+                            location.latitude,
+                            location.longitude
+                        )
+                    )
                 },
                 onPOIClick = { poi ->
                     onAction(WaypointSelectorAction.OnPoiClick(poi.placeId))

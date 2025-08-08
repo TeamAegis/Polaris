@@ -87,7 +87,7 @@ class FunctionCallNavigationHandler(
                             return@forEach
                         }
 
-                        navBackStack.rebaseTo(listOf(Screen.Home, screenInstance))
+                        navBackStack.rebaseTo(listOf(Screen.Map, screenInstance))
 
                         onResult(mapOf("result" to Value.Str("success")))
                     } else if (navBackStack.last() == screenInstance::class) {
