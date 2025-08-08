@@ -98,7 +98,7 @@ koin-annotations = { group = "io.insert-koin", name = "koin-annotations", versio
 koin-ksp-compiler = { group = "io.insert-koin", name = "koin-ksp-compiler", version.ref = "koinAnnotations" }
 # ktor
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
@@ -151,7 +151,7 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 [bundles]
 ktor = [
     "ktor-client-core",
-    "ktor-client-android",
+    "ktor-client-okhttp",
     "ktor-client-content-negotiation",
     "ktor-client-logging",
     "ktor-serialization-kotlinx-json",
