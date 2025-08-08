@@ -11,4 +11,10 @@ sealed class Event {
     data class OnSeedColorChange(val seedColor: SeedColor, val onResult: (Map<String, Value>) -> Unit): Event()
     data class OnAmoledModeChange(val enable: Boolean, val onResult: (Map<String, Value>) -> Unit): Event()
 
+
+
+
+    // create journey events || map screen
+    data class OnCreateJourneyBottomSheetVisibilityChanged(val visible: Boolean) : Event()
+
 }

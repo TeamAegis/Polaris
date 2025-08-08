@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -178,7 +180,7 @@ fun App(
 
 
     Scaffold(
-        modifier = Modifier.imePadding(),
+        modifier = Modifier.imePadding().navigationBarsPadding(),
         bottomBar = {
             Column {
                 AnimatedVisibility(
@@ -283,6 +285,9 @@ fun App(
                                             if(!state.value.hasLocationPermission) {
                                                 viewModel.onAction(AppAction.RequestLocationPermission)
                                             } else {
+                                                scope.launch {
+                                                    EventBus.emit(Event.OnCreateJourneyBottomSheetVisibilityChanged(true))
+                                                }
                                                 backStack.add(Screen.CreateJourney)
                                             }
                                         }
@@ -298,7 +303,7 @@ fun App(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { _ ->
+    ) { innerPadding ->
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },

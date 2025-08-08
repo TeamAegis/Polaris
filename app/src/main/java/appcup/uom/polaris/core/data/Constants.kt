@@ -1,5 +1,10 @@
 package appcup.uom.polaris.core.data
 
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+
 object Constants {
     const val NAME = "Polaris"
     const val PREFERENCES_THEME = "theme"
@@ -15,6 +20,31 @@ object Constants {
 
     const val GEMINI_LIVE_API_MODEL = "gemini-2.5-flash-preview-native-audio-dialog"
     const val GEMINI_API_MODEL = "gemini-2.5-flash"
+
+    // Google Maps Const
+    const val MAP_MAX_ZOOM = 17.5f
+    const val MAP_DEFAULT_ZOOM = 15f
+    val MAP_LAT_LNG_BOUNDS = LatLngBounds(
+        LatLng(-20.5316395374589, 57.29751376965287),
+        LatLng(-19.976374714034975, 57.81666850783445)
+    )
+    const val MAP_COUNTRY_BIAS = "MU"
+    val MAP_DEFAULT_PROPERTIES = MapProperties(
+        latLngBoundsForCameraTarget = MAP_LAT_LNG_BOUNDS,
+        maxZoomPreference = MAP_MAX_ZOOM
+    )
+    val MAP_PREVIEW_UI_SETTINGS = MapUiSettings(
+        compassEnabled = false,
+        indoorLevelPickerEnabled = false,
+        mapToolbarEnabled = false,
+        myLocationButtonEnabled = false,
+        rotationGesturesEnabled = false,
+        scrollGesturesEnabled = false,
+        scrollGesturesEnabledDuringRotateOrZoom = false,
+        tiltGesturesEnabled = false,
+        zoomControlsEnabled = false,
+        zoomGesturesEnabled = false,
+    )
 
     fun getSystemInstructions(): String {
         return "Polaris AI Assistant System Instructions for Android App\n" +
@@ -95,7 +125,7 @@ object Constants {
                 "  └── More Screen (Accessible via More Tab)\n" +
                 "        └── Settings Screen (SettingsScreen)\n" +
                 "              ├── Display Name Screen (DisplayName)\n"
-                "              └── Change Password Screen (ChangePassword)\n + (ChangePassword)\n" +
+        "              └── Change Password Screen (ChangePassword)\n + (ChangePassword)\n" +
                 "\n" +
                 "5. Tool Usage Guidance:\n" +
                 "\n" +
@@ -157,7 +187,6 @@ object Constants {
                 "\n" +
                 "Remember to always operate within the defined scope, prioritizing user safety and the app's security."
     }
-
 
 
 }

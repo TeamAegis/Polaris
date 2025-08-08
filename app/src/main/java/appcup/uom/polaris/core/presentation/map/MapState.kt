@@ -28,4 +28,9 @@ data class MapState(
 
 
     // create journey
+    val isCreateJourneyEnabled: Boolean = true,
+    val isCreateJourneyBottomSheetVisible: Boolean = true,
+    val startingWaypoint: Waypoint = Waypoint(),
+    val intermediateWaypoints: List<Waypoint> = listOf(),
+    val endingWaypoint: Waypoint = Waypoint()
 )

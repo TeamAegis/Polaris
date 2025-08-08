@@ -14,8 +14,9 @@ import org.koin.core.annotation.Single
 class PolarisModule {
     @Single
     fun provideLocationManager(
-        context: Context
-    ): LocationManager = LocationManager(context)
+        context: Context,
+        placesClient: PlacesClient
+    ): LocationManager = LocationManager(context = context, placesClient = placesClient)
 
     @Single
     fun providePlacesClient(context: Context): PlacesClient = Places.createClient(context)
@@ -29,8 +30,9 @@ class PolarisModule {
 
     @KoinViewModel
     fun provideWaypointSelectorViewModel(
+        locationManager: LocationManager,
         placesClient: PlacesClient
-    ): WaypointSelectorViewModel = WaypointSelectorViewModel(placesClient = placesClient)
+    ): WaypointSelectorViewModel = WaypointSelectorViewModel(locationManager = locationManager, placesClient = placesClient)
 
 
 }

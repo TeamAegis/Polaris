@@ -4,8 +4,12 @@ import com.google.android.libraries.places.compose.autocomplete.models.Autocompl
 
 sealed interface WaypointSelectorAction {
     object OnDismiss: WaypointSelectorAction
-    data class OnDismissDialogVisibilityChanged(val isDismissDialogVisible: Boolean): WaypointSelectorAction
+    object OnConfirm: WaypointSelectorAction
     data class OnSearchQueryChanged(val searchQuery: String): WaypointSelectorAction
     data class OnSelectedPlaceChanged(val selectedPlace: AutocompletePlace?): WaypointSelectorAction
+    data class OnSearchExpandedChanged(val expanded: Boolean): WaypointSelectorAction
+    object SetToCurrentLocation: WaypointSelectorAction
+    data class OnMapClick(val latitude: Double, val longitude: Double): WaypointSelectorAction
+    data class OnPoiClick(val placeId: String): WaypointSelectorAction
 
 }

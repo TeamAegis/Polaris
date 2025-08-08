@@ -6,20 +6,23 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.extras.theme.map_style
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
-import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorAction
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.MapSearchBar
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace
 import com.google.android.libraries.places.compose.autocomplete.models.toPlaceDetails
+import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -29,6 +32,16 @@ fun MapScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val searchState by viewModel.searchState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.currentCameraPositionState.isMoving) {
+        when (state.currentCameraPositionState.cameraMoveStartedReason) {
+            CameraMoveStartedReason.GESTURE -> {
+                viewModel.onAction(MapActions.OnTrackingUserChanged(false))
+            }
+
+            else -> {}
+        }
+    }
 
     MapScreenImpl(
         state = state,
@@ -47,6 +60,10 @@ fun MapScreenImpl(
     searchState: TextFieldState,
     onAction: (MapActions) -> Unit
 ) {
+    val context = LocalContext.current
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     Scaffold(
         topBar = {
             MapSearchBar(
@@ -75,22 +92,31 @@ fun MapScreenImpl(
                 .fillMaxSize(),
             cameraPositionState = state.currentCameraPositionState,
             uiSettings = MapUiSettings(
-//                compassEnabled = false,
-                indoorLevelPickerEnabled = false,
-                mapToolbarEnabled = false,
+                compassEnabled = false,
+//                indoorLevelPickerEnabled = false,
+//                mapToolbarEnabled = false,
 //                myLocationButtonEnabled = false,
-                rotationGesturesEnabled = false,
-                scrollGesturesEnabled = false,
-                scrollGesturesEnabledDuringRotateOrZoom = false,
-                tiltGesturesEnabled = false,
-//                zoomControlsEnabled = false,
-                zoomGesturesEnabled = false,
+//                rotationGesturesEnabled = false,
+//                scrollGesturesEnabled = false,
+//                scrollGesturesEnabledDuringRotateOrZoom = false,
+//                tiltGesturesEnabled = false,
+                zoomControlsEnabled = false,
+//                zoomGesturesEnabled = false,
             ),
-            properties = MapProperties(mapStyleOptions = MapStyleOptions(map_style))
-        ) {
-            Marker(
-                state = state.currentMarkerState
+            onMyLocationButtonClick = {
+
+
+                true
+            },
+            properties = MapProperties(
+                isBuildingEnabled = true,
+                isMyLocationEnabled = true,
+                mapStyleOptions = MapStyleOptions(map_style)
             )
+        ) {
+//            Marker(
+//                state = state.currentMarkerState
+//            )
         }
     }
 

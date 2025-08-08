@@ -1,10 +1,13 @@
 package appcup.uom.polaris.core.presentation.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -16,9 +19,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.presentation.components.ChatBar
+import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.searchBar
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import org.koin.compose.viewmodel.koinViewModel
@@ -78,4 +83,41 @@ fun HomeScreenImpl(
     }
 
     LoadingOverlay(isLoading = state.isLoading)
+}
+
+
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Preview
+@Composable
+fun HomePreview() {
+    MaterialTheme {
+        Scaffold { innerPadding ->
+            Column(
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                PolarisInputField(
+                    value = "",
+                    onValueChange = {
+
+                    },
+                    label = "Title"
+                )
+                PolarisInputField(
+                    value = "",
+                    onValueChange = {
+
+                    },
+                    label = "Title"
+                )
+                PolarisInputField(
+                    value = "",
+                    onValueChange = {
+
+                    },
+                    label = "Title"
+                )
+            }
+        }
+    }
 }

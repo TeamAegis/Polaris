@@ -2,7 +2,9 @@ package appcup.uom.polaris.features.polaris.presentation.create_journey
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -22,36 +24,35 @@ class CreateJourneyViewModel(
 
     init {
         viewModelScope.launch {
-            locationManager.getCoordinates { latitude, longitude ->
+            locationManager.getAddressAndCoordinates { address, latitude, longitude ->
                 if (latitude != null && longitude != null) {
-                    if (!_state.value.isStartingLocationCustom) {
-                        _state.update {
-                            it.copy(
-                                startingLocation = _state.value.startingLocation.copy(
-                                    latitude = latitude,
-                                    longitude = longitude
-                                ),
-                                startingMarkerState = MarkerState(
-                                    position = LatLng(
+                    _state.update {
+                        it.copy(
+                            startingWaypoint = _state.value.startingWaypoint.copy(
+                                latitude = latitude,
+                                longitude = longitude,
+                                formattedAddress = address ?: "Unknown address"
+                            ),
+                            startingMarkerState = MarkerState(
+                                position = LatLng(
+                                    latitude,
+                                    longitude
+                                )
+                            ),
+                            cameraPositionState = CameraPositionState(
+                                position = CameraPosition.fromLatLngZoom(
+                                    LatLng(
                                         latitude,
                                         longitude
-                                    )
-                                ),
-                                startingCameraPositionState = CameraPositionState(
-                                    position = CameraPosition.fromLatLngZoom(
-                                        LatLng(
-                                            latitude,
-                                            longitude
-                                        ), 15f
-                                    )
+                                    ), Constants.MAP_DEFAULT_ZOOM
                                 )
                             )
-                        }
+                        )
                     }
+
                 }
             }
         }
-
     }
 
     fun onAction(action: CreateJourneyAction) {
@@ -112,34 +113,70 @@ class CreateJourneyViewModel(
                 }
             }
 
-            is CreateJourneyAction.OnStartingLocationCustomChanged -> {
+            is CreateJourneyAction.OnWaypointSelectorVisibilityChanged -> {
                 _state.update {
                     it.copy(
-                        isStartingLocationCustom = action.isCustom
+                        isWaypointSelectorVisible = action.isVisible,
+                        waypointSelectorType = action.waypointSelectorType
                     )
                 }
             }
 
-            is CreateJourneyAction.OnEndingLocationCustomChanged -> {
-                _state.update {
-                    it.copy(
-                        isEndingLocationCustom = action.isCustom
-                    )
+            is CreateJourneyAction.OnWaypointSelectorResult -> {
+                when (_state.value.waypointSelectorType) {
+                    WaypointSelectorType.STARTING -> {
+                        _state.update {
+                            it.copy(
+                                startingWaypoint = action.waypoint,
+                                startingMarkerState = _state.value.startingMarkerState.apply {
+                                    position =
+                                        LatLng(action.waypoint.latitude, action.waypoint.longitude)
+                                },
+                            )
+                        }
+                    }
+
+                    WaypointSelectorType.INTERMEDIATE -> {
+                        _state.update {
+                            it.copy(
+                                intermediateWaypoints = it.intermediateWaypoints + action.waypoint,
+                                intermediateMarkerStates = it.intermediateMarkerStates + MarkerState(
+                                    position = LatLng(
+                                        action.waypoint.latitude,
+                                        action.waypoint.longitude
+                                    )
+
+                                )
+                            )
+                        }
+                    }
+
+                    WaypointSelectorType.ENDING -> {
+                        _state.update {
+                            it.copy(
+                                endingWaypoint = action.waypoint,
+                                endingMarkerState = MarkerState(
+                                    position = LatLng(
+                                        action.waypoint.latitude,
+                                        action.waypoint.longitude
+                                    )
+                                ),
+                            )
+                        }
+                    }
                 }
+
             }
 
-            is CreateJourneyAction.OnStartingLocationVisibilityChanged -> {
+            is CreateJourneyAction.OnIntermediateWaypointRemoved -> {
                 _state.update {
                     it.copy(
-                        isStartingLocationSelectorVisible = action.isVisible
-                    )
-                }
-            }
-
-            is CreateJourneyAction.OnEndingLocationVisibilityChanged -> {
-                _state.update {
-                    it.copy(
-                        isEndingLocationSelectorVisible = action.isVisible
+                        intermediateWaypoints = it.intermediateWaypoints.filterIndexed { index, _ ->
+                            index != action.index
+                        },
+                        intermediateMarkerStates = it.intermediateMarkerStates.filterIndexed { index, _ ->
+                            index != action.index
+                        }
                     )
                 }
             }

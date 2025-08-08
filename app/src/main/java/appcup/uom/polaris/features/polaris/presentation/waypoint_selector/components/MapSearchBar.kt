@@ -71,9 +71,9 @@ fun MapSearchBar(
     predictions: List<AutocompletePlace>,
     onSelected: (AutocompletePlace) -> Unit = {},
     selectedPlace: AutocompletePlace? = null,
+    expanded: Boolean = false,
+    onExpandedChange: (Boolean) -> Unit = {}
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
     val keyboardController = LocalSoftwareKeyboardController.current
     val scrollState = rememberScrollState()
     var expandedPlaceId by remember(predictions) { mutableStateOf<String?>(null) }
@@ -98,16 +98,20 @@ fun MapSearchBar(
                     onSearch = {
                         onSearch(if (predictions.isEmpty()) null else predictions.first())
                         keyboardController?.hide()
-                        expanded = false
+                        onExpandedChange(false)
                     },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary) },
                     expanded = expanded,
-                    onExpandedChange = { expanded = it },
+                    onExpandedChange = {
+                        onExpandedChange(it)
+                    },
                     placeholder = { Text("Search...") }
                 )
             },
             expanded = expanded,
-            onExpandedChange = { expanded = it },
+            onExpandedChange = {
+                onExpandedChange(it)
+            },
         ) {
             Column(
                 modifier = Modifier

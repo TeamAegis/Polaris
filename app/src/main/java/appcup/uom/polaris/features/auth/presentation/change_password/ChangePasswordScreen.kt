@@ -229,7 +229,6 @@ fun ChangePasswordScreenImpl(
                 } else {
                     Text(text = "Change Password")
                 }
-
             }
 
         }

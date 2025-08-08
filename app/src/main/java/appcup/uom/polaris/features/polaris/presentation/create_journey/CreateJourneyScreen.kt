@@ -1,7 +1,5 @@
 package appcup.uom.polaris.features.polaris.presentation.create_journey
 
-import android.annotation.SuppressLint
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +16,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -27,16 +28,12 @@ import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.LocationSearching
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.outlined.LocationSearching
-import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.ElevatedToggleButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -47,50 +44,45 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxDefaults
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.extras.theme.PolarisDarkColorScheme
-import appcup.uom.polaris.core.extras.theme.PolarisLightColorScheme
-import appcup.uom.polaris.core.extras.theme.PolarisTheme
+import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
 import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.PolarisTopAppBar
-import appcup.uom.polaris.core.presentation.components.Robot
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.chat.presentation.chat.ChatBottomSheet
 import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai_message.ConversationalAIMessage
 import appcup.uom.polaris.features.polaris.domain.Preferences
-import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorAction
-import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorDialog
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
+import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorBottomSheet
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
 import org.koin.androidx.compose.koinViewModel
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun CreateJourneyScreen(
@@ -101,6 +93,29 @@ fun CreateJourneyScreen(
     onBack: () -> Unit,
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(
+        state.value.startingWaypoint,
+        state.value.endingWaypoint,
+        state.value.intermediateWaypoints
+    ) {
+        val boundsBuilder = LatLngBounds.builder()
+        boundsBuilder.include(state.value.startingMarkerState.position)
+        if (state.value.endingMarkerState != null)
+            boundsBuilder.include(state.value.endingMarkerState!!.position)
+        state.value.intermediateMarkerStates.forEach { markerState ->
+            boundsBuilder.include(markerState.position)
+        }
+
+        val bounds = boundsBuilder.build()
+
+        val padding = 100
+
+        state.value.cameraPositionState.animate(
+            update = CameraUpdateFactory.newLatLngBounds(bounds, padding),
+            durationMs = 200
+        )
+    }
 
     CreateJourneyScreenImpl(
         state = state.value,
@@ -120,7 +135,10 @@ fun CreateJourneyScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalUuidApi::class
+)
 @Composable
 fun CreateJourneyScreenImpl(
     state: CreateJourneyState,
@@ -134,9 +152,17 @@ fun CreateJourneyScreenImpl(
     val sendMessageToLiveAgentBottomSheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    if (state.isStartingLocationSelectorVisible) {
-        WaypointSelectorDialog {
-            onAction(CreateJourneyAction.OnStartingLocationVisibilityChanged(false))
+    if (state.isWaypointSelectorVisible) {
+        WaypointSelectorBottomSheet { placeInfo ->
+            if (placeInfo != null) {
+                onAction(CreateJourneyAction.OnWaypointSelectorResult(placeInfo))
+            }
+            onAction(
+                CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
+                    false,
+                    WaypointSelectorType.STARTING
+                )
+            )
         }
     }
 
@@ -151,14 +177,13 @@ fun CreateJourneyScreenImpl(
                 "Create Journey",
                 navigationIcon = {
                     PolarisIconButton(
-                        icon =
-                            {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
+                        icon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
                     ) {
                         onAction(CreateJourneyAction.OnBackClicked)
@@ -177,6 +202,44 @@ fun CreateJourneyScreenImpl(
                     .padding(horizontal = 16.dp)
             ) {
                 item {
+                    Card(
+                        modifier = Modifier
+                            .polarisDropShadow(),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        GoogleMap(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(16 / 9f)
+                                .clip(RoundedCornerShape(16.dp)),
+                            cameraPositionState = state.cameraPositionState,
+                            uiSettings = Constants.MAP_PREVIEW_UI_SETTINGS,
+                            properties = Constants.MAP_DEFAULT_PROPERTIES
+                        ) {
+                            Marker(
+                                state = state.startingMarkerState,
+                            )
+
+                            state.intermediateMarkerStates.forEach { markerState ->
+                                Marker(
+                                    state = markerState
+                                )
+
+                            }
+
+                            if (state.endingMarkerState != null)
+                                Marker(
+                                    state = state.endingMarkerState,
+                                )
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                item {
                     Text(
                         "Journey Details",
                         fontWeight = FontWeight.Bold,
@@ -191,7 +254,11 @@ fun CreateJourneyScreenImpl(
                             value = state.journeyName,
                             onValueChange = {
                                 onAction(CreateJourneyAction.OnJourneyNameChanged(it))
-                            }
+                            },
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                imeAction = ImeAction.Next,
+                                capitalization = KeyboardCapitalization.Words
+                            )
                         )
                         PolarisInputField(
                             label = "Journey Description",
@@ -199,7 +266,13 @@ fun CreateJourneyScreenImpl(
                             onValueChange = {
                                 onAction(CreateJourneyAction.OnJourneyDescriptionChanged(it))
                             },
-                            minLines = 3
+                            minLines = 3,
+                            maxLines = 5,
+                            singleLine = false,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                imeAction = ImeAction.Default,
+                                capitalization = KeyboardCapitalization.Sentences
+                            )
                         )
                     }
                 }
@@ -242,12 +315,14 @@ fun CreateJourneyScreenImpl(
                         }
                     }
                 }
+
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+
                 item {
                     Text(
-                        "Start & End Locations",
+                        "Waypoints",
                         fontWeight = FontWeight.Bold,
                         fontStyle = MaterialTheme.typography.titleLarge.fontStyle
                     )
@@ -256,208 +331,159 @@ fun CreateJourneyScreenImpl(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 item {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "Start",
-                                modifier = Modifier.weight(1f),
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = MaterialTheme.typography.titleMedium.fontStyle
+                    WaypointCard(
+                        title = "Start",
+                        waypoint = state.startingWaypoint,
+                        onClick = {
+                            onAction(
+                                CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
+                                    true,
+                                    WaypointSelectorType.STARTING
+                                )
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                                ElevatedToggleButton(
-                                    checked = !state.isStartingLocationCustom,
-                                    onCheckedChange = {
-                                        onAction(
-                                            CreateJourneyAction.OnStartingLocationCustomChanged(
-                                                false
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        }
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                items(
+                    state.intermediateWaypoints.size,
+                    key = { index -> state.intermediateWaypoints[index].waypointId }) { index ->
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                                ) {
+                    val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
+                        SwipeToDismissBoxValue.Settled,
+                        SwipeToDismissBoxDefaults.positionalThreshold
+                    )
+                    SwipeToDismissBox(
+                        state = swipeToDismissBoxState,
+                        onDismiss = {
+                            if (it == SwipeToDismissBoxValue.StartToEnd || it == SwipeToDismissBoxValue.EndToStart) {
+                                onAction(CreateJourneyAction.OnIntermediateWaypointRemoved(index))
+                            }
+                        },
+                        backgroundContent = {
+                            when (swipeToDismissBoxState.dismissDirection) {
+                                SwipeToDismissBoxValue.StartToEnd -> {
                                     Icon(
-                                        Icons.Default.MyLocation,
-                                        contentDescription = "Localized description",
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove item",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(Color.Red)
+                                            .wrapContentSize(Alignment.CenterStart)
+                                            .padding(12.dp),
+                                        tint = Color.White
                                     )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text("Current")
                                 }
 
-                                ElevatedToggleButton(
-                                    checked = state.isStartingLocationCustom,
-                                    onCheckedChange = {
-                                        onAction(
-                                            CreateJourneyAction.OnStartingLocationCustomChanged(
-                                                true
-                                            )
-                                        )
-                                        onAction(
-                                            CreateJourneyAction.OnStartingLocationVisibilityChanged(
-                                                true
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                                ) {
+                                SwipeToDismissBoxValue.EndToStart -> {
                                     Icon(
-                                        Icons.Default.LocationSearching,
-                                        contentDescription = "Localized description",
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove item",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(Color.Red)
+                                            .wrapContentSize(Alignment.CenterEnd)
+                                            .padding(12.dp),
+                                        tint = Color.White
                                     )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text("Custom")
                                 }
+
+                                SwipeToDismissBoxValue.Settled -> {}
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Card(
-                            modifier = Modifier
-                                .polarisDropShadow(),
-                            shape = RoundedCornerShape(16.dp),
+                    ) {
+                        WaypointCard(
+                            title = "Intermediary",
+                            waypoint = state.intermediateWaypoints[index],
+                            onClick = {}
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
                             onClick = {
                                 onAction(
-                                    CreateJourneyAction.OnStartingLocationVisibilityChanged(
-                                        true
+                                    CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
+                                        true,
+                                        WaypointSelectorType.INTERMEDIATE
                                     )
                                 )
                             }
                         ) {
-                            GoogleMap(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16 / 9f)
-                                    .clip(
-                                        if (state.isStartingLocationCustom)
-                                            RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                                        else
-                                            RoundedCornerShape(16.dp)
-                                    ),
-                                cameraPositionState = state.startingCameraPositionState,
-                                uiSettings = MapUiSettings(
-                                    compassEnabled = false,
-                                    indoorLevelPickerEnabled = false,
-                                    mapToolbarEnabled = false,
-                                    myLocationButtonEnabled = false,
-                                    rotationGesturesEnabled = false,
-                                    scrollGesturesEnabled = false,
-                                    scrollGesturesEnabledDuringRotateOrZoom = false,
-                                    tiltGesturesEnabled = false,
-                                    zoomControlsEnabled = false,
-                                    zoomGesturesEnabled = false,
-                                )
-                            ) {
-                                Marker(
-                                    state = state.startingMarkerState,
-                                )
-                            }
-                            if (state.isStartingLocationCustom) {
-
-                            }
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text("Add Waypoint")
                         }
 
-                    }
-                }
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                item {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "End",
-                                modifier = Modifier.weight(1f),
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = MaterialTheme.typography.titleMedium.fontStyle
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                                ElevatedToggleButton(
-                                    checked = !state.isEndingLocationCustom,
-                                    onCheckedChange = {
+                        OutlinedButton(
+                            onClick = {
 
-                                        onAction(
-                                            CreateJourneyAction.OnEndingLocationCustomChanged(
-                                                false
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        Robot,
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text("AI")
-                                }
-
-                                ElevatedToggleButton(
-                                    checked = state.isEndingLocationCustom,
-                                    onCheckedChange = {
-                                        onAction(
-                                            CreateJourneyAction.OnEndingLocationCustomChanged(
-                                                true
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        Icons.Default.LocationSearching,
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text("Custom")
-                                }
                             }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Card(
-                            modifier = Modifier
-                                .polarisDropShadow(),
-                            shape = RoundedCornerShape(16.dp)
                         ) {
-                            GoogleMap(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16 / 9f)
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                                uiSettings = MapUiSettings(
-                                    compassEnabled = false,
-                                    indoorLevelPickerEnabled = false,
-                                    mapToolbarEnabled = false,
-                                    myLocationButtonEnabled = false,
-                                    rotationGesturesEnabled = false,
-                                    scrollGesturesEnabled = false,
-                                    scrollGesturesEnabledDuringRotateOrZoom = false,
-                                    tiltGesturesEnabled = false,
-                                    zoomControlsEnabled = false,
-                                    zoomGesturesEnabled = false,
-                                )
-                            )
-                            Text("Address")
-                            Text("More Details")
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text("Generate")
                         }
                     }
+                }
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                item {
+                    WaypointCard(
+                        title = "End",
+                        waypoint = state.endingWaypoint,
+                        onClick = {
+                            onAction(
+                                CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
+                                    true,
+                                    WaypointSelectorType.ENDING
+                                )
+                            )
+                        }
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+                item {
+                    Button(
+                        onClick = {
+
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .polarisDropShadow()
+                            .clip(RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        if (state.isLoading) {
+                            Text(text = "Creating...")
+                            Spacer(modifier = Modifier.width(16.dp))
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier
+                                    .height(16.dp)
+                                    .width(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text(text = "Create Journey")
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(128.dp))
                 }
             }
 
@@ -533,318 +559,37 @@ fun CreateJourneyScreenImpl(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview(showBackground = true)
 @Composable
-fun CreateJourneyScreenPreview() {
-    PolarisTheme(
-        darkTheme = false,
-        dynamicColor = false,
-        lightColorScheme = PolarisLightColorScheme,
-        darkColorScheme = PolarisDarkColorScheme
+fun WaypointCard(
+    title: String,
+    waypoint: Waypoint?,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .polarisDropShadow(),
+        shape = RoundedCornerShape(16.dp),
+        onClick = {
+            onClick()
+        }
     ) {
-        Scaffold(
-            topBar = {
-                PolarisTopAppBar(
-                    title = "Create Journey",
-                    navigationIcon = {
-                        PolarisIconButton(
-                            icon = {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                            },
-                            onClick = {}
-                        )
-                    }
-                )
-            },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-
-            LazyColumn(
-                contentPadding = innerPadding,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-            ) {
-                stickyHeader {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(title, fontWeight = FontWeight.Bold)
+                waypoint?.let {
+                    Text(it.placeName, style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "Journey Details",
-                        fontWeight = FontWeight.Bold,
-                        fontStyle = MaterialTheme.typography.titleLarge.fontStyle
+                        it.formattedAddress ?: "Unknown Address",
+                        style = MaterialTheme.typography.bodySmall
                     )
-                }
-                item {
-                    Column {
-                        PolarisInputField(
-                            label = "Journey Name",
-                            value = "",
-                            onValueChange = {}
-                        )
-                        PolarisInputField(
-                            label = "Journey Description",
-                            value = "",
-                            onValueChange = {},
-                            minLines = 3
-                        )
-                    }
-                }
-                stickyHeader {
-                    Text("Preferences")
-                }
-                item {
-                    val preferences = remember {
-                        mutableStateListOf(
-                            "\uD83C\uDF7D\uFE0F Food",
-                            "\uD83C\uDFDB\uFE0F Attractions",
-                            "\uD83C\uDF3F Nature",
-                            "\uD83C\uDFE8 Hotels",
-                            "\uD83D\uDECD\uFE0F Shopping",
-                            "\uD83D\uDEBB Essentials"
-                        )
-                    }
-                    val selectedPreferences = remember { mutableStateListOf<String>() }
-                    FlowRow(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        preferences.forEach { preference ->
-                            val selected = selectedPreferences.contains(preference)
-                            FilterChip(
-                                selected = selected,
-                                onClick = {
-                                    if (selected) {
-                                        selectedPreferences.remove(preference)
-                                    } else {
-                                        selectedPreferences.add(preference)
-                                    }
-                                },
-                                label = { Text(preference) },
-                                leadingIcon = {
-                                    if (selected) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Done,
-                                            contentDescription = "Localized description",
-                                            modifier = Modifier.size(FilterChipDefaults.IconSize),
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-                stickyHeader {
-                    Text("Start & End Locations")
-                }
-                item {
-                    Column {
-                        val options = listOf("Current", "Custom")
-                        val unCheckedIcons =
-                            listOf(Icons.Outlined.MyLocation, Icons.Outlined.LocationSearching)
-                        val checkedIcons =
-                            listOf(Icons.Filled.MyLocation, Icons.Filled.LocationSearching)
-                        var selectedIndex by remember { mutableIntStateOf(0) }
-                        val checked = remember { mutableStateListOf(false, false) }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            Text("Start", modifier = Modifier.weight(1f))
-
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                ToggleButton(
-                                    checked = selectedIndex == 0,
-                                    onCheckedChange = { selectedIndex = 0 },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        if (checked[0]) checkedIcons[0] else unCheckedIcons[0],
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(options[0])
-                                }
-
-                                ToggleButton(
-                                    checked = selectedIndex == 1,
-                                    onCheckedChange = { selectedIndex = 1 },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        if (checked[1]) checkedIcons[1] else unCheckedIcons[1],
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(options[1])
-                                }
-                            }
-
-                        }
-
-
-                        val singapore = LatLng(1.35, 103.87)
-                        val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(singapore, 10f)
-                        }
-                        Card(
-                            modifier = Modifier
-                                .padding(0.dp)
-                                .polarisDropShadow(),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            GoogleMap(
-                                cameraPositionState = cameraPositionState,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16 / 9f)
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                            )
-                            Text("Address")
-                            Text("More Details")
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-                                .polarisDropShadow()
-                                .background(MaterialTheme.colorScheme.surface),
-                        ) {
-
-                        }
-
-                    }
-                }
-
-                item {
-                    Column {
-                        val options = listOf("AI", "Custom")
-                        val unCheckedIcons =
-                            listOf(Robot, Icons.Outlined.LocationSearching)
-                        val checkedIcons =
-                            listOf(Robot, Icons.Filled.LocationSearching)
-                        var selectedIndex by remember { mutableIntStateOf(0) }
-                        val checked = remember { mutableStateListOf(false, false) }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            Text("End", modifier = Modifier.weight(1f))
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                ToggleButton(
-                                    checked = selectedIndex == 0,
-                                    onCheckedChange = { selectedIndex = 0 },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedLeadingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        if (checked[0]) checkedIcons[0] else unCheckedIcons[0],
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(options[0])
-                                }
-
-                                ToggleButton(
-                                    checked = selectedIndex == 1,
-                                    onCheckedChange = { selectedIndex = 1 },
-                                    modifier = Modifier.semantics {
-                                        role = Role.RadioButton
-                                    },
-                                    shapes =
-                                        ButtonGroupDefaults.connectedTrailingButtonShapes()
-
-                                ) {
-                                    Icon(
-                                        if (checked[1]) checkedIcons[1] else unCheckedIcons[1],
-                                        contentDescription = "Localized description",
-                                    )
-                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                    Text(options[1])
-                                }
-                            }
-
-                        }
-
-
-                        val singapore = LatLng(1.35, 103.87)
-                        val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(singapore, 10f)
-                        }
-                        Card(
-                            modifier = Modifier
-                                .padding(0.dp)
-                                .polarisDropShadow(),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            GoogleMap(
-                                cameraPositionState = cameraPositionState,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16 / 9f)
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                            )
-                            Text("Address")
-                            Text("More Details")
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-                                .polarisDropShadow()
-                                .background(MaterialTheme.colorScheme.surface),
-                        ) {
-
-                        }
-
-                    }
-                }
-                stickyHeader {
-                    Text("Waypoint(s)")
-                }
-                item {
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 48.dp)
-                            .polarisDropShadow()
-                            .clip(RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        onClick = {
-
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Localized description"
-                        )
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text("Add a Waypoint")
-                    }
-                }
+                } ?: Text("Tap to select", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

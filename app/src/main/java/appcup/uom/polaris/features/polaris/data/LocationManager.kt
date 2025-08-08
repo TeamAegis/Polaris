@@ -13,6 +13,7 @@ import android.os.Looper
 import appcup.uom.polaris.core.domain.LatLong
 import appcup.uom.polaris.core.domain.Orientation
 import appcup.uom.polaris.core.domain.ResultState
+import appcup.uom.polaris.features.polaris.domain.Waypoint
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationCallback
@@ -20,21 +21,60 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.google.android.libraries.places.api.net.PlacesClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
 import java.util.Locale
+import kotlin.uuid.ExperimentalUuidApi
 
 class LocationManager(
     private val context: Context,
+    private val placesClient: PlacesClient,
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
         context
     )
 ) {
+
+    @OptIn(ExperimentalUuidApi::class)
+    @SuppressLint("NewApi")
+    fun getWaypointByPlaceId(placeId: String, onResult: (waypoint: Waypoint?) -> Unit) {
+        placesClient.fetchPlace(
+            FetchPlaceRequest.builder(
+                placeId, listOf(
+                    Place.Field.NAME,
+                    Place.Field.ADDRESS,
+                    Place.Field.RATING,
+                    Place.Field.USER_RATINGS_TOTAL,
+                    Place.Field.CURRENT_OPENING_HOURS,
+                    Place.Field.PHONE_NUMBER,
+                    Place.Field.WEBSITE_URI,
+                    Place.Field.LAT_LNG
+                )
+            ).build()
+        ).addOnSuccessListener { placeResponse ->
+            val waypoint = Waypoint(
+                placeName = placeResponse.place.displayName ?: "Unknown",
+                formattedAddress = placeResponse.place.formattedAddress,
+                rating = placeResponse.place.rating,
+                userRatingsTotal = placeResponse.place.rating,
+                openNow = isPlaceOpenNow(placeResponse.place.currentOpeningHours),
+                phoneNumber = placeResponse.place.internationalPhoneNumber
+                    ?: placeResponse.place.nationalPhoneNumber,
+                websiteUri = placeResponse.place.websiteUri,
+                latitude = placeResponse.place.location?.latitude ?: 0.0,
+                longitude = placeResponse.place.location?.longitude ?: 0.0
+            )
+            onResult(waypoint)
+        }.addOnFailureListener {
+            onResult(null)
+        }
+    }
 
     @SuppressLint("MissingPermission")
     fun getCoordinates(onResult: (latitude: Double?, longitude: Double?) -> Unit) {
@@ -82,6 +122,24 @@ class LocationManager(
                 onResult("Error fetching location: ${it.message}", null, null)
             }
     }
+
+    @SuppressLint("NewApi")
+    fun getAddressFromLocation(
+        latitude: Double,
+        longitude: Double,
+        onAddressFetched: (String?) -> Unit
+    ) {
+
+        val geocoder = Geocoder(context, Locale.getDefault())
+        geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
+            if (addresses.isNotEmpty()) {
+                onAddressFetched(addresses[0].getAddressLine(0))
+            } else {
+                onAddressFetched("No address found")
+            }
+        }
+    }
+
 
     private fun getAddressFromLocation(
         location: Location,
