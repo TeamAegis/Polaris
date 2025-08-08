@@ -3,24 +3,37 @@ package appcup.uom.polaris.features.polaris.presentation.create_journey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.domain.DataError
+import appcup.uom.polaris.core.domain.Result
+import appcup.uom.polaris.core.domain.RoutesResponse
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.PolarisRepository
 import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MarkerState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class CreateJourneyViewModel(
-    locationManager: LocationManager
+    locationManager: LocationManager,
+    private val polarisRepository: PolarisRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(CreateJourneyState())
     val state = _state.asStateFlow()
+
+    private val _event = MutableSharedFlow<CreateJourneyEvent>()
+    val event = _event.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -31,7 +44,7 @@ class CreateJourneyViewModel(
                             startingWaypoint = _state.value.startingWaypoint.copy(
                                 latitude = latitude,
                                 longitude = longitude,
-                                formattedAddress = address ?: "Unknown address"
+                                address = address ?: "Unknown address"
                             ),
                             startingMarkerState = MarkerState(
                                 position = LatLng(
@@ -165,7 +178,7 @@ class CreateJourneyViewModel(
                         }
                     }
                 }
-
+                getJourneyPolyline()
             }
 
             is CreateJourneyAction.OnIntermediateWaypointRemoved -> {
@@ -179,10 +192,51 @@ class CreateJourneyViewModel(
                         }
                     )
                 }
+                getJourneyPolyline()
             }
 
             else -> {}
         }
     }
 
+    fun getJourneyPolyline() {
+        if (_state.value.endingWaypoint.id == Uuid.NIL) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = polarisRepository.getRoutePolyline(
+                startingWaypoint = _state.value.startingWaypoint,
+                intermediaryWaypoints = _state.value.intermediateWaypoints,
+                destinationWaypoint = _state.value.endingWaypoint
+            )
+            when (response) {
+                is Result.Error<DataError.Remote> -> {
+                    _event.emit(CreateJourneyEvent.OnError(response.error.message))
+                }
+
+                is Result.Success<RoutesResponse> -> {
+                    if (response.data.routes.isEmpty()) return@launch
+                    val optimizedIntermediateWaypointsIndex = response.data.routes.first().optimizedIntermediateWaypointIndex
+
+                    if (optimizedIntermediateWaypointsIndex != null && optimizedIntermediateWaypointsIndex.size > 1) {
+                        _state.update {
+                            it.copy(
+                                polyline = PolyUtil.decode(response.data.routes.first().polyline.encodedPolyline),
+                                intermediateWaypoints = optimizedIntermediateWaypointsIndex.map { index ->
+                                    _state.value.intermediateWaypoints[index]
+                                },
+                                intermediateMarkerStates = optimizedIntermediateWaypointsIndex.map { index -> _state.value.intermediateMarkerStates[index] }
+                            )
+                        }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                polyline = PolyUtil.decode(response.data.routes.first().polyline.encodedPolyline)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+    }
 }

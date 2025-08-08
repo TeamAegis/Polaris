@@ -155,6 +155,7 @@ dependencies {
     implementation(libs.places)
     implementation(libs.places.compose)
     implementation(libs.play.services.maps)
+    implementation(libs.android.maps.utils)
 
 //    firebase ai
     implementation(platform(libs.firebase.bom))

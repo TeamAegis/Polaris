@@ -17,6 +17,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             ConversationalAIModule().module,
             PolarisModule().module,
             ChatModule().module,
+            NetworkModule().module
         )
     }
 }

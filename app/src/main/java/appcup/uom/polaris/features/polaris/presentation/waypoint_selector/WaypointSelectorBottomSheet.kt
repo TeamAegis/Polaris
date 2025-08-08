@@ -62,7 +62,7 @@ fun WaypointSelectorBottomSheet(
         onAction = { action ->
             when (action) {
                 WaypointSelectorAction.OnConfirm -> {
-                    onDismiss(state.value.selectedWaypoint?.copy(waypointId = Uuid.random()))
+                    onDismiss(state.value.selectedWaypoint?.copy(id = Uuid.random()))
                 }
 
                 WaypointSelectorAction.OnDismiss -> {

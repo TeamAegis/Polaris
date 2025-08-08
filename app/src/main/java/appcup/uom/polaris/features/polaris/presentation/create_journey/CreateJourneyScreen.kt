@@ -81,6 +81,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.Polyline
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -97,7 +98,8 @@ fun CreateJourneyScreen(
     LaunchedEffect(
         state.value.startingWaypoint,
         state.value.endingWaypoint,
-        state.value.intermediateWaypoints
+        state.value.intermediateWaypoints,
+        state.value.polyline
     ) {
         val boundsBuilder = LatLngBounds.builder()
         boundsBuilder.include(state.value.startingMarkerState.position)
@@ -105,6 +107,9 @@ fun CreateJourneyScreen(
             boundsBuilder.include(state.value.endingMarkerState!!.position)
         state.value.intermediateMarkerStates.forEach { markerState ->
             boundsBuilder.include(markerState.position)
+        }
+        state.value.polyline.forEach {
+            boundsBuilder.include(it)
         }
 
         val bounds = boundsBuilder.build()
@@ -115,6 +120,16 @@ fun CreateJourneyScreen(
             update = CameraUpdateFactory.newLatLngBounds(bounds, padding),
             durationMs = 200
         )
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.event.collect {
+            when (it) {
+                is CreateJourneyEvent.OnError -> {
+                    snackbarHostState.showSnackbar(it.message)
+                }
+            }
+        }
     }
 
     CreateJourneyScreenImpl(
@@ -231,6 +246,12 @@ fun CreateJourneyScreenImpl(
                                 Marker(
                                     state = state.endingMarkerState,
                                 )
+
+                            if (state.polyline.isNotEmpty() && (state.endingMarkerState != null || state.intermediateWaypoints.isNotEmpty())) {
+                                Polyline(
+                                    state.polyline,
+                                )
+                            }
                         }
                     }
                 }
@@ -349,7 +370,7 @@ fun CreateJourneyScreenImpl(
                 }
                 items(
                     state.intermediateWaypoints.size,
-                    key = { index -> state.intermediateWaypoints[index].waypointId }) { index ->
+                    key = { index -> state.intermediateWaypoints[index].id }) { index ->
                     Spacer(modifier = Modifier.height(4.dp))
 
                     val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
@@ -584,9 +605,9 @@ fun WaypointCard(
             Column {
                 Text(title, fontWeight = FontWeight.Bold)
                 waypoint?.let {
-                    Text(it.placeName, style = MaterialTheme.typography.bodyMedium)
+                    Text(it.name, style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        it.formattedAddress ?: "Unknown Address",
+                        it.address ?: "Unknown Address",
                         style = MaterialTheme.typography.bodySmall
                     )
                 } ?: Text("Tap to select", style = MaterialTheme.typography.bodySmall)

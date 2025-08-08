@@ -158,7 +158,6 @@ class ChatRepositoryImpl(
             chat = generativeModel.startChat()
             Result.Success(Unit)
         } catch (e: Exception) {
-            println(Constants.DEBUG_VALUE + e.message)
             Result.Error(DataError.Local.UNKNOWN)
         }
     }

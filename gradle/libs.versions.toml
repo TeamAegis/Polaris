@@ -43,6 +43,7 @@ pipecat-android = "0.3.4"
 materialKolor = "3.0.1"
 # maps
 mapsCompose = "6.7.0"
+mapsUtils = "3.14.0"
 placesCompose = "0.1.3"
 places = "4.4.1"
 playServicesMaps = "19.2.0"
@@ -122,6 +123,7 @@ maps-compose = { group = "com.google.maps.android", name = "maps-compose", versi
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 places-compose = { module = "com.google.maps.android:places-compose", version.ref = "placesCompose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "mapsUtils" }
 # firebase ai
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-ai = { module = "com.google.firebase:firebase-ai" }

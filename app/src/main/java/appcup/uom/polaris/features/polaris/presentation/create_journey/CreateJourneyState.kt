@@ -3,6 +3,7 @@ package appcup.uom.polaris.features.polaris.presentation.create_journey
 import appcup.uom.polaris.features.polaris.domain.Preferences
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MarkerState
 import kotlin.uuid.ExperimentalUuidApi
@@ -32,7 +33,9 @@ data class CreateJourneyState @OptIn(ExperimentalUuidApi::class) constructor(
     val startingWaypoint: Waypoint = Waypoint(),
     val intermediateWaypoints: List<Waypoint> = listOf(),
     val endingWaypoint: Waypoint = Waypoint().copy(
-        formattedAddress = "Set destination"
+        address = "Set destination"
     ),
     val waypointSelectorType: WaypointSelectorType = WaypointSelectorType.STARTING,
+
+    val polyline: List<LatLng> = emptyList(),
 )

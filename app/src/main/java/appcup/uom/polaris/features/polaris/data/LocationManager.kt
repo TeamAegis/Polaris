@@ -59,8 +59,9 @@ class LocationManager(
             ).build()
         ).addOnSuccessListener { placeResponse ->
             val waypoint = Waypoint(
-                placeName = placeResponse.place.displayName ?: "Unknown",
-                formattedAddress = placeResponse.place.formattedAddress,
+                placeId = placeId,
+                name = placeResponse.place.displayName ?: "Unknown",
+                address = placeResponse.place.formattedAddress,
                 rating = placeResponse.place.rating,
                 userRatingsTotal = placeResponse.place.rating,
                 openNow = isPlaceOpenNow(placeResponse.place.currentOpeningHours),

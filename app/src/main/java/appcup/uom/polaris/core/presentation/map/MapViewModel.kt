@@ -162,7 +162,6 @@ class MapViewModel(
 //        }
         viewModelScope.launch {
             _searchState.debounce(500.milliseconds).collect { query: TextFieldState ->
-                println(Constants.DEBUG_VALUE + query.text.toString())
                 val response = placesClient.awaitFindAutocompletePredictions {
 //                locationBias = bias
 //                typesFilter = listOf(

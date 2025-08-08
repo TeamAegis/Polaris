@@ -46,13 +46,13 @@ fun WaypointCard(
         ) {
             // Name
             Text(
-                text = waypoint.placeName,
+                text = waypoint.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
             // Address
-            waypoint.formattedAddress?.let {
+            waypoint.address?.let {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = it,
