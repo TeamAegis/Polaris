@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.StrokeCap
 
 val Robot: ImageVector
     get() {
@@ -168,8 +167,6 @@ val FilterFocus: ImageVector
 private var _Filter_center_focus: ImageVector? = null
 
 
-
-
 val PhotoPrints: ImageVector
     get() {
         if (_Photo_prints != null) return _Photo_prints!!
@@ -283,7 +280,7 @@ val PhotoPrints: ImageVector
 private var _Photo_prints: ImageVector? = null
 
 val AudioWaves: ImageVector
-    get(){
+    get() {
         if (_audio_waves != null) return _audio_waves!!
 
         _audio_waves = ImageVector.Builder(
@@ -334,3 +331,86 @@ val AudioWaves: ImageVector
         return _audio_waves!!
     }
 private var _audio_waves: ImageVector? = null;
+
+val Journals: ImageVector
+    get() {
+        if (_Journals != null) return _Journals!!
+
+        _Journals = ImageVector.Builder(
+            name = "Journals",
+            defaultWidth = 16.dp,
+            defaultHeight = 16.dp,
+            viewportWidth = 16f,
+            viewportHeight = 16f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black)
+            ) {
+                moveTo(5f, 0f)
+                horizontalLineToRelative(8f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+                verticalLineToRelative(10f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+                horizontalLineTo(3f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, -2f)
+                horizontalLineToRelative(1f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, 1f)
+                horizontalLineToRelative(8f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, -1f)
+                verticalLineTo(4f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, -1f)
+                horizontalLineTo(3f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, 1f)
+                horizontalLineTo(1f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+                horizontalLineToRelative(8f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+                verticalLineToRelative(9f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, -1f)
+                verticalLineTo(2f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, -1f)
+                horizontalLineTo(5f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, 1f)
+                horizontalLineTo(3f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+            }
+            path(
+                fill = SolidColor(Color.Black)
+            ) {
+                moveTo(1f, 6f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 1f, 0f)
+                verticalLineTo(6f)
+                horizontalLineToRelative(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, 1f)
+                horizontalLineToRelative(-2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, -1f)
+                close()
+                moveToRelative(0f, 3f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 1f, 0f)
+                verticalLineTo(9f)
+                horizontalLineToRelative(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, 1f)
+                horizontalLineToRelative(-2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, -1f)
+                close()
+                moveToRelative(0f, 2.5f)
+                verticalLineToRelative(0.5f)
+                horizontalLineTo(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, 0f, 1f)
+                horizontalLineToRelative(2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, 0f, -1f)
+                horizontalLineTo(2f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, -1f, 0f)
+            }
+        }.build()
+
+        return _Journals!!
+    }
+
+private var _Journals: ImageVector? = null
+
+

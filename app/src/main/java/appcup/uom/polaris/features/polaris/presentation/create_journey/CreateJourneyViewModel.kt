@@ -7,8 +7,9 @@ import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesResponse
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
-import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
+import appcup.uom.polaris.features.polaris.domain.WaypointType
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
@@ -130,14 +131,14 @@ class CreateJourneyViewModel(
                 _state.update {
                     it.copy(
                         isWaypointSelectorVisible = action.isVisible,
-                        waypointSelectorType = action.waypointSelectorType
+                        waypointType = action.waypointType
                     )
                 }
             }
 
             is CreateJourneyAction.OnWaypointSelectorResult -> {
-                when (_state.value.waypointSelectorType) {
-                    WaypointSelectorType.STARTING -> {
+                when (_state.value.waypointType) {
+                    WaypointType.START -> {
                         _state.update {
                             it.copy(
                                 startingWaypoint = action.waypoint,
@@ -149,7 +150,7 @@ class CreateJourneyViewModel(
                         }
                     }
 
-                    WaypointSelectorType.INTERMEDIATE -> {
+                    WaypointType.INTERMEDIATE -> {
                         _state.update {
                             it.copy(
                                 intermediateWaypoints = it.intermediateWaypoints + action.waypoint,
@@ -164,7 +165,7 @@ class CreateJourneyViewModel(
                         }
                     }
 
-                    WaypointSelectorType.ENDING -> {
+                    WaypointType.END -> {
                         _state.update {
                             it.copy(
                                 endingWaypoint = action.waypoint,
@@ -177,6 +178,7 @@ class CreateJourneyViewModel(
                             )
                         }
                     }
+                    else -> {}
                 }
                 getJourneyPolyline()
             }
@@ -195,7 +197,39 @@ class CreateJourneyViewModel(
                 getJourneyPolyline()
             }
 
-            else -> {}
+            CreateJourneyAction.OnBackClicked -> {}
+            CreateJourneyAction.OnCreateJourneyClicked -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isCreatingJourney = true
+                        )
+                    }
+                    val result = polarisRepository.createJourney(
+                        name = _state.value.journeyName,
+                        description = _state.value.journeyDescription,
+                        preferences = _state.value.selectedPreferences,
+                        encodedPolyline = PolyUtil.encode(state.value.polyline),
+                        startingWaypoint = _state.value.startingWaypoint,
+                        intermediaryWaypoints = _state.value.intermediateWaypoints,
+                        destinationWaypoint = _state.value.endingWaypoint
+                    )
+
+                    when (result) {
+                        is Result.Error<DataError.JourneyError> -> {
+                            _event.emit(CreateJourneyEvent.OnError(result.error.message))
+                        }
+                        is Result.Success<Journey> -> {
+                            _event.emit(CreateJourneyEvent.OnJourneyCreated(result.data))
+                        }
+                    }
+                    _state.update {
+                        it.copy(
+                            isCreatingJourney = false
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -209,7 +243,7 @@ class CreateJourneyViewModel(
                 destinationWaypoint = _state.value.endingWaypoint
             )
             when (response) {
-                is Result.Error<DataError.Remote> -> {
+                is Result.Error<DataError.JourneyError> -> {
                     _event.emit(CreateJourneyEvent.OnError(response.error.message))
                 }
 

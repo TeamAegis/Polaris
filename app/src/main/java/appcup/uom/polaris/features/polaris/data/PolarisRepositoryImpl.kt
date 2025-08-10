@@ -1,20 +1,197 @@
 package appcup.uom.polaris.features.polaris.data
 
+import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesApi
 import appcup.uom.polaris.core.domain.RoutesResponse
+import appcup.uom.polaris.features.polaris.domain.Journey
+import appcup.uom.polaris.features.polaris.domain.JourneyStatus
+import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.polaris.domain.Preferences
+import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.polaris.domain.WaypointType
+import com.google.firebase.ai.type.PublicPreviewAPI
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.filter.FilterOperation
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresListDataFlow
+import io.github.jan.supabase.realtime.realtime
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(PublicPreviewAPI::class)
 class PolarisRepositoryImpl(
-    private val routesApi: RoutesApi
-): PolarisRepository {
+    private val routesApi: RoutesApi,
+    private val supabaseClient: SupabaseClient
+) : PolarisRepository {
     override suspend fun getRoutePolyline(
         startingWaypoint: Waypoint,
         intermediaryWaypoints: List<Waypoint>,
         destinationWaypoint: Waypoint
-    ): Result<RoutesResponse, DataError.Remote> {
-        return routesApi.getRoutePolyline(startingWaypoint, intermediaryWaypoints, destinationWaypoint)
+    ): Result<RoutesResponse, DataError.JourneyError> {
+        val result =
+            routesApi.getRoutePolyline(startingWaypoint, intermediaryWaypoints, destinationWaypoint)
+        return when (result) {
+            is Result.Error -> {
+                Result.Error(DataError.JourneyError.UNKNOWN)
+            }
+
+            is Result.Success -> {
+                Result.Success(result.data)
+            }
+
+        }
+    }
+
+
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+    override suspend fun createJourney(
+        name: String,
+        description: String,
+        preferences: List<Preferences>,
+        encodedPolyline: String,
+        startingWaypoint: Waypoint,
+        intermediaryWaypoints: List<Waypoint>,
+        destinationWaypoint: Waypoint
+    ): Result<Journey, DataError.JourneyError> {
+        if (name.isBlank()) {
+            return Result.Error(DataError.JourneyError.NAME_EMPTY)
+        }
+        if (description.isBlank()) {
+            return Result.Error(DataError.JourneyError.DESCRIPTION_EMPTY)
+        }
+        if (destinationWaypoint.latitude == 0.0 && destinationWaypoint.longitude == 0.0) {
+            return Result.Error(DataError.JourneyError.END_LOCATION_NOT_SET)
+        }
+
+        return try {
+            val journey = supabaseClient.from("journeys")
+                .insert(
+                    Journey(
+                        name = name,
+                        description = description,
+                        preferences = preferences,
+                        encodedPolyline = encodedPolyline,
+                        status = JourneyStatus.NOT_STARTED,
+                        userId = StaticData.user.id,
+                        createdAt = Clock.System.now(),
+                    )
+                ) {
+                    select()
+                }.decodeSingle<Journey>()
+
+
+            val waypoints = listOf(
+                startingWaypoint.toPersonalWaypoint(
+                    type = WaypointType.START,
+                    isUnlocked = false,
+                    userId = StaticData.user.id,
+                    journeyId = journey.id!!
+                )
+            ) + intermediaryWaypoints.map {
+                it.toPersonalWaypoint(
+                    type = WaypointType.INTERMEDIATE,
+                    isUnlocked = false,
+                    userId = StaticData.user.id,
+                    journeyId = journey.id
+                )
+            } + listOf(
+                destinationWaypoint.toPersonalWaypoint(
+                    type = WaypointType.END,
+                    isUnlocked = false,
+                    userId = StaticData.user.id,
+                    journeyId = journey.id
+                )
+            )
+            supabaseClient.from("personal_waypoints").insert(
+                waypoints
+            )
+            Result.Success(journey)
+
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
+
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override fun getJourneys(): Flow<List<Journey>> = callbackFlow {
+        val channel = supabaseClient.channel("journey_channel_${StaticData.user.id}")
+        val journeyFlow = channel.postgresListDataFlow(
+            schema = "public",
+            table = "journeys",
+            primaryKey = Journey::id
+        )
+        channel.subscribe()
+        val job = launch {
+            journeyFlow.collect { journeys ->
+                trySend(journeys)
+            }
+        }
+
+        awaitClose {
+            job.cancel()
+            runBlocking {
+                supabaseClient.realtime.removeChannel(channel)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override fun getAllMyWaypoints(): Flow<List<PersonalWaypoint>> = callbackFlow {
+        val channel = supabaseClient.channel("personal_waypoints_channel_${StaticData.user.id}")
+        val personalWaypointsFlow = channel.postgresListDataFlow(
+            schema = "public",
+            table = "personal_waypoints",
+            primaryKey = PersonalWaypoint::id,
+            filter = FilterOperation("user_id", FilterOperator.EQ, StaticData.user.id)
+        )
+        channel.subscribe()
+        val job = launch {
+            personalWaypointsFlow.collect { personalWaypoints ->
+                trySend(personalWaypoints)
+            }
+        }
+
+        awaitClose {
+            job.cancel()
+            runBlocking {
+                supabaseClient.realtime.removeChannel(channel)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override fun getPublicWaypoints(): Flow<List<PublicWaypoint>> = callbackFlow {
+        val channel = supabaseClient.channel("public_waypoints_channel_${StaticData.user.id}")
+        val publicWaypointsFlow = channel.postgresListDataFlow(
+            schema = "public",
+            table = "public_waypoints",
+            primaryKey = PublicWaypoint::id,
+        )
+        channel.subscribe()
+        val job = launch {
+            publicWaypointsFlow.collect { publicWaypoints ->
+                trySend(publicWaypoints)
+            }
+        }
+
+        awaitClose {
+            job.cancel()
+            runBlocking {
+                supabaseClient.realtime.removeChannel(channel)
+            }
+        }
     }
 }

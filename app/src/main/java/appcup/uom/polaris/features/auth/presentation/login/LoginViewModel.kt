@@ -42,7 +42,7 @@ class LoginViewModel(
                         it.copy(isLoading = false)
                     }
                     when(res) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.AuthError> -> {
                             _event.emit(LoginEvent.Error(res.error.message))
                         }
                         is Result.Success<*> -> {

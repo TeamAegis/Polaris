@@ -25,8 +25,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -61,11 +63,12 @@ import com.google.android.libraries.places.compose.autocomplete.data.toDistanceS
 import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace
 import kotlinx.coroutines.flow.filter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MapSearchBar(
     modifier: Modifier = Modifier,
     textFieldState: TextFieldState = TextFieldState(""),
+    isSearching: Boolean = false,
     onQueryChange: (String) -> Unit = {},
     onSearch: (AutocompletePlace?) -> Unit,
     predictions: List<AutocompletePlace>,
@@ -105,9 +108,12 @@ fun MapSearchBar(
                     onExpandedChange = {
                         onExpandedChange(it)
                     },
-                    placeholder = { Text("Search...") }
+                    placeholder = { Text("Search...") },
                 )
             },
+            colors = SearchBarDefaults.colors(
+                dividerColor = if (isSearching) Color.Transparent else MaterialTheme.colorScheme.outline,
+            ),
             expanded = expanded,
             onExpandedChange = {
                 onExpandedChange(it)
@@ -122,6 +128,8 @@ fun MapSearchBar(
                     )
                     .verticalScroll(scrollState)
             ) {
+                if (isSearching)
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
                 for (prediction in predictions) {
                     AutocompletePlaceRow(
                         autocompletePlace = prediction,

@@ -1,32 +1,24 @@
 package appcup.uom.polaris.features.polaris.domain
 
 import android.net.Uri
-import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.EncodeDefault.Mode.NEVER
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalSerializationApi::class,ExperimentalUuidApi::class)
 data class Waypoint(
     val id: Uuid = Uuid.NIL,
-    @SerialName("place_id")
     val placeId: String?,
     val name: String,
     val address: String?,
-    @EncodeDefault(NEVER)
     val rating: Double?,
-    @EncodeDefault(NEVER)
     val userRatingsTotal: Double?,
-    @EncodeDefault(NEVER)
     val openNow: Boolean?,
-    @EncodeDefault(NEVER)
     val phoneNumber: String?,
-    @EncodeDefault(NEVER)
     val websiteUri: Uri?,
     val latitude: Double,
     val longitude: Double,
+    val waypointType: WaypointType = WaypointType.CURRENT_LOCATION
 ) {
     constructor() : this(
         id = Uuid.NIL,
@@ -40,5 +32,23 @@ data class Waypoint(
         websiteUri = null,
         latitude = 0.0,
         longitude = 0.0
+    )
+
+    fun toPersonalWaypoint(
+        type: WaypointType,
+        isUnlocked: Boolean,
+        userId: Uuid,
+        journeyId: Uuid
+    )
+    = PersonalWaypoint(
+        placeId = placeId,
+        name = name,
+        address = address,
+        latitude = latitude,
+        longitude = longitude,
+        isUnlocked = isUnlocked,
+        type = type,
+        userId = userId,
+        journeyId = journeyId
     )
 }

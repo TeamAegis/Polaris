@@ -1,6 +1,5 @@
 package appcup.uom.polaris.features.chat.data
 
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
@@ -17,8 +16,12 @@ import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresListDataFlow
+import io.github.jan.supabase.realtime.realtime
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
@@ -33,7 +36,7 @@ class ChatRepositoryImpl(
     lateinit var chat: Chat
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun initialize(): Result<Unit, DataError.Local> {
+    override suspend fun initialize(): Result<Unit, DataError.ChatError> {
         try {
             val messages = supabaseClient.from("messages").select {
                 filter {
@@ -51,12 +54,12 @@ class ChatRepositoryImpl(
 
             return Result.Success(Unit)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class, SupabaseExperimental::class)
-    override fun getChatHistory(): Flow<List<Message>> = flow {
+    override fun getChatHistory(): Flow<List<Message>> = callbackFlow {
         val channel = supabaseClient.channel("chat_channel_${StaticData.user.id}")
         val messageFlow = channel.postgresListDataFlow(
             schema = "public",
@@ -64,15 +67,25 @@ class ChatRepositoryImpl(
             primaryKey = Message::id
         )
         channel.subscribe()
-        messageFlow.collect { messages ->
-            emit(messages)
+
+        val job = launch {
+            messageFlow.collect { messages ->
+                trySend(messages)
+            }
+        }
+
+        awaitClose {
+            job.cancel()
+            runBlocking {
+                supabaseClient.realtime.removeChannel(channel)
+            }
         }
     }
 
 
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-    override suspend fun sendMessage(message: String): Result<Unit, DataError.Local> {
-        if (message.isBlank()) return Result.Error(DataError.Local.MESSAGE_EMPTY)
+    override suspend fun sendMessage(message: String): Result<Unit, DataError.ChatError> {
+        if (message.isBlank()) return Result.Error(DataError.ChatError.MESSAGE_EMPTY)
 
         return try {
             // Send the message to the chat model
@@ -138,17 +151,17 @@ class ChatRepositoryImpl(
                     )
                 )
             } else {
-                Result.Error(DataError.Local.UNKNOWN)
+                Result.Error(DataError.ChatError.UNKNOWN)
             }
 
             Result.Success(Unit)
         } catch (_: Exception) {
-            Result.Error(DataError.Local.UNKNOWN)
+            Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun clearChatHistory(): Result<Unit, DataError.Local> {
+    override suspend fun clearChatHistory(): Result<Unit, DataError.ChatError> {
         return try {
             supabaseClient.from("messages").delete {
                 filter {
@@ -158,7 +171,7 @@ class ChatRepositoryImpl(
             chat = generativeModel.startChat()
             Result.Success(Unit)
         } catch (e: Exception) {
-            Result.Error(DataError.Local.UNKNOWN)
+            Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 

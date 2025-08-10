@@ -8,9 +8,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.LocalDateTime
 
-fun isPlaceOpenNow(openingHours: OpeningHours?): Boolean {
+fun isPlaceOpenNow(openingHours: OpeningHours?): Boolean? {
     if (openingHours == null) {
-        return false // Or handle as "unknown" depending on your needs
+        return null
     }
 
     val periods = openingHours.periods

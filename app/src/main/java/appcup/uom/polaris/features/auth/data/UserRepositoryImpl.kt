@@ -21,9 +21,9 @@ class UserRepositoryImpl(
     override suspend fun login(
         email: String,
         password: String
-    ): Result<User, DataError.Local> {
+    ): Result<User, DataError.AuthError> {
         if (email.isBlank() || password.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
 
         if (!Regex(
@@ -35,7 +35,7 @@ class UserRepositoryImpl(
                         + "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$"
             ).matches(email)
         ) {
-            return Result.Error(DataError.Local.INVALID_EMAIL)
+            return Result.Error(DataError.AuthError.INVALID_EMAIL)
         }
 
         try {
@@ -46,9 +46,9 @@ class UserRepositoryImpl(
 
             return getUser()
         } catch (_: AuthRestException) {
-            return Result.Error(DataError.Local.INVALID_LOGIN_CREDENTIALS)
+            return Result.Error(DataError.AuthError.INVALID_LOGIN_CREDENTIALS)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
 
     }
@@ -58,9 +58,9 @@ class UserRepositoryImpl(
         email: String,
         password: String,
         confirmPassword: String
-    ): Result<Unit, DataError.Local> {
+    ): Result<Unit, DataError.AuthError> {
         if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
 
         if (!Regex(
@@ -72,13 +72,13 @@ class UserRepositoryImpl(
                         + "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$"
             ).matches(email)
         ) {
-            return Result.Error(DataError.Local.INVALID_EMAIL)
+            return Result.Error(DataError.AuthError.INVALID_EMAIL)
         }
         if (password.length < 8) {
-            return Result.Error(DataError.Local.PASSWORD_TOO_SHORT)
+            return Result.Error(DataError.AuthError.PASSWORD_TOO_SHORT)
         }
         if (password != confirmPassword) {
-            return Result.Error(DataError.Local.PASSWORD_MISMATCH)
+            return Result.Error(DataError.AuthError.PASSWORD_MISMATCH)
         }
 
          try {
@@ -92,41 +92,41 @@ class UserRepositoryImpl(
              return if (user != null) {
                  Result.Success(Unit)
              } else {
-                 Result.Error(DataError.Local.UNKNOWN)
+                 Result.Error(DataError.AuthError.UNKNOWN)
              }
         } catch (_: AuthRestException) {
-            return Result.Error(DataError.Local.ACCOUNT_EXISTS)
+            return Result.Error(DataError.AuthError.ACCOUNT_EXISTS)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
-    override suspend fun confirmRegistration(email: String, otp: String): Result<User, DataError.Local> {
+    override suspend fun confirmRegistration(email: String, otp: String): Result<User, DataError.AuthError> {
         if (email.isBlank() || otp.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         try {
             supabaseClient.auth.verifyEmailOtp(type = OtpType.Email.EMAIL, email = email, token = otp)
             return getUser()
         } catch (_: AuthRestException) {
-            return Result.Error(DataError.Local.INVALID_OTP)
+            return Result.Error(DataError.AuthError.INVALID_OTP)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
     override suspend fun changePassword(
         password: String,
         confirmPassword: String
-    ): Result<Unit, DataError.Local> {
+    ): Result<Unit, DataError.AuthError> {
         if (password.isBlank() || confirmPassword.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         if (password.length < 8) {
-            return Result.Error(DataError.Local.PASSWORD_TOO_SHORT)
+            return Result.Error(DataError.AuthError.PASSWORD_TOO_SHORT)
         }
         if (password != confirmPassword) {
-            return Result.Error(DataError.Local.PASSWORD_MISMATCH)
+            return Result.Error(DataError.AuthError.PASSWORD_MISMATCH)
         }
 
         try {
@@ -137,9 +137,9 @@ class UserRepositoryImpl(
         } catch (_: Exception) {
             try {
                 supabaseClient.auth.reauthenticate()
-                return Result.Error(DataError.Local.REAUTHENTICATION_REQUIRED)
+                return Result.Error(DataError.AuthError.REAUTHENTICATION_REQUIRED)
             } catch (_: Exception) {
-                return Result.Error(DataError.Local.UNKNOWN)
+                return Result.Error(DataError.AuthError.UNKNOWN)
             }
         }
     }
@@ -148,9 +148,9 @@ class UserRepositoryImpl(
         nonce: String,
         password: String,
         confirmPassword: String
-    ): Result<User, DataError.Local> {
+    ): Result<User, DataError.AuthError> {
         if (nonce.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         try {
             supabaseClient.auth.updateUser {
@@ -159,12 +159,12 @@ class UserRepositoryImpl(
             }
             return getUser()
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun logout(): Result<Unit, DataError.Local> {
+    override suspend fun logout(): Result<Unit, DataError.AuthError> {
         try {
             supabaseClient.auth.signOut()
             StaticData.user = User(
@@ -174,15 +174,15 @@ class UserRepositoryImpl(
             )
             return Result.Success(Unit)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun getUser(): Result<User, DataError.Local> {
+    override suspend fun getUser(): Result<User, DataError.AuthError> {
         val user = supabaseClient.auth.currentUserOrNull()
         return if (user == null) {
-            Result.Error(DataError.Local.UNKNOWN)
+            Result.Error(DataError.AuthError.UNKNOWN)
         } else {
             Result.Success(User(
                 id = Uuid.parse(user.id),
@@ -193,9 +193,9 @@ class UserRepositoryImpl(
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun updateDisplayName(name: String): Result<Unit, DataError.Local> {
+    override suspend fun updateDisplayName(name: String): Result<Unit, DataError.AuthError> {
         if (name.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         try {
             supabaseClient.auth.updateUser {
@@ -206,13 +206,13 @@ class UserRepositoryImpl(
             StaticData.user = StaticData.user.copy(name = name)
             return Result.Success(Unit)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
-    override suspend fun forgotPassword(email: String): Result<Unit, DataError.Local> {
+    override suspend fun forgotPassword(email: String): Result<Unit, DataError.AuthError> {
         if (email.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
 
         if (!Regex(
@@ -224,31 +224,31 @@ class UserRepositoryImpl(
                         + "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$"
             ).matches(email)
         ) {
-            return Result.Error(DataError.Local.INVALID_EMAIL)
+            return Result.Error(DataError.AuthError.INVALID_EMAIL)
         }
 
         try {
             supabaseClient.auth.resetPasswordForEmail(email)
             return Result.Success(Unit)
         } catch (_: AuthRestException) {
-            return Result.Error(DataError.Local.INVALID_EMAIL)
+            return Result.Error(DataError.AuthError.INVALID_EMAIL)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 
     override suspend fun resetPassword(
         password: String,
         confirmPassword: String
-    ): Result<Unit, DataError.Local> {
+    ): Result<Unit, DataError.AuthError> {
         if (password.isBlank() || confirmPassword.isBlank()) {
-            return Result.Error(DataError.Local.EMPTY_FIELD)
+            return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         if (password.length < 8) {
-            return Result.Error(DataError.Local.PASSWORD_TOO_SHORT)
+            return Result.Error(DataError.AuthError.PASSWORD_TOO_SHORT)
         }
         if (password != confirmPassword) {
-            return Result.Error(DataError.Local.PASSWORD_MISMATCH)
+            return Result.Error(DataError.AuthError.PASSWORD_MISMATCH)
         }
 
         try {
@@ -257,7 +257,7 @@ class UserRepositoryImpl(
             }
             return Result.Success(Unit)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.AuthError.UNKNOWN)
         }
     }
 }

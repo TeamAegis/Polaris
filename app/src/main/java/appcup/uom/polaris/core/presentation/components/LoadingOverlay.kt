@@ -9,12 +9,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 
 @Composable
-fun LoadingOverlay(isLoading: Boolean) {
+fun LoadingOverlay(isLoading: Boolean, alpha: Float = 0.3f) {
     if (isLoading) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(Color.Black.copy(alpha = alpha))
                 .pointerInput(Unit) {}
         )
     }

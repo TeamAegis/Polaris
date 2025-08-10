@@ -65,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
 import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.PolarisTopAppBar
@@ -75,7 +76,7 @@ import appcup.uom.polaris.features.conversational_ai.presentation.Conversational
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai_message.ConversationalAIMessage
 import appcup.uom.polaris.features.polaris.domain.Preferences
 import appcup.uom.polaris.features.polaris.domain.Waypoint
-import appcup.uom.polaris.features.polaris.domain.WaypointSelectorType
+import appcup.uom.polaris.features.polaris.domain.WaypointType
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.WaypointSelectorBottomSheet
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLngBounds
@@ -128,6 +129,10 @@ fun CreateJourneyScreen(
                 is CreateJourneyEvent.OnError -> {
                     snackbarHostState.showSnackbar(it.message)
                 }
+
+                is CreateJourneyEvent.OnJourneyCreated -> {
+                    onBack()
+                }
             }
         }
     }
@@ -168,14 +173,16 @@ fun CreateJourneyScreenImpl(
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (state.isWaypointSelectorVisible) {
-        WaypointSelectorBottomSheet { placeInfo ->
+        WaypointSelectorBottomSheet(
+            waypointType = state.waypointType
+        ) { placeInfo ->
             if (placeInfo != null) {
                 onAction(CreateJourneyAction.OnWaypointSelectorResult(placeInfo))
             }
             onAction(
                 CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
                     false,
-                    WaypointSelectorType.STARTING
+                    WaypointType.START
                 )
             )
         }
@@ -329,6 +336,7 @@ fun CreateJourneyScreenImpl(
                                             imageVector = Icons.Filled.Done,
                                             contentDescription = "Localized description",
                                             modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }
@@ -359,7 +367,7 @@ fun CreateJourneyScreenImpl(
                             onAction(
                                 CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
                                     true,
-                                    WaypointSelectorType.STARTING
+                                    WaypointType.START
                                 )
                             )
                         }
@@ -434,7 +442,7 @@ fun CreateJourneyScreenImpl(
                                 onAction(
                                     CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
                                         true,
-                                        WaypointSelectorType.INTERMEDIATE
+                                        WaypointType.INTERMEDIATE
                                     )
                                 )
                             }
@@ -467,7 +475,7 @@ fun CreateJourneyScreenImpl(
                             onAction(
                                 CreateJourneyAction.OnWaypointSelectorVisibilityChanged(
                                     true,
-                                    WaypointSelectorType.ENDING
+                                    WaypointType.END
                                 )
                             )
                         }
@@ -479,7 +487,7 @@ fun CreateJourneyScreenImpl(
                 item {
                     Button(
                         onClick = {
-
+                            onAction(CreateJourneyAction.OnCreateJourneyClicked)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -487,7 +495,7 @@ fun CreateJourneyScreenImpl(
                             .clip(RoundedCornerShape(16.dp)),
                         shape = RoundedCornerShape(16.dp),
                     ) {
-                        if (state.isLoading) {
+                        if (state.isCreatingJourney) {
                             Text(text = "Creating...")
                             Spacer(modifier = Modifier.width(16.dp))
                             CircularProgressIndicator(
@@ -578,6 +586,8 @@ fun CreateJourneyScreenImpl(
             )
         }
     }
+
+    LoadingOverlay(state.isCreatingJourney)
 }
 
 @Composable

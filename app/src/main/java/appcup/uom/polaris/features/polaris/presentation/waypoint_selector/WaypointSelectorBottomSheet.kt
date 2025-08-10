@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.polaris.domain.WaypointType
+import appcup.uom.polaris.features.polaris.presentation.components.AnimatedMarkerIcon
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.MapSearchBar
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.WaypointCard
 import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace
@@ -43,6 +45,7 @@ import com.google.android.libraries.places.compose.autocomplete.models.toPlaceDe
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -51,6 +54,7 @@ import kotlin.uuid.Uuid
 @Composable
 fun WaypointSelectorBottomSheet(
     viewModel: WaypointSelectorViewModel = koinViewModel(),
+    waypointType: WaypointType,
     onDismiss: (Waypoint?) -> Unit
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
@@ -58,6 +62,7 @@ fun WaypointSelectorBottomSheet(
 
     WaypointSelectorBottomSheetImpl(
         state = state.value,
+        waypointType = waypointType,
         searchState = searchState.value,
         onAction = { action ->
             when (action) {
@@ -82,6 +87,7 @@ fun WaypointSelectorBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 fun WaypointSelectorBottomSheetImpl(
     state: WaypointSelectorState,
+    waypointType: WaypointType,
     searchState: TextFieldState,
     onAction: (WaypointSelectorAction) -> Unit
 ) {
@@ -143,6 +149,7 @@ fun WaypointSelectorBottomSheetImpl(
             topBar = {
                 MapSearchBar(
                     textFieldState = searchState,
+                    isSearching = state.isSearching,
                     onQueryChange = {
                         onAction(WaypointSelectorAction.OnSearchQueryChanged(it))
                     },
@@ -204,6 +211,11 @@ fun WaypointSelectorBottomSheetImpl(
                     onAction(WaypointSelectorAction.OnPoiClick(poi.placeId))
                 }
             ) {
+//                MarkerComposable(
+//                    state = state.waypointMarkerState
+//                ) {
+//                    AnimatedMarkerIcon(waypointType)
+//                }
                 Marker(
                     state = state.waypointMarkerState,
                 )

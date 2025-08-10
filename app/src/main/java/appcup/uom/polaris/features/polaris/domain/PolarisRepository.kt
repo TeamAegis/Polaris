@@ -3,8 +3,32 @@ package appcup.uom.polaris.features.polaris.domain
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesResponse
+import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.ExperimentalUuidApi
 
 interface PolarisRepository {
-    suspend fun getRoutePolyline(startingWaypoint: Waypoint, intermediaryWaypoints: List<Waypoint>, destinationWaypoint: Waypoint): Result<RoutesResponse, DataError.Remote>
+    suspend fun getRoutePolyline(
+        startingWaypoint: Waypoint,
+        intermediaryWaypoints: List<Waypoint>,
+        destinationWaypoint: Waypoint
+    ): Result<RoutesResponse, DataError.JourneyError>
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun createJourney(
+        name: String,
+        description: String,
+        preferences: List<Preferences>,
+        encodedPolyline: String,
+        startingWaypoint: Waypoint,
+        intermediaryWaypoints: List<Waypoint>,
+        destinationWaypoint: Waypoint
+    ): Result<Journey, DataError.JourneyError>
+
+    fun getJourneys(): Flow<List<Journey>>
+
+    fun getAllMyWaypoints(): Flow<List<PersonalWaypoint>>
+
+    fun getPublicWaypoints(): Flow<List<PublicWaypoint>>
+
 
 }

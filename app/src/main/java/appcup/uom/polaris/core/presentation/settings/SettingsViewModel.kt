@@ -167,7 +167,7 @@ class SettingsViewModel(
                         )
                     }
                     when (res) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.AuthError> -> {
                             _event.emit(SettingsEvent.Error(res.error.message))
                         }
                         else -> {}

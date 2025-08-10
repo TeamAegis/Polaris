@@ -77,6 +77,7 @@ class WaypointSelectorViewModel(
                 }
                 _state.update {
                     it.copy(
+                        isSearching = false,
                         predictions = response.autocompletePredictions
                     )
                 }
@@ -101,6 +102,11 @@ class WaypointSelectorViewModel(
             is WaypointSelectorAction.OnSearchQueryChanged -> {
                 _searchState.update {
                     TextFieldState(action.searchQuery)
+                }
+                _state.update {
+                    it.copy(
+                        isSearching = true
+                    )
                 }
             }
 

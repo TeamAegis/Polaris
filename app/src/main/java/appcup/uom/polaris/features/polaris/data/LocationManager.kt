@@ -11,10 +11,13 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import appcup.uom.polaris.core.domain.LatLong
-import appcup.uom.polaris.core.domain.Orientation
 import appcup.uom.polaris.core.domain.ResultState
 import appcup.uom.polaris.features.polaris.domain.Waypoint
+import com.google.android.gms.location.DeviceOrientation
+import com.google.android.gms.location.DeviceOrientationListener
+import com.google.android.gms.location.DeviceOrientationRequest
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.FusedOrientationProviderClient
 import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import java.util.Locale
+import java.util.concurrent.Executors
 import kotlin.uuid.ExperimentalUuidApi
 
 class LocationManager(
@@ -38,7 +42,9 @@ class LocationManager(
     private val placesClient: PlacesClient,
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
         context
-    )
+    ),
+    private val fusedOrientationProviderClient: FusedOrientationProviderClient =
+        LocationServices.getFusedOrientationProviderClient(context)
 ) {
 
     @OptIn(ExperimentalUuidApi::class)
@@ -256,42 +262,21 @@ class LocationManager(
         }.flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class)
-    fun getOrientationFlow(): Flow<Orientation> = callbackFlow {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    fun getOrientationFlow(): Flow<DeviceOrientation> = callbackFlow {
+        val request =
+            DeviceOrientationRequest.Builder(DeviceOrientationRequest.OUTPUT_PERIOD_DEFAULT).build()
+        val executor = Executors.newSingleThreadExecutor()
 
-        if (rotationSensor == null) {
-            close() // No sensor available
-            return@callbackFlow
-        }
+        val listener = DeviceOrientationListener { p0 -> trySend(p0) }
 
-        val rotationMatrix = FloatArray(9)
-        val orientationAngles = FloatArray(3)
-
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                SensorManager.getOrientation(rotationMatrix, orientationAngles)
-
-                val azimuth =
-                    (Math.toDegrees(orientationAngles[0].toDouble()).toFloat() + 360f) % 360f
-                val pitch = Math.toDegrees(orientationAngles[1].toDouble()).toFloat()
-                val roll = Math.toDegrees(orientationAngles[2].toDouble()).toFloat()
-
-                trySend(Orientation(azimuth, pitch, roll))
-            }
-
-            override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-        }
-
-        sensorManager.registerListener(
-            listener,
-            rotationSensor,
-            SensorManager.SENSOR_DELAY_UI
-        )
+        fusedOrientationProviderClient.requestOrientationUpdates(
+            request,
+            executor,
+                listener
+            )
 
         awaitClose {
-            sensorManager.unregisterListener(listener)
+            fusedOrientationProviderClient.removeOrientationUpdates(listener)
         }
     }.flowOn(Dispatchers.IO)
 

@@ -46,7 +46,7 @@ class DisplayNameViewModel(
                         it.copy(isLoading = false)
                     }
                     when(res) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.AuthError> -> {
                             _event.emit(DisplayNameEvent.Error(res.error.message))
                         }
                         is Result.Success<Unit> -> {

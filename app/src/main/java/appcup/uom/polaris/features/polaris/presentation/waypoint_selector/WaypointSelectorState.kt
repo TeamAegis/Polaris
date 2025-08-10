@@ -10,7 +10,7 @@ data class WaypointSelectorState(
     val predictions: List<AutocompletePrediction> = emptyList(),
     val selectedPlace: AutocompletePlace? = null,
     val expanded: Boolean = false,
-    val isLoading: Boolean = false,
+    val isSearching: Boolean = false,
 
     val waypointMarkerState: MarkerState = MarkerState(),
     val waypointCameraPositionState: CameraPositionState = CameraPositionState(),

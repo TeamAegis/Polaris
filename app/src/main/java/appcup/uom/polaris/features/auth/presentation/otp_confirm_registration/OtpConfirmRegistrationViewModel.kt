@@ -39,7 +39,7 @@ class OtpConfirmRegistrationViewModel(
                         it.copy(isLoading = false)
                     }
                     when(res) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.AuthError> -> {
                             _event.emit(OtpConfirmRegistrationEvent.Error(res.error.message))
                         }
 

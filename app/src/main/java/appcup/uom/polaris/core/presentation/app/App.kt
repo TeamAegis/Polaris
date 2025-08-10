@@ -9,17 +9,21 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
@@ -91,12 +95,14 @@ import appcup.uom.polaris.features.conversational_ai.presentation.conversational
 import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
+import appcup.uom.polaris.features.polaris.presentation.journeys.JourneysScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App(
@@ -205,16 +211,46 @@ fun App(
         floatingActionButton = {
             if (state.value.isAuthenticated) {
                 if ((conversationAIState.value.isRecording || !isBottomBarVisible.value) && backStack.last() !is Screen.Chat) {
-                    ConversationalAI(
-                        viewModel = conversationAIViewModel,
-                        snackbarHostState = snackbarHostState
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.wrapContentSize().padding(
+                            bottom = if (backStack.last() is Screen.Map) 72.dp else 0.dp
+                        ),
+                    ) {
+                        ConversationalAI(
+                            viewModel = conversationAIViewModel,
+                            snackbarHostState = snackbarHostState
+                        )
+
+                        if (backStack.last() is Screen.Journeys) {
+                            FloatingActionButton(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                onClick = {
+                                    if (!state.value.hasLocationPermission) {
+                                        viewModel.onAction(AppAction.RequestLocationPermission)
+                                    } else {
+                                        scope.launch {
+                                            EventBus.emit(
+                                                Event.OnCreateJourneyBottomSheetVisibilityChanged(
+                                                    true
+                                                )
+                                            )
+                                        }
+                                        backStack.add(Screen.CreateJourney)
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Filled.Add, contentDescription = "Add")
+                            }
+                        }
+                    }
                 } else if (isBottomBarVisible.value) {
                     val primaryColor = MaterialTheme.colorScheme.primary
 
                     FloatingActionButtonMenu(
                         modifier = Modifier
-                            .absoluteOffset(x = 16.dp, y = 16.dp),
+                            .absoluteOffset(x = 16.dp, y =  if (backStack.last() is Screen.Map) (-56).dp else 16.dp),
                         expanded = state.value.isFabMenuExpanded,
                         button = {
                             ToggleFloatingActionButton(
@@ -287,19 +323,8 @@ fun App(
                                             conversationAIViewModel.onAction(ConversationalAIAction.StartRecording)
                                         }
 
-                                        FabMenuItem.CreateJourney -> {
-                                            if (!state.value.hasLocationPermission) {
-                                                viewModel.onAction(AppAction.RequestLocationPermission)
-                                            } else {
-                                                scope.launch {
-                                                    EventBus.emit(
-                                                        Event.OnCreateJourneyBottomSheetVisibilityChanged(
-                                                            true
-                                                        )
-                                                    )
-                                                }
-                                                backStack.add(Screen.CreateJourney)
-                                            }
+                                        FabMenuItem.Journeys -> {
+                                            backStack.add(Screen.Journeys)
                                         }
                                     }
                                 },
@@ -477,6 +502,15 @@ fun App(
                         viewModel = chatViewModel!!,
                         onBack = { backStack.removeLastOrNull() },
                         snackbarHostState = snackbarHostState
+                    )
+                }
+
+                entry<Screen.Journeys> {
+                    JourneysScreen(
+                        onBack = { backStack.removeLastOrNull() },
+                        onJourneyClick = {
+
+                        },
                     )
                 }
             }

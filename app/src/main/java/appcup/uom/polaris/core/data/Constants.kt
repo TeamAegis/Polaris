@@ -23,7 +23,8 @@ object Constants {
 
     // Google Maps Const
     const val MAP_MAX_ZOOM = 17.5f
-    const val MAP_DEFAULT_ZOOM = 15f
+    const val MAP_DEFAULT_ZOOM = 18.75f
+    const val MAP_DEFAULT_TILT = 68.5f
     val MAP_LAT_LNG_BOUNDS = LatLngBounds(
         LatLng(-20.5316395374589, 57.29751376965287),
         LatLng(-19.976374714034975, 57.81666850783445)
@@ -45,6 +46,7 @@ object Constants {
         zoomControlsEnabled = false,
         zoomGesturesEnabled = false,
     )
+    const val MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES = 500
 
     fun getSystemInstructions(): String {
         return "Polaris AI Assistant System Instructions for Android App\n" +

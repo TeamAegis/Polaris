@@ -47,6 +47,7 @@ mapsUtils = "3.14.0"
 placesCompose = "0.1.3"
 places = "4.4.1"
 playServicesMaps = "19.2.0"
+playServicesLocation = "21.3.0"
 # secrets.properties-gradle-plugin
 secretsGradle = "2.0.1"
 # firebase ai
@@ -124,6 +125,7 @@ places = { module = "com.google.android.libraries.places:places", version.ref = 
 places-compose = { module = "com.google.maps.android:places-compose", version.ref = "placesCompose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version.ref = "mapsUtils" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 # firebase ai
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-ai = { module = "com.google.firebase:firebase-ai" }

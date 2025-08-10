@@ -10,10 +10,26 @@ sealed interface DataError: Error {
         UNKNOWN("An unknown error occurred. Please try again.")
     }
 
-    enum class Local(val message: String) : DataError {
+    enum class GenericError(val message: String) : DataError {
         UNKNOWN("An unknown error occurred."),
         EMPTY_FIELD("Please fill in all fields."),
+    }
+
+    enum class JourneyError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        NAME_EMPTY("Please enter a name for your journey."),
+        DESCRIPTION_EMPTY("Please enter a description for your journey."),
+        END_LOCATION_NOT_SET("Please set an end location for your journey."),
+    }
+
+    enum class ChatError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
         MESSAGE_EMPTY("Message cannot be empty."),
+    }
+
+    enum class AuthError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        EMPTY_FIELD("Please fill in all fields."),
         ACCOUNT_EXISTS("An account with this email already exists."),
         REAUTHENTICATION_REQUIRED("Please reauthenticate to continue."),
         INVALID_LOGIN_CREDENTIALS("Invalid login credentials."),
