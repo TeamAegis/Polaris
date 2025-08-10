@@ -3,7 +3,9 @@ package appcup.uom.polaris.core.presentation.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.LatLong
+import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.ResultState
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
@@ -20,20 +22,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class, FlowPreview::class)
 class MapViewModel(
     locationManager: LocationManager,
-    polarisRepository: PolarisRepository,
+    private val polarisRepository: PolarisRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapState())
     val state = _state.asStateFlow()
 
 
     init {
-
-
         viewModelScope.launch {
             locationManager.getCoordinates { latitude, longitude ->
                 if (latitude != null && longitude != null) {
@@ -111,6 +112,19 @@ class MapViewModel(
                                     )
                                 ) <= Constants.MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES
                             }
+                        )
+                    }
+                    if (_state.value.selectedJourney != null) {
+                        _state.update {
+                            it.copy(
+                                waypointsForSelectedJourney = _state.value.allMyWaypoints.filter { waypoint ->
+                                    waypoint.journeyId == _state.value.selectedJourney!!.id
+                                }
+                            )
+                        }
+                        checkAndUpdatePersonalWaypointsUnlockStatus(
+                            latitude,
+                            longitude
                         )
                     }
                 }
@@ -210,5 +224,40 @@ class MapViewModel(
             else -> {}
         }
 
+    }
+
+    suspend fun checkAndUpdatePersonalWaypointsUnlockStatus(
+        latitude: Double,
+        longitude: Double
+    ) {
+        val unlockedWaypoints = _state.value.waypointsForSelectedJourney.filter { waypoint ->
+            !waypoint.isUnlocked && SphericalUtil.computeDistanceBetween(
+                LatLng(
+                    latitude,
+                    longitude
+                ),
+                LatLng(
+                    waypoint.latitude,
+                    waypoint.longitude
+                )
+            ) <= Constants.MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES
+        }
+
+        if (unlockedWaypoints.isNotEmpty()) {
+            val result = polarisRepository.setPersonalWaypointsAsUnlocked(
+                journey = _state.value.selectedJourney!!,
+                unlockedWaypoints = unlockedWaypoints,
+                allWaypoints = _state.value.waypointsForSelectedJourney
+            )
+            when (result) {
+                is Result.Error<DataError.JourneyError> -> {
+
+                }
+
+                is Result.Success<Unit> -> {
+
+                }
+            }
+        }
     }
 }

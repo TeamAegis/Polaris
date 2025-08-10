@@ -158,7 +158,7 @@ fun ConversationalAIImpl(
                     onAction(ConversationalAIAction.StartRecording)
                 }
             }
-            .size(56.dp),
+            .size(48.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {

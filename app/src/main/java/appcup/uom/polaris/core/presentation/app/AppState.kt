@@ -9,7 +9,9 @@ data class AppState(
     val isAuthenticated: Boolean = false,
     val isFabMenuExpanded: Boolean = false,
     val hasCameraPermission: Boolean = false,
-    val hasLocationPermission: Boolean = false
+    val hasLocationPermission: Boolean = false,
+
+    val isControlPanelExpanded: Boolean = true
 )
 
 enum class FabMenuItem(val imageVector: ImageVector, val label: String) {

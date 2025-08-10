@@ -4,4 +4,6 @@ sealed interface AppAction {
     data class OnFabMenuExpanded(val isFabMenuExpanded: Boolean) : AppAction
     object RequestCameraPermission : AppAction
     object RequestLocationPermission : AppAction
+
+    object OnControlPanelExpandedChanged: AppAction
 }

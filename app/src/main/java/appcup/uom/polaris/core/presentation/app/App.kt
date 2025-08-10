@@ -9,24 +9,31 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -34,6 +41,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.material3.VerticalFloatingToolbar
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,12 +51,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
@@ -57,6 +67,7 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -72,6 +83,10 @@ import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.extras.navigation.rebaseTo
 import appcup.uom.polaris.core.presentation.components.BottomBar
 import appcup.uom.polaris.core.presentation.components.BottomBarVisibility
+import appcup.uom.polaris.core.presentation.components.FilterFocus
+import appcup.uom.polaris.core.presentation.components.draggableWithDynamicFling
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
+import appcup.uom.polaris.core.presentation.components.rememberDraggableFlingStateWithDynamicSize
 import appcup.uom.polaris.core.presentation.map.MapScreen
 import appcup.uom.polaris.core.presentation.memories.MemoriesScreen
 import appcup.uom.polaris.core.presentation.more.MoreScreen
@@ -100,6 +115,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
@@ -213,9 +229,11 @@ fun App(
                 if ((conversationAIState.value.isRecording || !isBottomBarVisible.value) && backStack.last() !is Screen.Chat) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.wrapContentSize().padding(
-                            bottom = if (backStack.last() is Screen.Map) 72.dp else 0.dp
-                        ),
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .padding(
+                                bottom = if (backStack.last() is Screen.Map) 72.dp else 0.dp
+                            ),
                     ) {
                         ConversationalAI(
                             viewModel = conversationAIViewModel,
@@ -250,7 +268,10 @@ fun App(
 
                     FloatingActionButtonMenu(
                         modifier = Modifier
-                            .absoluteOffset(x = 16.dp, y =  if (backStack.last() is Screen.Map) (-56).dp else 16.dp),
+                            .absoluteOffset(
+                                x = 16.dp,
+                                y = if (backStack.last() is Screen.Map) (-56).dp else 16.dp
+                            ),
                         expanded = state.value.isFabMenuExpanded,
                         button = {
                             ToggleFloatingActionButton(
@@ -339,183 +360,280 @@ fun App(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        NavDisplay(
-            backStack = backStack,
-            onBack = { backStack.removeLastOrNull() },
-            entryDecorators = listOf(
-                rememberSceneSetupNavEntryDecorator(),
-                rememberSavedStateNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-            transitionSpec = {
-                fadeIn(tween(200)) togetherWith fadeOut(tween(200))
-            },
-            popTransitionSpec = {
-                fadeIn(tween(200)) togetherWith fadeOut(tween(200))
-            },
-            predictivePopTransitionSpec = {
-                fadeIn(tween(200)) togetherWith fadeOut(tween(200))
-            },
-            entryProvider = entryProvider {
-                entry<Screen.Start> {
-                    StartScreen(
-                        navigateToLogin = { backStack.add(Screen.Login) },
-                        navigateToRegister = { backStack.add(Screen.Register) }
-                    )
-                }
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            NavDisplay(
+                backStack = backStack,
+                onBack = { backStack.removeLastOrNull() },
+                entryDecorators = listOf(
+                    rememberSceneSetupNavEntryDecorator(),
+                    rememberSavedStateNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+                transitionSpec = {
+                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                },
+                popTransitionSpec = {
+                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                },
+                predictivePopTransitionSpec = {
+                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
+                },
+                entryProvider = entryProvider {
+                    entry<Screen.Start> {
+                        StartScreen(
+                            navigateToLogin = { backStack.add(Screen.Login) },
+                            navigateToRegister = { backStack.add(Screen.Register) }
+                        )
+                    }
 
-                entry<Screen.Login> {
-                    LoginScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        onForgotPassword = { backStack.add(Screen.ForgotPassword) },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
+                    entry<Screen.Login> {
+                        LoginScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onForgotPassword = { backStack.add(Screen.ForgotPassword) },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
 
-                entry<Screen.ResetPassword> {
-                    ResetPasswordScreen(
-                        onBack = { message ->
-                            backStack.removeLastOrNull()
-                            if (message != null) {
-                                scope.launch { snackbarHostState.showSnackbar(message) }
-                            }
-                        },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.ChangeDisplayName> {
-                    DisplayNameScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.Register> {
-                    RegisterScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        navigateToOtpConfirmRegistration = { email ->
-                            backStack.add(Screen.OtpConfirmRegistration(email))
-                        },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.ChangePassword> {
-                    ChangePasswordScreen(
-                        onBack = { message ->
-                            backStack.removeLastOrNull()
-                            if (message != null) {
-                                scope.launch { snackbarHostState.showSnackbar(message) }
-                            }
-                        },
-                        navigateToReauthenticate = { message, password, confirmPassword ->
-                            backStack.add(
-                                Screen.OtpReauthenticate(password, confirmPassword)
-                            )
-                            scope.launch { snackbarHostState.showSnackbar(message) }
-                        },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.ForgotPassword> {
-                    ForgotPasswordScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.CreateJourney> {
-                    CreateJourneyScreen(
-                        conversationAIViewModel = conversationAIViewModel,
-                        chatViewModel = chatViewModel!!,
-                        snackbarHostState = snackbarHostState,
-                        onBack = { backStack.removeLastOrNull() }
-                    )
-                }
-
-                entry<Screen.Map> {
-                    MapScreen(snackbarHostState = snackbarHostState)
-                }
-
-                entry<Screen.Memories> {
-                    MemoriesScreen(snackbarHostState = snackbarHostState)
-                }
-
-                entry<Screen.More> {
-                    MoreScreen(
-                        navigateToSettings = { backStack.add(Screen.Settings) },
-                        navigateToChat = { backStack.add(Screen.Chat) },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.Settings> {
-                    SettingsScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        navigateToChangeDisplayName = { backStack.add(Screen.ChangeDisplayName) },
-                        navigateToChangePassword = { backStack.add(Screen.ChangePassword) },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.LiveTranslate> {
-                    LiveTranslateScreen(
-                        viewModel = conversationAIViewModel,
-                        onBack = { backStack.removeLastOrNull() })
-                }
-
-                entry<Screen.OtpConfirmRegistration> { screen ->
-                    OtpConfirmRegistrationScreen(
-                        viewModel = koinViewModel {
-                            parametersOf(OtpConfirmRegistrationNavArgs(email = screen.email))
-                        },
-                        onBack = { backStack.removeLastOrNull() },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.OtpReauthenticate> { screen ->
-                    OtpReauthenticateScreen(
-                        viewModel = koinViewModel {
-                            parametersOf(
-                                OtpReauthenticateNavArgs(
-                                    screen.password,
-                                    screen.confirmPassword
-                                )
-                            )
-                        },
-                        onBack = { message ->
-                            backStack.removeLastOrNull()
-                            if (message != null) {
+                    entry<Screen.ResetPassword> {
+                        ResetPasswordScreen(
+                            onBack = { message ->
                                 backStack.removeLastOrNull()
+                                if (message != null) {
+                                    scope.launch { snackbarHostState.showSnackbar(message) }
+                                }
+                            },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.ChangeDisplayName> {
+                        DisplayNameScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.Register> {
+                        RegisterScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            navigateToOtpConfirmRegistration = { email ->
+                                backStack.add(Screen.OtpConfirmRegistration(email))
+                            },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.ChangePassword> {
+                        ChangePasswordScreen(
+                            onBack = { message ->
+                                backStack.removeLastOrNull()
+                                if (message != null) {
+                                    scope.launch { snackbarHostState.showSnackbar(message) }
+                                }
+                            },
+                            navigateToReauthenticate = { message, password, confirmPassword ->
+                                backStack.add(
+                                    Screen.OtpReauthenticate(password, confirmPassword)
+                                )
                                 scope.launch { snackbarHostState.showSnackbar(message) }
-                            }
-                        },
+                            },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.ForgotPassword> {
+                        ForgotPasswordScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.CreateJourney> {
+                        CreateJourneyScreen(
+                            conversationAIViewModel = conversationAIViewModel,
+                            chatViewModel = chatViewModel!!,
+                            snackbarHostState = snackbarHostState,
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                    }
+
+                    entry<Screen.Map> {
+                        MapScreen(snackbarHostState = snackbarHostState)
+                    }
+
+                    entry<Screen.Memories> {
+                        MemoriesScreen(snackbarHostState = snackbarHostState)
+                    }
+
+                    entry<Screen.More> {
+                        MoreScreen(
+                            navigateToSettings = { backStack.add(Screen.Settings) },
+                            navigateToChat = { backStack.add(Screen.Chat) },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.Settings> {
+                        SettingsScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            navigateToChangeDisplayName = { backStack.add(Screen.ChangeDisplayName) },
+                            navigateToChangePassword = { backStack.add(Screen.ChangePassword) },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.LiveTranslate> {
+                        LiveTranslateScreen(
+                            viewModel = conversationAIViewModel,
+                            onBack = { backStack.removeLastOrNull() })
+                    }
+
+                    entry<Screen.OtpConfirmRegistration> { screen ->
+                        OtpConfirmRegistrationScreen(
+                            viewModel = koinViewModel {
+                                parametersOf(OtpConfirmRegistrationNavArgs(email = screen.email))
+                            },
+                            onBack = { backStack.removeLastOrNull() },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.OtpReauthenticate> { screen ->
+                        OtpReauthenticateScreen(
+                            viewModel = koinViewModel {
+                                parametersOf(
+                                    OtpReauthenticateNavArgs(
+                                        screen.password,
+                                        screen.confirmPassword
+                                    )
+                                )
+                            },
+                            onBack = { message ->
+                                backStack.removeLastOrNull()
+                                if (message != null) {
+                                    backStack.removeLastOrNull()
+                                    scope.launch { snackbarHostState.showSnackbar(message) }
+                                }
+                            },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.Chat> {
+                        ChatScreen(
+                            viewModel = chatViewModel!!,
+                            onBack = { backStack.removeLastOrNull() },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+
+                    entry<Screen.Journeys> {
+                        JourneysScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onJourneyClick = {
+
+                            },
+                        )
+                    }
+                }
+
+            )
+            val scope = rememberCoroutineScope()
+            var initialElementHeight by remember { mutableStateOf(56.dp) }
+            val density = LocalDensity.current
+            val draggableState = rememberDraggableFlingStateWithDynamicSize(
+                padding = 16.dp,
+                initialElementHeight = initialElementHeight
+            )
+
+            VerticalFloatingToolbar(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .onSizeChanged { size ->
+                        val newHeight = with(density) {
+                            size.width.toDp()
+                        }
+                        if (newHeight != initialElementHeight) {
+                            initialElementHeight = newHeight
+                        }
+                    }
+                    .offset {
+                        IntOffset(
+                            draggableState.offsetX.value.roundToInt(),
+                            draggableState.offsetY.value.roundToInt()
+                        )
+                    }
+                    .draggableWithDynamicFling(draggableState, scope)
+                    .polarisDropShadow(),
+                expanded = state.value.isControlPanelExpanded,
+                leadingContent = {
+                    ConversationalAI(
+                        viewModel = conversationAIViewModel,
                         snackbarHostState = snackbarHostState
                     )
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            imageVector = FilterFocus,
+                            contentDescription = "Live Translate"
+                        )
+                    }
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Explore,
+                            contentDescription = "Explore"
+                        )
+                    }
+
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = "My Location"
+                        )
+                    }
+                },
+                content = {
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors().copy(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        onClick = {
+                            viewModel.onAction(AppAction.OnControlPanelExpandedChanged)
+                        }
+                    ) {
+                        if (state.value.isControlPanelExpanded) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Expand toolbar"
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = "Collapse toolbar"
+                            )
+                        }
+                    }
                 }
-
-                entry<Screen.Chat> {
-                    ChatScreen(
-                        viewModel = chatViewModel!!,
-                        onBack = { backStack.removeLastOrNull() },
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-
-                entry<Screen.Journeys> {
-                    JourneysScreen(
-                        onBack = { backStack.removeLastOrNull() },
-                        onJourneyClick = {
-
-                        },
-                    )
-                }
-            }
-
-        )
+            )
+        }
     }
     StatusBarProtection(
         color = MaterialTheme.colorScheme.surfaceContainer,

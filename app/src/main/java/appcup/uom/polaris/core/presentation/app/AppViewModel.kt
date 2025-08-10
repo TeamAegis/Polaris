@@ -138,6 +138,12 @@ class AppViewModel(
                     }
                 })
             }
+
+            AppAction.OnControlPanelExpandedChanged -> {
+                _state.update {
+                    it.copy(isControlPanelExpanded = !it.isControlPanelExpanded)
+                }
+            }
         }
     }
 

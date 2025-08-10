@@ -1,5 +1,7 @@
 package appcup.uom.polaris.features.polaris.data
 
+import android.util.Log
+import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
@@ -192,6 +194,45 @@ class PolarisRepositoryImpl(
             runBlocking {
                 supabaseClient.realtime.removeChannel(channel)
             }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun setPersonalWaypointsAsUnlocked(journey: Journey, unlockedWaypoints: List<PersonalWaypoint>, allWaypoints: List<PersonalWaypoint>): Result<Unit, DataError.JourneyError> {
+        return try {
+            supabaseClient.from("personal_waypoints").update({
+                PersonalWaypoint::isUnlocked setTo true
+            }) {
+                filter {
+                    PersonalWaypoint::id isIn (unlockedWaypoints.map { it.id })
+                }
+            }
+
+            val isStillInProgress = unlockedWaypoints.size < allWaypoints.filter { !it.isUnlocked }.size
+
+
+            if (isStillInProgress && journey.status == JourneyStatus.NOT_STARTED) {
+                supabaseClient.from("journeys").update({
+                    Journey::status setTo JourneyStatus.IN_PROGRESS
+                }) {
+                    filter {
+                        Journey::id eq journey.id
+                    }
+                }
+
+            } else {
+                supabaseClient.from("journeys").update({
+                    Journey::status setTo JourneyStatus.COMPLETED
+                }) {
+                    filter {
+                        Journey::id eq journey.id
+                    }
+                }
+            }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
         }
     }
 }

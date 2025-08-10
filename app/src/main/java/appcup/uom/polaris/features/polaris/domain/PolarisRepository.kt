@@ -30,5 +30,7 @@ interface PolarisRepository {
 
     fun getPublicWaypoints(): Flow<List<PublicWaypoint>>
 
+    suspend fun setPersonalWaypointsAsUnlocked(journey: Journey, unlockedWaypoints: List<PersonalWaypoint>, allWaypoints: List<PersonalWaypoint>): Result<Unit, DataError.JourneyError>
+
 
 }
