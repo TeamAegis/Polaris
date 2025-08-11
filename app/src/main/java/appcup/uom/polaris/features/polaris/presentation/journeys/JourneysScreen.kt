@@ -3,6 +3,7 @@
 package appcup.uom.polaris.features.polaris.presentation.journeys
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -87,25 +88,64 @@ fun JourneysScreenImpl(
             .statusBarsPadding()
             .imePadding(),
         topBar = {
-            Column {
-                PolarisTopAppBar(
-                    "Journeys",
-                    navigationIcon = {
-                        PolarisIconButton(
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-
-                        ) {
-                            onAction(JourneysAction.OnBackClicked)
-                        }
-                    }
+            Column(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
+            ) {
+                PolarisInputField(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    label = "Search journeys",
+                    value = state.searchQuery,
+                    onValueChange = { onAction(JourneysAction.OnSearchQueryChanged(it)) },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Search
+                    )
                 )
 
+                Spacer(Modifier.height(12.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(
+                        horizontal = 16.dp,
+                    )
+                ) {
+                    item {
+                        val selected = state.selectedStatus == null
+                        FilterChip(
+                            selected = selected,
+                            leadingIcon = {
+                                if (selected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            onClick = { onAction(JourneysAction.OnStatusSelected(null)) },
+                            label = { Text("All") }
+                        )
+                    }
+
+                    items(JourneyStatus.entries.size) { index ->
+                        val status = JourneyStatus.entries[index]
+                        val selected = state.selectedStatus != null && state.selectedStatus == status
+                        FilterChip(
+                            leadingIcon = {
+                                if (selected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            selected = selected,
+                            onClick = { onAction(JourneysAction.OnStatusSelected(status)) },
+                            label = { Text(status.label) }
+                        )
+                    }
+                }
                 if (state.isLoading)
                     LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -113,68 +153,8 @@ fun JourneysScreenImpl(
     ) { padding ->
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
         ) {
-            PolarisInputField(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                label = "Search journeys",
-                value = state.searchQuery,
-                onValueChange = { onAction(JourneysAction.OnSearchQueryChanged(it)) },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Search
-                )
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(
-                    horizontal = 16.dp
-                )
-            ) {
-                item {
-                    val selected = state.selectedStatus == null
-                    FilterChip(
-                        selected = selected,
-                        leadingIcon = {
-                            if (selected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        onClick = { onAction(JourneysAction.OnStatusSelected(null)) },
-                        label = { Text("All") }
-                    )
-                }
-
-                items(JourneyStatus.entries.size) { index ->
-                    val status = JourneyStatus.entries[index]
-                    val selected = state.selectedStatus != null && state.selectedStatus == status
-                    FilterChip(
-                        leadingIcon = {
-                            if (selected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        selected = selected,
-                        onClick = { onAction(JourneysAction.OnStatusSelected(status)) },
-                        label = { Text(status.label) }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
             if (!state.filteredJourneys.isEmpty() && !state.isLoading) {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -182,7 +162,7 @@ fun JourneysScreenImpl(
                         .padding(horizontal = 16.dp)
                         .fillMaxSize(),
                     contentPadding = PaddingValues(
-                        top = 12.dp,
+                        top = padding.calculateTopPadding() + 16.dp,
                         bottom = 128.dp
                     )
                 ) {

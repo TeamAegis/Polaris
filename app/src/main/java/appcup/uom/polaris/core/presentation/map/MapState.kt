@@ -37,14 +37,9 @@ data class MapState(
     val discoveredPublicWaypoints: List<PublicWaypoint> = emptyList(),
 
 
-    val selectedJourney: Journey? = Journey(
-        Uuid.parse("74fd1c95-829f-41f0-9d20-2b0d1a4bce3a"),
-        "Test",
-        "Test",
-        listOf(Preferences.FOOD, Preferences.ATTRACTIONS),
-        "rphyB_w{~IeAw@cBpDkAnC{AbGaAtAkAnAt@x@YRmBpBbAt@cAu@oE~Fc@`@OHaCd@HPnBjBsAjAq@hAcBjBQOpLfJhN_TvEkHlDuFd@u@",
-        JourneyStatus.NOT_STARTED,
-        Uuid.parse("a96830c4-4a22-42ce-9d70-ca3b15ab0848"),
-    ),
+    val shouldShowStartJourneyDialog: Boolean = true,
+    val startableJourneys: List<Journey> = emptyList(),
+    val selectedJourney: Journey? = null,
     val waypointsForSelectedJourney: List<PersonalWaypoint> = emptyList(),
+    val isJourneyCompleted: Boolean = false,
 )

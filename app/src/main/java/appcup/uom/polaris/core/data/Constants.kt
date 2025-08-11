@@ -8,9 +8,6 @@ import com.google.maps.android.compose.MapUiSettings
 object Constants {
     const val NAME = "Polaris"
     const val PREFERENCES_THEME = "theme"
-    const val PREFERENCES_AMOLED = "amoled"
-    const val PREFERENCES_THEME_COLOR = "theme_color"
-
 
     const val DEEPLINK_SCHEMA = "polaris"
     const val DEEPLINK_HOST_AUTH = "auth.polaris.uom"
@@ -18,7 +15,7 @@ object Constants {
 
     const val DEBUG_VALUE = "DEBUG AEGIS: "
 
-    const val GEMINI_LIVE_API_MODEL = "gemini-2.5-flash-preview-native-audio-dialog"
+    const val GEMINI_LIVE_API_MODEL = "gemini-live-2.5-flash-preview"
     const val GEMINI_API_MODEL = "gemini-2.5-flash"
 
     // Google Maps Const
@@ -48,6 +45,8 @@ object Constants {
     )
     const val MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES = 500
     const val MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES = 50
+
+    const val MAP_STARTING_PROMPT_RADIUS_IN_METRES = 50
 
     fun getSystemInstructions(): String {
         return "Polaris AI Assistant System Instructions for Android App\n" +

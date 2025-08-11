@@ -2,7 +2,6 @@ package appcup.uom.polaris.features.conversational_ai.data
 
 import ai.pipecat.client.types.Value
 import appcup.uom.polaris.core.extras.navigation.Screen
-import appcup.uom.polaris.core.extras.theme.SeedColor
 import appcup.uom.polaris.core.presentation.settings.AppTheme
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallAction
 
@@ -129,62 +128,6 @@ object ConversationalAITools {
         )
     )
 
-    val changeSeedColorTool = Value.Object(
-        values = arrayOf(
-            "name" to Value.Str(FunctionCallAction.CHANGE_SEED_COLOR.name),
-            "description" to Value.Str("Must navigate to Settings Screen first. Changes the application's seed color/theme color. This allows the user to switch between different color palettes for the app's UI."),
-            "parameters" to Value.Object(
-                values = arrayOf(
-                    "type" to Value.Str("OBJECT"),
-                    "properties" to Value.Object(
-                        values = arrayOf(
-                            "seed_color" to Value.Object(
-                                values = arrayOf(
-                                    "type" to Value.Str("STRING"),
-                                    "description" to Value.Str("The seed color to apply. This must be one of the available seed colors."),
-                                    "enum" to Value.Array(
-                                        values = SeedColor.entries.map { Value.Str(it.name) }
-                                            .toTypedArray()
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                    "required" to Value.Array(
-                        values = arrayOf(
-                            Value.Str("seed_color")
-                        )
-                    )
-                )
-            )
-        )
-    )
-
-    val enableAmoledModeTool = Value.Object(
-        values = arrayOf(
-            "name" to Value.Str(FunctionCallAction.ENABLE_AMOLED_MODE.name),
-            "description" to Value.Str("Must navigate to Settings Screen first. Enables or disables AMOLED mode, which uses pure black backgrounds to save battery on AMOLED screens."),
-            "parameters" to Value.Object(
-                values = arrayOf(
-                    "type" to Value.Str("OBJECT"),
-                    "properties" to Value.Object(
-                        values = arrayOf(
-                            "enable" to Value.Object(
-                                values = arrayOf(
-                                    "type" to Value.Str("BOOLEAN"),
-                                    "description" to Value.Str("Whether to enable or disable AMOLED mode.")
-                                )
-                            )
-                        )
-                    ),
-                    "required" to Value.Array(
-                        values = arrayOf(Value.Str("enable"))
-                    )
-                )
-            )
-        )
-    )
-
 
     val toolsArray = arrayOf(
         navigateToScreenTool,
@@ -192,8 +135,6 @@ object ConversationalAITools {
         changeThemeTool,
         navigateBackTool,
         getScreenDetailsTool,
-        changeSeedColorTool,
-        enableAmoledModeTool
     )
 
 }

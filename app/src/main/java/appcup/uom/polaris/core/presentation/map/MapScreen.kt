@@ -1,34 +1,46 @@
 package appcup.uom.polaris.core.presentation.map
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.extras.theme.map_style
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
-import appcup.uom.polaris.core.presentation.map.components.MapOverlayControls
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
-import org.koin.compose.viewmodel.koinViewModel
+import com.google.maps.android.compose.Polyline
 
 @Composable
 fun MapScreen(
-    viewModel: MapViewModel = koinViewModel(),
+    viewModel: MapViewModel,
     snackbarHostState: SnackbarHostState
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -51,6 +63,16 @@ fun MapScreen(
         )
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.event.collect { event ->
+            when (event) {
+                MapEvent.OnJourneyCompleted -> {
+                    viewModel.onAction(MapActions.OnJourneyCompletedDialogVisibilityChanged(true))
+                }
+            }
+        }
+    }
+
     MapScreenImpl(
         state = state,
         onAction = { action ->
@@ -67,39 +89,77 @@ fun MapScreenImpl(
     state: MapState,
     onAction: (MapActions) -> Unit
 ) {
+
+    if (state.isJourneyCompleted) {
+        AlertDialog(
+            onDismissRequest = {
+                onAction(MapActions.OnJourneyCompletedDialogVisibilityChanged(false))
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Success",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(40.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Journey Complete!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Text(
+                    text = "Congratulations! You've successfully completed \"${state.selectedJourney!!.name}\".",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onAction(MapActions.OnJourneyCompletedDialogVisibilityChanged(false))
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Okay")
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
     ) { contentPadding ->
-        Box {
+        GoogleMap(
+            modifier = Modifier
+                .fillMaxSize(),
+            cameraPositionState = state.currentCameraPositionState,
+            uiSettings = if (state.isTrackingUser) Constants.MAP_PREVIEW_UI_SETTINGS else MapUiSettings(
+                compassEnabled = false,
+                indoorLevelPickerEnabled = false,
+                mapToolbarEnabled = false,
+                myLocationButtonEnabled = false,
+                zoomControlsEnabled = false,
+            ),
+            properties = MapProperties(
+                latLngBoundsForCameraTarget = Constants.MAP_LAT_LNG_BOUNDS,
+                isBuildingEnabled = true,
+                mapStyleOptions = MapStyleOptions(map_style)
+            )
+        ) {
 
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxSize(),
-                cameraPositionState = state.currentCameraPositionState,
-                uiSettings = if (state.isTrackingUser) Constants.MAP_PREVIEW_UI_SETTINGS else MapUiSettings(
-                    compassEnabled = false,
-                    indoorLevelPickerEnabled = false,
-                    mapToolbarEnabled = false,
-                    myLocationButtonEnabled = false,
-//                rotationGesturesEnabled = false,
-//                scrollGesturesEnabled = false,
-//                scrollGesturesEnabledDuringRotateOrZoom = false,
-//                tiltGesturesEnabled = false,
-                    zoomControlsEnabled = false,
-//                zoomGesturesEnabled = false,
-                ),
-                properties = MapProperties(
-                    latLngBoundsForCameraTarget = Constants.MAP_LAT_LNG_BOUNDS,
-                    isBuildingEnabled = true,
-                    mapStyleOptions = MapStyleOptions(map_style)
-                )
-            ) {
+            Marker(
+                state = state.currentMarkerState
+            )
 
-                Marker(
-                    state = state.currentMarkerState
-                )
-
+            if (state.selectedJourney == null) {
                 state.allMyWaypoints.forEach { waypoint ->
                     Marker(
                         state = MarkerState(
@@ -110,8 +170,21 @@ fun MapScreenImpl(
                         )
                     )
                 }
+            }
 
-                state.discoveredPublicWaypoints.forEach { waypoint ->
+            state.discoveredPublicWaypoints.forEach { waypoint ->
+                Marker(
+                    state = MarkerState(
+                        position = LatLng(
+                            waypoint.latitude,
+                            waypoint.longitude
+                        )
+                    )
+                )
+            }
+
+            if (state.selectedJourney != null) {
+                state.waypointsForSelectedJourney.forEach { waypoint ->
                     Marker(
                         state = MarkerState(
                             position = LatLng(
@@ -120,19 +193,13 @@ fun MapScreenImpl(
                             )
                         )
                     )
+
                 }
+                Polyline(
+                    points = PolyUtil.decode(state.selectedJourney.encodedPolyline)
+                )
             }
         }
-        MapOverlayControls(
-            state = state,
-            modifier = Modifier.fillMaxSize(),
-            onToggleMap = {
-                onAction(MapActions.OnTrackingUserChanged(!state.isTrackingUser))
-            },
-            onCompassClick = {
-                onAction(MapActions.OnCompassClick)
-            }
-        )
 
     }
 

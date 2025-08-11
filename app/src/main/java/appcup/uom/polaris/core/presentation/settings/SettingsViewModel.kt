@@ -2,17 +2,16 @@ package appcup.uom.polaris.core.presentation.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import appcup.uom.polaris.core.domain.DataError
-import appcup.uom.polaris.core.domain.Event
-import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.EventBus
 import appcup.uom.polaris.core.data.StaticData
+import appcup.uom.polaris.core.domain.DataError
+import appcup.uom.polaris.core.domain.Event
+import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.domain.Value.Str
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,7 +24,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val userRepository: UserRepository,
     private val prefs: DataStore<Preferences>
-): ViewModel() {
+) : ViewModel() {
     private val _state = MutableStateFlow(SettingsState())
     val state = _state.asStateFlow()
 
@@ -37,8 +36,6 @@ class SettingsViewModel(
             _state.update {
                 it.copy(
                     theme = StaticData.appTheme,
-                    isAmoled = StaticData.isAmoled,
-                    themeColor = StaticData.seedColor,
                 )
             }
 
@@ -60,37 +57,6 @@ class SettingsViewModel(
                         action.onResult(mapOf("result" to Str("success")))
                     }
 
-                    is Event.OnSeedColorChange -> {
-                        viewModelScope.launch {
-                            prefs.edit {
-                                val themeColor = stringPreferencesKey(Constants.PREFERENCES_THEME_COLOR)
-                                it[themeColor] = action.seedColor.name
-                            }
-                        }
-                        _state.update {
-                            it.copy(
-                                themeColor = action.seedColor,
-                            )
-                        }
-
-                        action.onResult(mapOf("result" to Str("success")))
-                    }
-
-                    is Event.OnAmoledModeChange -> {
-                        viewModelScope.launch {
-                            prefs.edit {
-                                val amoledKey = booleanPreferencesKey(Constants.PREFERENCES_AMOLED)
-                                it[amoledKey] = action.enable
-                            }
-                        }
-                        _state.update {
-                            it.copy(
-                                isAmoled = action.enable,
-                            )
-                        }
-                        action.onResult(mapOf("result" to Str("success")))
-                    }
-
                     else -> {}
                 }
 
@@ -99,7 +65,7 @@ class SettingsViewModel(
     }
 
     fun onAction(action: SettingsAction) {
-        when(action) {
+        when (action) {
             is SettingsAction.OnThemeChanged -> {
                 viewModelScope.launch {
                     prefs.edit {
@@ -113,6 +79,7 @@ class SettingsViewModel(
                     )
                 }
             }
+
             is SettingsAction.OnThemeBottomSheetToggled -> {
                 _state.update {
                     it.copy(
@@ -120,39 +87,7 @@ class SettingsViewModel(
                     )
                 }
             }
-            is SettingsAction.OnAmoledChanged -> {
-                _state.update {
-                    it.copy(
-                        isAmoled = !_state.value.isAmoled,
-                    )
-                }
-                viewModelScope.launch {
-                    prefs.edit {
-                        val amoledKey = booleanPreferencesKey(Constants.PREFERENCES_AMOLED)
-                        it[amoledKey] = _state.value.isAmoled
-                    }
-                }
-            }
-            is SettingsAction.OnColorChanged -> {
-                _state.update {
-                    it.copy(
-                        themeColor = action.color,
-                    )
-                }
-                viewModelScope.launch {
-                    prefs.edit {
-                        val themeColor = stringPreferencesKey(Constants.PREFERENCES_THEME_COLOR)
-                        it[themeColor] = _state.value.themeColor.name
-                    }
-                }
-            }
-            is SettingsAction.OnColorBottomSheetToggled -> {
-                _state.update {
-                    it.copy(
-                        isColorBottomSheetVisible = action.show,
-                    )
-                }
-            }
+
             SettingsAction.OnLogoutClicked -> {
                 _state.update {
                     it.copy(
@@ -170,6 +105,7 @@ class SettingsViewModel(
                         is Result.Error<DataError.AuthError> -> {
                             _event.emit(SettingsEvent.Error(res.error.message))
                         }
+
                         else -> {}
                     }
                 }

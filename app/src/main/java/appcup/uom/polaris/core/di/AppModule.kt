@@ -14,8 +14,6 @@ import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
-import com.google.android.libraries.places.api.net.PlacesClient
-import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -50,8 +48,8 @@ class AppModule {
     }
 
     @KoinViewModel
-    fun appViewModel(supabaseClient: SupabaseClient, permissionBridge: PermissionBridge) =
-        AppViewModel(supabaseClient = supabaseClient, permissionBridge = permissionBridge)
+    fun appViewModel(permissionBridge: PermissionBridge) =
+        AppViewModel(permissionBridge = permissionBridge)
 
     @KoinViewModel
     fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>) =

@@ -2,6 +2,8 @@ package appcup.uom.polaris.core.presentation.app
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,15 +19,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
@@ -50,10 +51,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -80,28 +81,26 @@ import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import appcup.uom.polaris.core.data.EventBus
 import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.extras.navigation.Screen
-import appcup.uom.polaris.core.extras.navigation.rebaseTo
+import appcup.uom.polaris.core.presentation.components.AnimatedJourneyProgressTopBar
 import appcup.uom.polaris.core.presentation.components.BottomBar
-import appcup.uom.polaris.core.presentation.components.BottomBarVisibility
 import appcup.uom.polaris.core.presentation.components.FilterFocus
+import appcup.uom.polaris.core.presentation.components.JourneyCardPager
 import appcup.uom.polaris.core.presentation.components.draggableWithDynamicFling
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.core.presentation.components.rememberDraggableFlingStateWithDynamicSize
+import appcup.uom.polaris.core.presentation.map.MapActions
 import appcup.uom.polaris.core.presentation.map.MapScreen
+import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesScreen
 import appcup.uom.polaris.core.presentation.more.MoreScreen
 import appcup.uom.polaris.core.presentation.settings.SettingsScreen
 import appcup.uom.polaris.features.auth.presentation.change_password.ChangePasswordScreen
 import appcup.uom.polaris.features.auth.presentation.display_name.DisplayNameScreen
 import appcup.uom.polaris.features.auth.presentation.forgot_password.ForgotPasswordScreen
-import appcup.uom.polaris.features.auth.presentation.login.LoginScreen
 import appcup.uom.polaris.features.auth.presentation.otp_confirm_registration.OtpConfirmRegistrationNavArgs
 import appcup.uom.polaris.features.auth.presentation.otp_confirm_registration.OtpConfirmRegistrationScreen
 import appcup.uom.polaris.features.auth.presentation.otp_reauthenticate.OtpReauthenticateNavArgs
 import appcup.uom.polaris.features.auth.presentation.otp_reauthenticate.OtpReauthenticateScreen
-import appcup.uom.polaris.features.auth.presentation.register.RegisterScreen
-import appcup.uom.polaris.features.auth.presentation.reset_password.ResetPasswordScreen
-import appcup.uom.polaris.features.auth.presentation.start.StartScreen
 import appcup.uom.polaris.features.chat.presentation.chat.ChatScreen
 import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
@@ -121,32 +120,21 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun App(
+fun AuthenticatedApp(
     viewModel: AppViewModel = koinInject()
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
     val backStack =
-        rememberNavBackStack(if (state.value.isAuthenticated) Screen.Map else Screen.Start)
+        rememberNavBackStack(Screen.Map)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val chatViewModel: ChatViewModel? = if (state.value.isAuthenticated) {
-        koinViewModel()
-    } else {
-        null
-    }
+    val chatViewModel: ChatViewModel = koinViewModel()
+
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
             when (event) {
-                AppEvent.Authenticated -> {
-                    backStack.rebaseTo(listOf(Screen.Map))
-                }
-
-                AppEvent.Unauthenticated -> {
-                    backStack.rebaseTo(listOf(Screen.Start))
-                }
-
                 AppEvent.CameraPermissionDenied -> {
                     scope.launch {
                         snackbarHostState.showSnackbar("Camera permission denied")
@@ -157,10 +145,6 @@ fun App(
                     scope.launch {
                         snackbarHostState.showSnackbar("Camera permission denied. Please enable it from settings.")
                     }
-                }
-
-                AppEvent.CameraPermissionGranted -> {
-
                 }
 
                 AppEvent.LocationPermissionDenied -> {
@@ -175,9 +159,7 @@ fun App(
                     }
                 }
 
-                AppEvent.LocationPermissionGranted -> {
-
-                }
+                else -> {}
             }
         }
     }
@@ -192,13 +174,12 @@ fun App(
         }
     }
 
-
-    val isBottomBarVisible = rememberSaveable { mutableStateOf(false) }
-    backStack.BottomBarVisibility(isBottomBarVisible)
-
     val conversationAIViewModel: ConversationalAIViewModel = koinViewModel()
     val conversationAIState = conversationAIViewModel.state.collectAsStateWithLifecycle()
 
+
+    val mapViewModel: MapViewModel = koinViewModel()
+    val mapState = mapViewModel.state.collectAsStateWithLifecycle()
 
 
 
@@ -206,156 +187,162 @@ fun App(
         modifier = Modifier
             .imePadding()
             .navigationBarsPadding(),
+        topBar = {
+            if (mapState.value.selectedJourney != null && mapState.value.waypointsForSelectedJourney.isNotEmpty()) {
+                AnimatedJourneyProgressTopBar(
+                    targetProgress = mapState.value.waypointsForSelectedJourney.filter { it.isUnlocked }.size.toFloat() / mapState.value.waypointsForSelectedJourney.size,
+                    journeyName = mapState.value.selectedJourney!!.name,
+                    onStopJourney = {
+                        mapViewModel.onAction(MapActions.OnStopJourneyClicked)
+                    }
+                )
+            }
+        },
         bottomBar = {
             Column {
                 AnimatedVisibility(
-                    visible = isBottomBarVisible.value,
+                    visible = backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty() && mapState.value.shouldShowStartJourneyDialog,
+                ) {
+                    JourneyCardPager(
+                        journeys = mapState.value.startableJourneys,
+                        onStartJourney = { journey ->
+                            mapViewModel.onAction(MapActions.OnStartJourneyClicked(journey))
+                        },
+                        onViewDetails = {
+
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = when (backStack.last()) {
+                        Screen.Map, Screen.Journeys, Screen.Memories, Screen.More -> true
+                        else -> false
+                    },
                     enter = slideInVertically(initialOffsetY = { it }),
                     exit = slideOutVertically(targetOffsetY = { it })
                 ) {
-                    BottomBar(
-                        navBackStack = backStack,
-                        state = state.value,
-                        onLocationPermissionRequest = {
-                            if (!state.value.hasLocationPermission) {
-                                viewModel.onAction(AppAction.RequestLocationPermission)
-                            }
-                        })
+                    BottomBar(navBackStack = backStack)
                 }
             }
         },
         floatingActionButton = {
-            if (state.value.isAuthenticated) {
-                if ((conversationAIState.value.isRecording || !isBottomBarVisible.value) && backStack.last() !is Screen.Chat) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .padding(
-                                bottom = if (backStack.last() is Screen.Map) 72.dp else 0.dp
-                            ),
-                    ) {
-                        ConversationalAI(
-                            viewModel = conversationAIViewModel,
-                            snackbarHostState = snackbarHostState
-                        )
-
-                        if (backStack.last() is Screen.Journeys) {
-                            FloatingActionButton(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                onClick = {
-                                    if (!state.value.hasLocationPermission) {
-                                        viewModel.onAction(AppAction.RequestLocationPermission)
-                                    } else {
-                                        scope.launch {
-                                            EventBus.emit(
-                                                Event.OnCreateJourneyBottomSheetVisibilityChanged(
-                                                    true
-                                                )
-                                            )
-                                        }
-                                        backStack.add(Screen.CreateJourney)
-                                    }
+            if (backStack.last() is Screen.Map && !conversationAIState.value.isRecording) {
+                val primaryColor = MaterialTheme.colorScheme.primary
+                FloatingActionButtonMenu(
+                    modifier = Modifier
+                        .absoluteOffset(
+                            x = 16.dp,
+                            y = 16.dp
+                        ),
+                    expanded = state.value.isFabMenuExpanded,
+                    button = {
+                        ToggleFloatingActionButton(
+                            containerColor = { primaryColor },
+                            modifier = Modifier
+                                .semantics {
+                                    traversalIndex = -1f
+                                    stateDescription =
+                                        if (state.value.isFabMenuExpanded) "Expanded" else "Collapsed"
+                                    contentDescription = "Toggle menu"
                                 }
-                            ) {
-                                Icon(Icons.Filled.Add, contentDescription = "Add")
-                            }
-                        }
-                    }
-                } else if (isBottomBarVisible.value) {
-                    val primaryColor = MaterialTheme.colorScheme.primary
-
-                    FloatingActionButtonMenu(
-                        modifier = Modifier
-                            .absoluteOffset(
-                                x = 16.dp,
-                                y = if (backStack.last() is Screen.Map) (-56).dp else 16.dp
-                            ),
-                        expanded = state.value.isFabMenuExpanded,
-                        button = {
-                            ToggleFloatingActionButton(
-                                containerColor = { primaryColor },
-                                modifier = Modifier
-                                    .semantics {
-                                        traversalIndex = -1f
-                                        stateDescription =
-                                            if (state.value.isFabMenuExpanded) "Expanded" else "Collapsed"
-                                        contentDescription = "Toggle menu"
-                                    }
-                                    .animateFloatingActionButton(
-                                        visible = true,
-                                        alignment = Alignment.BottomEnd,
-                                    ),
-                                checked = state.value.isFabMenuExpanded,
-                                onCheckedChange = {
-                                    viewModel.onAction(
-                                        AppAction.OnFabMenuExpanded(
-                                            it
-                                        )
+                                .animateFloatingActionButton(
+                                    visible = true,
+                                    alignment = Alignment.BottomEnd,
+                                ),
+                            checked = state.value.isFabMenuExpanded,
+                            onCheckedChange = {
+                                viewModel.onAction(
+                                    AppAction.OnFabMenuExpanded(
+                                        it
                                     )
-                                },
-                            ) {
-                                val imageVector by remember {
-                                    derivedStateOf {
-                                        if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
-                                    }
-                                }
-                                Icon(
-                                    painter = rememberVectorPainter(imageVector),
-                                    contentDescription = null,
-                                    modifier = Modifier.animateIcon({ checkedProgress }),
                                 )
+                            },
+                        ) {
+                            val imageVector by remember {
+                                derivedStateOf {
+                                    if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
+                                }
                             }
-                        },
-                    ) {
-                        FabMenuItem.entries.forEachIndexed { i, item ->
-                            FloatingActionButtonMenuItem(
-                                modifier = Modifier.semantics {
-                                    isTraversalGroup = true
-                                    if (i == FabMenuItem.entries.size - 1) {
-                                        customActions = listOf(
-                                            CustomAccessibilityAction(
-                                                label = "Close menu",
-                                                action = {
-                                                    viewModel.onAction(
-                                                        AppAction.OnFabMenuExpanded(
-                                                            false
-                                                        )
-                                                    )
-                                                    true
-                                                },
-                                            )
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    viewModel.onAction(AppAction.OnFabMenuExpanded(false))
-                                    when (item) {
-                                        FabMenuItem.LiveTranslate -> {
-                                            if (!state.value.hasCameraPermission) {
-                                                viewModel.onAction(AppAction.RequestCameraPermission)
-                                            } else {
-                                                backStack.add(Screen.LiveTranslate)
-                                            }
-                                        }
-
-                                        FabMenuItem.VoiceAssistant -> {
-                                            conversationAIViewModel.onAction(ConversationalAIAction.StartRecording)
-                                        }
-
-                                        FabMenuItem.Journeys -> {
-                                            backStack.add(Screen.Journeys)
-                                        }
-                                    }
-                                },
-                                icon = { Icon(item.imageVector, contentDescription = null) },
-                                text = { Text(text = item.label) },
+                            Icon(
+                                painter = rememberVectorPainter(imageVector),
+                                contentDescription = null,
+                                modifier = Modifier.animateIcon({ checkedProgress }),
                             )
                         }
+                    },
+                ) {
+                    FabMenuItem.entries.forEachIndexed { i, item ->
+                        FloatingActionButtonMenuItem(
+                            modifier = Modifier.semantics {
+                                isTraversalGroup = true
+                                if (i == FabMenuItem.entries.size - 1) {
+                                    customActions = listOf(
+                                        CustomAccessibilityAction(
+                                            label = "Close menu",
+                                            action = {
+                                                viewModel.onAction(
+                                                    AppAction.OnFabMenuExpanded(
+                                                        false
+                                                    )
+                                                )
+                                                true
+                                            },
+                                        )
+                                    )
+                                }
+                            },
+                            onClick = {
+                                viewModel.onAction(AppAction.OnFabMenuExpanded(false))
+                                when (item) {
+                                    FabMenuItem.LiveTranslate -> {
+                                        if (!state.value.hasCameraPermission) {
+                                            viewModel.onAction(AppAction.RequestCameraPermission)
+                                        } else {
+                                            backStack.add(Screen.LiveTranslate)
+                                        }
+                                    }
+
+                                    FabMenuItem.VoiceAssistant -> {
+                                        conversationAIViewModel.onAction(ConversationalAIAction.StartRecording)
+                                    }
+                                }
+                            },
+                            icon = { Icon(item.imageVector, contentDescription = null) },
+                            text = { Text(text = item.label) },
+                        )
                     }
                 }
+            }
 
+            if (backStack.last() is Screen.Map && conversationAIState.value.isRecording) {
+                ConversationalAI(
+                    viewModel = conversationAIViewModel,
+                    snackbarHostState = snackbarHostState
+                )
+            }
+
+            if (backStack.last() is Screen.Journeys) {
+                FloatingActionButton(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    onClick = {
+                        if (!state.value.hasLocationPermission) {
+                            viewModel.onAction(AppAction.RequestLocationPermission)
+                        } else {
+                            scope.launch {
+                                EventBus.emit(
+                                    Event.OnCreateJourneyBottomSheetVisibilityChanged(
+                                        true
+                                    )
+                                )
+                            }
+                            backStack.add(Screen.CreateJourney)
+                        }
+                    }
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -381,32 +368,7 @@ fun App(
                     fadeIn(tween(200)) togetherWith fadeOut(tween(200))
                 },
                 entryProvider = entryProvider {
-                    entry<Screen.Start> {
-                        StartScreen(
-                            navigateToLogin = { backStack.add(Screen.Login) },
-                            navigateToRegister = { backStack.add(Screen.Register) }
-                        )
-                    }
 
-                    entry<Screen.Login> {
-                        LoginScreen(
-                            onBack = { backStack.removeLastOrNull() },
-                            onForgotPassword = { backStack.add(Screen.ForgotPassword) },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
-
-                    entry<Screen.ResetPassword> {
-                        ResetPasswordScreen(
-                            onBack = { message ->
-                                backStack.removeLastOrNull()
-                                if (message != null) {
-                                    scope.launch { snackbarHostState.showSnackbar(message) }
-                                }
-                            },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
 
                     entry<Screen.ChangeDisplayName> {
                         DisplayNameScreen(
@@ -415,15 +377,6 @@ fun App(
                         )
                     }
 
-                    entry<Screen.Register> {
-                        RegisterScreen(
-                            onBack = { backStack.removeLastOrNull() },
-                            navigateToOtpConfirmRegistration = { email ->
-                                backStack.add(Screen.OtpConfirmRegistration(email))
-                            },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
 
                     entry<Screen.ChangePassword> {
                         ChangePasswordScreen(
@@ -453,14 +406,17 @@ fun App(
                     entry<Screen.CreateJourney> {
                         CreateJourneyScreen(
                             conversationAIViewModel = conversationAIViewModel,
-                            chatViewModel = chatViewModel!!,
+                            chatViewModel = chatViewModel,
                             snackbarHostState = snackbarHostState,
                             onBack = { backStack.removeLastOrNull() }
                         )
                     }
 
                     entry<Screen.Map> {
-                        MapScreen(snackbarHostState = snackbarHostState)
+                        MapScreen(
+                            viewModel = mapViewModel,
+                            snackbarHostState = snackbarHostState
+                        )
                     }
 
                     entry<Screen.Memories> {
@@ -523,7 +479,7 @@ fun App(
 
                     entry<Screen.Chat> {
                         ChatScreen(
-                            viewModel = chatViewModel!!,
+                            viewModel = chatViewModel,
                             onBack = { backStack.removeLastOrNull() },
                             snackbarHostState = snackbarHostState
                         )
@@ -547,6 +503,8 @@ fun App(
                 padding = 16.dp,
                 initialElementHeight = initialElementHeight
             )
+            val animatedBearing =
+                rememberSmoothBearing(mapState.value.currentCameraPositionState.position.bearing)
 
             VerticalFloatingToolbar(
                 modifier = Modifier
@@ -569,44 +527,75 @@ fun App(
                     .polarisDropShadow(),
                 expanded = state.value.isControlPanelExpanded,
                 leadingContent = {
-                    ConversationalAI(
-                        viewModel = conversationAIViewModel,
-                        snackbarHostState = snackbarHostState
-                    )
-                    IconButton(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        onClick = {
-
+                    if (backStack.last() is Screen.Map && conversationAIState.value.isRecording) {
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                if (!state.value.hasCameraPermission) {
+                                    viewModel.onAction(AppAction.RequestCameraPermission)
+                                } else {
+                                    backStack.add(Screen.LiveTranslate)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = FilterFocus,
+                                contentDescription = "Live Translate"
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = FilterFocus,
-                            contentDescription = "Live Translate"
-                        )
-                    }
-                    IconButton(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        onClick = {
-
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Explore,
-                            contentDescription = "Explore"
-                        )
                     }
 
-                    IconButton(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        onClick = {
-
+                    if (backStack.last() !is Screen.Map) {
+                        Column {
+                            ConversationalAI(
+                                viewModel = conversationAIViewModel,
+                                snackbarHostState = snackbarHostState
+                            )
+                            if (backStack.last() !is Screen.LiveTranslate) {
+                                IconButton(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    onClick = {
+                                        if (!state.value.hasCameraPermission) {
+                                            viewModel.onAction(AppAction.RequestCameraPermission)
+                                        } else {
+                                            backStack.add(Screen.LiveTranslate)
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = FilterFocus,
+                                        contentDescription = "Live Translate"
+                                    )
+                                }
+                            }
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MyLocation,
-                            contentDescription = "My Location"
-                        )
+                    } else {
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                mapViewModel.onAction(MapActions.OnCompassClicked)
+                            }
+                        ) {
+                            Icon(
+                                modifier = Modifier.rotate(animatedBearing),
+                                imageVector = Icons.Default.Explore,
+                                contentDescription = "Explore"
+                            )
+                        }
+
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                mapViewModel.onAction(MapActions.OnTrackingUserChanged(!mapState.value.isTrackingUser))
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (mapState.value.isTrackingUser) Icons.Default.MyLocation else Icons.Default.LocationSearching,
+                                contentDescription = if (mapState.value.isTrackingUser) "Stop tracking" else "Start tracking"
+                            )
+                        }
                     }
+
                 },
                 content = {
                     IconButton(
@@ -621,12 +610,12 @@ fun App(
                     ) {
                         if (state.value.isControlPanelExpanded) {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
+                                imageVector = Icons.Default.KeyboardArrowUp,
                                 contentDescription = "Expand toolbar"
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowUp,
+                                imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Collapse toolbar"
                             )
                         }
@@ -665,6 +654,15 @@ fun calculateGradientHeight(): () -> Float {
     val statusBars = WindowInsets.statusBars
     val density = LocalDensity.current
     return { statusBars.getTop(density).times(1.2f) }
+}
+
+@Composable
+fun rememberSmoothBearing(targetBearing: Float): Float {
+    val animated by animateFloatAsState(
+        targetValue = targetBearing - 45.0f,
+        animationSpec = tween(durationMillis = 10, easing = FastOutSlowInEasing)
+    )
+    return animated
 }
 
 
