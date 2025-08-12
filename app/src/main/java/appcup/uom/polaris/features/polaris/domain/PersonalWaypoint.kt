@@ -25,4 +25,29 @@ data class PersonalWaypoint(
     val userId: Uuid,
     @SerialName("journey_id")
     val journeyId: Uuid
-)
+) {
+    constructor(longitude: Double, latitude: Double, placeId: String) : this(
+        id = null,
+        placeId = placeId,
+        name = null,
+        address = null,
+        latitude = latitude,
+        longitude = longitude,
+        isUnlocked = false,
+        type = WaypointType.INTERMEDIATE,
+        userId = Uuid.random(),
+        journeyId = Uuid.random()
+    )
+}
+
+@OptIn(ExperimentalUuidApi::class)
+fun PersonalWaypoint.toWaypoint(): Waypoint
+    = Waypoint().copy(
+        id = this.id ?: Uuid.NIL,
+        placeId = this.placeId,
+        name = this.name ?: "",
+        address = this.address,
+        latitude = this.latitude,
+        longitude = this.longitude,
+        waypointType = this.type
+    )

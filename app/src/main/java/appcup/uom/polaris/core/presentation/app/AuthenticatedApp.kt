@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonMenu
@@ -85,6 +88,7 @@ import appcup.uom.polaris.core.presentation.components.AnimatedJourneyProgressTo
 import appcup.uom.polaris.core.presentation.components.BottomBar
 import appcup.uom.polaris.core.presentation.components.FilterFocus
 import appcup.uom.polaris.core.presentation.components.JourneyCardPager
+import appcup.uom.polaris.core.presentation.components.TrackingWaypointCard
 import appcup.uom.polaris.core.presentation.components.draggableWithDynamicFling
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.core.presentation.components.rememberDraggableFlingStateWithDynamicSize
@@ -108,6 +112,7 @@ import appcup.uom.polaris.features.conversational_ai.presentation.conversational
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
 import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
+import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
 import appcup.uom.polaris.features.polaris.presentation.journeys.JourneysScreen
 import kotlinx.coroutines.launch
@@ -181,6 +186,8 @@ fun AuthenticatedApp(
     val mapViewModel: MapViewModel = koinViewModel()
     val mapState = mapViewModel.state.collectAsStateWithLifecycle()
 
+    val isJourneyInProgress = mapState.value.selectedJourney != null && mapState.value.waypointsForSelectedJourney.isNotEmpty()
+
 
 
     Scaffold(
@@ -188,7 +195,7 @@ fun AuthenticatedApp(
             .imePadding()
             .navigationBarsPadding(),
         topBar = {
-            if (mapState.value.selectedJourney != null && mapState.value.waypointsForSelectedJourney.isNotEmpty()) {
+            if (isJourneyInProgress) {
                 AnimatedJourneyProgressTopBar(
                     targetProgress = mapState.value.waypointsForSelectedJourney.filter { it.isUnlocked }.size.toFloat() / mapState.value.waypointsForSelectedJourney.size,
                     journeyName = mapState.value.selectedJourney!!.name,
@@ -202,6 +209,8 @@ fun AuthenticatedApp(
             Column {
                 AnimatedVisibility(
                     visible = backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty() && mapState.value.shouldShowStartJourneyDialog,
+                    enter = slideInVertically(initialOffsetY = { it }),
+                    exit = slideOutVertically(targetOffsetY = { it })
                 ) {
                     JourneyCardPager(
                         journeys = mapState.value.startableJourneys,
@@ -209,6 +218,20 @@ fun AuthenticatedApp(
                             mapViewModel.onAction(MapActions.OnStartJourneyClicked(journey))
                         },
                         onViewDetails = {
+
+                        }
+                    )
+                }
+
+                AnimatedVisibility(mapState.value.isSelectedWaypointCardVisible && backStack.last() is Screen.Map) {
+                    TrackingWaypointCard(
+                        waypoint = if (mapState.value.selectedWaypoint != null) mapState.value.selectedWaypoint!! else Waypoint(),
+                        isLoading = mapState.value.selectedWaypoint == null,
+                        weather = mapState.value.selectedWeatherData,
+                        onDismiss = {
+                            mapViewModel.onAction(MapActions.OnTrackingWaypointCardDismissed)
+                        },
+                        onViewMore = {
 
                         }
                     )
@@ -351,6 +374,7 @@ fun AuthenticatedApp(
             modifier = Modifier.fillMaxSize()
         ) {
             NavDisplay(
+                modifier = Modifier.padding(top = if (isJourneyInProgress) innerPadding.calculateTopPadding() - 16.dp else 0.dp),
                 backStack = backStack,
                 onBack = { backStack.removeLastOrNull() },
                 entryDecorators = listOf(
@@ -594,6 +618,19 @@ fun AuthenticatedApp(
                                 contentDescription = if (mapState.value.isTrackingUser) "Stop tracking" else "Start tracking"
                             )
                         }
+
+                        if (backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty())
+                            IconButton(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                onClick = {
+                                    mapViewModel.onAction(MapActions.OnToggleShowStartJourneyDialog)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (mapState.value.shouldShowStartJourneyDialog) Icons.Default.StopCircle else Icons.Default.PlayCircle,
+                                    contentDescription = if (mapState.value.shouldShowStartJourneyDialog) "Hide start journey dialog" else "Show start journey dialog"
+                                )
+                            }
                     }
 
                 },

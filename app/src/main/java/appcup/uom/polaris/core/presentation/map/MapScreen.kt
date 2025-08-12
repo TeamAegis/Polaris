@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.extras.theme.map_style
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
+import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -113,7 +114,7 @@ fun MapScreenImpl(
             },
             text = {
                 Text(
-                    text = "Congratulations! You've successfully completed \"${state.selectedJourney!!.name}\".",
+                    text = "Congratulations! You've successfully completed the journey.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -152,7 +153,17 @@ fun MapScreenImpl(
                 latLngBoundsForCameraTarget = Constants.MAP_LAT_LNG_BOUNDS,
                 isBuildingEnabled = true,
                 mapStyleOptions = MapStyleOptions(map_style)
-            )
+            ),
+            onPOIClick = { poi ->
+                onAction(MapActions.OnPersonalWaypointClicked(
+                    PersonalWaypoint(
+                        latitude = poi.latLng.latitude,
+                        longitude = poi.latLng.longitude,
+                        placeId = poi.placeId
+                    )
+                ))
+                true
+            }
         ) {
 
             Marker(
@@ -167,7 +178,11 @@ fun MapScreenImpl(
                                 waypoint.latitude,
                                 waypoint.longitude
                             )
-                        )
+                        ),
+                        onClick = {
+                            onAction(MapActions.OnPersonalWaypointClicked(waypoint))
+                            true
+                        }
                     )
                 }
             }
@@ -191,7 +206,11 @@ fun MapScreenImpl(
                                 waypoint.latitude,
                                 waypoint.longitude
                             )
-                        )
+                        ),
+                        onClick = {
+                            onAction(MapActions.OnPersonalWaypointClicked(waypoint))
+                            true
+                        }
                     )
 
                 }

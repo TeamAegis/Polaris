@@ -2,6 +2,7 @@ package appcup.uom.polaris.features.polaris.di
 
 import android.content.Context
 import appcup.uom.polaris.core.domain.RoutesApi
+import appcup.uom.polaris.core.domain.WeatherApi
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.data.PolarisRepositoryImpl
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
@@ -29,9 +30,11 @@ class PolarisModule {
     @Single
     fun providePolarisRepository(
         routesApi: RoutesApi,
+        weatherApi: WeatherApi,
         supabaseClient: SupabaseClient
     ): PolarisRepository = PolarisRepositoryImpl(
         routesApi = routesApi,
+        weatherApi = weatherApi,
         supabaseClient = supabaseClient
     )
 

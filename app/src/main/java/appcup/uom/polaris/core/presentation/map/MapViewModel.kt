@@ -7,13 +7,20 @@ import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.LatLong
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.ResultState
+import appcup.uom.polaris.core.domain.WeatherData
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.Journey
+import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.polaris.domain.WaypointType
+import appcup.uom.polaris.features.polaris.domain.toWaypoint
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.MarkerState.Companion.invoke
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,10 +33,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class, FlowPreview::class)
 class MapViewModel(
-    locationManager: LocationManager,
+    private val locationManager: LocationManager,
     private val polarisRepository: PolarisRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapState())
@@ -276,7 +284,38 @@ class MapViewModel(
             is MapActions.OnJourneyCompletedDialogVisibilityChanged -> {
                 _state.update {
                     it.copy(
-                        shouldShowStartJourneyDialog = action.isVisible
+                        isJourneyCompleted = action.isVisible
+                    )
+                }
+            }
+
+            MapActions.OnToggleShowStartJourneyDialog -> {
+                _state.update {
+                    it.copy(
+                        shouldShowStartJourneyDialog = !_state.value.shouldShowStartJourneyDialog
+                    )
+                }
+            }
+
+            is MapActions.OnPersonalWaypointClicked -> {
+                _state.update {
+                    it.copy(
+                        selectedWaypoint = null,
+                        selectedWeatherData = null,
+                        isSelectedWaypointCardVisible = true,
+                    )
+                }
+                viewModelScope.launch {
+                    showPlaceOnMap(action.waypoint)
+                }
+            }
+
+            MapActions.OnTrackingWaypointCardDismissed -> {
+                _state.update {
+                    it.copy(
+                        isSelectedWaypointCardVisible = false,
+                        selectedWaypoint = null,
+                        selectedWeatherData = null
                     )
                 }
             }
@@ -361,6 +400,61 @@ class MapViewModel(
                     it.copy(
                         startableJourneys = result.data
                     )
+                }
+            }
+        }
+    }
+
+
+    fun showPlaceOnMap(waypoint: PersonalWaypoint) {
+        if (waypoint.placeId == null) {
+            viewModelScope.launch {
+                val result = polarisRepository.getWeatherData(waypoint.latitude, waypoint.longitude)
+                when (result) {
+                    is Result.Error<DataError.Remote> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = waypoint.toWaypoint()
+                            )
+                        }
+                    }
+                    is Result.Success<WeatherData> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = waypoint.toWaypoint(),
+                                selectedWeatherData = result.data
+                            )
+                        }
+                    }
+                }
+            }
+            return
+        }
+
+        locationManager.getWaypointByPlaceId(waypoint.placeId) { placeInfo ->
+            if (placeInfo == null) return@getWaypointByPlaceId
+            viewModelScope.launch {
+                val result = polarisRepository.getWeatherData(placeInfo.latitude, placeInfo.longitude)
+                when (result) {
+                    is Result.Error<DataError.Remote> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = placeInfo.copy(
+                                    id = waypoint.id ?: Uuid.NIL,
+                                )
+                            )
+                        }
+                    }
+                    is Result.Success<WeatherData> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = placeInfo.copy(
+                                    id = waypoint.id ?: Uuid.NIL,
+                                ),
+                                selectedWeatherData = result.data
+                            )
+                        }
+                    }
                 }
             }
         }

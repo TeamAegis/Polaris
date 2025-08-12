@@ -5,6 +5,8 @@ import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesApi
 import appcup.uom.polaris.core.domain.RoutesResponse
+import appcup.uom.polaris.core.domain.WeatherApi
+import appcup.uom.polaris.core.domain.WeatherData
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
@@ -35,6 +37,7 @@ import kotlin.uuid.Uuid
 @OptIn(PublicPreviewAPI::class)
 class PolarisRepositoryImpl(
     private val routesApi: RoutesApi,
+    private val weatherApi: WeatherApi,
     private val supabaseClient: SupabaseClient
 ) : PolarisRepository {
     override suspend fun getRoutePolyline(
@@ -99,21 +102,24 @@ class PolarisRepositoryImpl(
                     type = WaypointType.START,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id!!
+                    journeyId = journey.id!!,
+                    id = null
                 )
             ) + intermediaryWaypoints.map {
                 it.toPersonalWaypoint(
                     type = WaypointType.INTERMEDIATE,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id
+                    journeyId = journey.id,
+                    id = null
                 )
             } + listOf(
                 destinationWaypoint.toPersonalWaypoint(
                     type = WaypointType.END,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id
+                    journeyId = journey.id,
+                    id = null
                 )
             )
             supabaseClient.from("personal_waypoints").insert(
@@ -254,5 +260,12 @@ class PolarisRepositoryImpl(
         } catch (e: Exception) {
             Result.Error(DataError.JourneyError.UNKNOWN)
         }
+    }
+
+    override suspend fun getWeatherData(
+        latitude: Double,
+        longitude: Double
+    ): Result<WeatherData, DataError.Remote> {
+        return weatherApi.getWeather(latitude, longitude)
     }
 }
