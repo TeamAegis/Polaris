@@ -162,6 +162,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.android.maps.utils)
     implementation(libs.play.services.location)
+    implementation("com.google.android.libraries.places:places:4.4.1")
 
 //    firebase ai
     implementation(platform(libs.firebase.bom))
