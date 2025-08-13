@@ -14,6 +14,10 @@ plugins {
 
 //    google-services
     alias(libs.plugins.google.services)
+
+//    sqldelight
+    alias(libs.plugins.sqldelight)
+
 }
 
 android {
@@ -115,6 +119,7 @@ dependencies {
 
 //    sqldelight
     implementation(libs.sqldelight.android)
+    implementation(libs.sqldelight.coroutines.extensions)
 
 //    koin
     implementation(platform(libs.koin.bom))
@@ -199,4 +204,12 @@ fun Project.loadLocalProperty(
         throw GradleException("can not find property : $propertyName")
     }
 
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("appcup.uom.polaris")
+        }
+    }
 }
