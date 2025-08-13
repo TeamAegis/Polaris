@@ -135,7 +135,8 @@ class PolarisRepositoryImpl(
 
     @OptIn(ExperimentalUuidApi::class)
     override fun getJourneys(): Flow<List<Journey>> = callbackFlow {
-        val channel = supabaseClient.channel("journey_channel_${StaticData.user.id}_${Uuid.random()}")
+        val channel =
+            supabaseClient.channel("journey_channel_${StaticData.user.id}_${Uuid.random()}")
         val journeyFlow = channel.postgresListDataFlow(
             schema = "public",
             table = "journeys",
@@ -157,8 +158,45 @@ class PolarisRepositoryImpl(
     }
 
     @OptIn(ExperimentalUuidApi::class)
+    override suspend fun getJourney(id: Uuid): Result<Journey, DataError.JourneyError> {
+        return try {
+            Result.Success(supabaseClient.from("journeys").select().decodeSingle<Journey>())
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
+        }
+
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun deleteJourney(id: Uuid) {
+        try {
+            supabaseClient.from("journeys").delete {
+                filter {
+                    eq("id", id)
+                }
+            }
+        } catch (e: Exception) {
+
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun getPersonalWaypoints(id: Uuid): Result<List<PersonalWaypoint>, DataError.JourneyError> {
+        return try {
+            Result.Success(supabaseClient.from("personal_waypoints").select {
+                filter {
+                    PersonalWaypoint::journeyId eq id
+                }
+            }.decodeList<PersonalWaypoint>())
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
     override fun getAllMyWaypoints(): Flow<List<PersonalWaypoint>> = callbackFlow {
-        val channel = supabaseClient.channel("personal_waypoints_channel_${StaticData.user.id}_${Uuid.random()}")
+        val channel =
+            supabaseClient.channel("personal_waypoints_channel_${StaticData.user.id}_${Uuid.random()}")
         val personalWaypointsFlow = channel.postgresListDataFlow(
             schema = "public",
             table = "personal_waypoints",
@@ -182,7 +220,8 @@ class PolarisRepositoryImpl(
 
     @OptIn(ExperimentalUuidApi::class)
     override fun getPublicWaypoints(): Flow<List<PublicWaypoint>> = callbackFlow {
-        val channel = supabaseClient.channel("public_waypoints_channel_${StaticData.user.id}_${Uuid.random()}")
+        val channel =
+            supabaseClient.channel("public_waypoints_channel_${StaticData.user.id}_${Uuid.random()}")
         val publicWaypointsFlow = channel.postgresListDataFlow(
             schema = "public",
             table = "public_waypoints",

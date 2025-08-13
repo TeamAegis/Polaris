@@ -57,4 +57,8 @@ class MemoryRepositoryImpl(
             }
         }
     }
+
+    override suspend fun getMemories(journeyId: String): List<Memory> {
+        return memoryDataSource.selectMemories(journeyId).executeAsList()
+    }
 }

@@ -125,6 +125,7 @@ import appcup.uom.polaris.core.presentation.memories.memory.MemoryEvent
 import appcup.uom.polaris.core.presentation.memories.memory.MemoryViewModel
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
+import appcup.uom.polaris.features.polaris.presentation.journey_details.JourneyDetailsScreen
 import appcup.uom.polaris.features.polaris.presentation.journeys.JourneysScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -255,7 +256,7 @@ fun AuthenticatedApp(
                             mapViewModel.onAction(MapActions.OnStartJourneyClicked(journey))
                         },
                         onViewDetails = {
-
+                            backStack.add(Screen.JourneyDetails(it.id!!.toString()))
                         }
                     )
                 }
@@ -550,8 +551,19 @@ fun AuthenticatedApp(
                         JourneysScreen(
                             onBack = { backStack.removeLastOrNull() },
                             onJourneyClick = {
-
+                                backStack.add(Screen.JourneyDetails(it.toString()))
                             },
+                        )
+                    }
+
+                    entry<Screen.JourneyDetails> {
+                        JourneyDetailsScreen(
+                            viewModel = koinViewModel {
+                                parametersOf(
+                                    it.journeyId
+                                )
+                            },
+                            onBack = { backStack.removeLastOrNull() }
                         )
                     }
                 }

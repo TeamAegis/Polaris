@@ -28,6 +28,15 @@ interface PolarisRepository {
 
     fun getJourneys(): Flow<List<Journey>>
 
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun getJourney(id: Uuid): Result<Journey, DataError.JourneyError>
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun deleteJourney(id: Uuid)
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun getPersonalWaypoints(id: Uuid): Result<List<PersonalWaypoint>, DataError.JourneyError>
+
     fun getAllMyWaypoints(): Flow<List<PersonalWaypoint>>
 
     fun getPublicWaypoints(): Flow<List<PublicWaypoint>>

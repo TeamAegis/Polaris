@@ -1,5 +1,6 @@
 package appcup.uom.polaris.core.presentation.memories
 
+import EmptyMemories
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,23 +62,26 @@ fun MemoriesScreenImpl(
         modifier = Modifier
             .fillMaxSize()
     ) { contentPadding ->
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2),
-            contentPadding = PaddingValues(
-                top = contentPadding.calculateTopPadding(),
-                bottom = 128.dp,
-                start = 16.dp,
-                end = 16.dp
-            ),
-            verticalItemSpacing = 8.dp,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(
-                count = state.memories.size,
-                key = { index -> state.memories[index].id }) { index ->
-                MemoryGridItem(state.memories[index], onClick = {})
+        if (state.memories.isEmpty())
+            EmptyMemories()
+        else
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
+                contentPadding = PaddingValues(
+                    top = contentPadding.calculateTopPadding(),
+                    bottom = 128.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                ),
+                verticalItemSpacing = 8.dp,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    count = state.memories.size,
+                    key = { index -> state.memories[index].id }) { index ->
+                    MemoryGridItem(state.memories[index], onClick = {})
+                }
             }
-        }
     }
 
     LoadingOverlay(isLoading = state.isLoading)

@@ -273,5 +273,18 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
             )
         }
     }
+
+    @Serializable
+    data class JourneyDetails(val journeyId: String): Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("Journey Details"),
+                    "description" to Value.Str("This is the journey details screen of the app."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
 }
 

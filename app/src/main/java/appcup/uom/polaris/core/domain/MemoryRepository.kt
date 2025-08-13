@@ -9,4 +9,5 @@ interface MemoryRepository {
     suspend fun createMemory(memory: Memory)
     suspend fun saveImage(uri: Uri): String
     suspend fun deleteMemoryIfImageMissing(memory: Memory)
+    suspend fun getMemories(journeyId: String): List<Memory>
 }

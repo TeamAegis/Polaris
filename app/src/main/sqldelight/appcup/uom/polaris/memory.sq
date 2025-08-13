@@ -17,3 +17,8 @@ VALUES (?,?,?,?);
 delete:
 DELETE FROM memory
 WHERE id = ?;
+
+selectMemories:
+SELECT *
+FROM memory
+WHERE journey_id = ?;
