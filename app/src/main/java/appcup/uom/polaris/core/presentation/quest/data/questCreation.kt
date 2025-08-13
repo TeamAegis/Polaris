@@ -7,18 +7,15 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import appcup.uom.polaris.core.data.createQuest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.libraries.places.api.model.LocationRestriction
-import com.google.android.libraries.places.api.net.kotlin.searchNearbyRequest
-import com.google.android.libraries.places.api.net.kotlin.awaitSearchNearby
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.model.kotlin.circularBounds
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.google.android.libraries.places.api.net.SearchNearbyRequest
 import com.google.android.libraries.places.api.net.SearchNearbyResponse
-import kotlinx.coroutines.*
-import kotlin.coroutines.resumeWithException
+import com.google.android.libraries.places.api.net.kotlin.searchNearbyRequest
+import org.json.JSONObject
 
 private const val TAG = "NearbySearch"
 var placesClient: PlacesClient? = null
@@ -86,3 +83,26 @@ fun nearbySearchPlaces(context: Context, onResult: (List<Place>) -> Unit) {
     }
 }
 
+fun getQuest(
+    context: Context,
+    onResult: (JSONObject) -> Unit
+) {
+    nearbySearchPlaces(context) { place ->
+        val nearbyInfo = mutableListOf<String>()
+        if (!place.isEmpty()) {
+            var res = ""
+            for (item in place) { // Get info from nearby search
+                res += "Place name: ${item.displayName}\n"
+                res += "lat and lng: ${item.location?.toString()}\n"
+                res += "type: ${item.placeTypes?.toString()}"
+                res += "Address: ${item.formattedAddress}\n"
+                res += "website URL: ${item.websiteUri?.toString()}\n"
+                nearbyInfo.add(res)
+                res = ""
+            }
+
+            val chat_prompt = createQuest(nearbyInfo.joinToString("\n, ", "[ ", " ]"), "hiking, swimming, Shopping, Eating")
+            // Chat results
+        }
+    }
+}
