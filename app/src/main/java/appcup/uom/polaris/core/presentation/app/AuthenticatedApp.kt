@@ -1,6 +1,10 @@
 package appcup.uom.polaris.core.presentation.app
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.os.Environment
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -63,6 +67,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
@@ -73,6 +78,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entry
@@ -86,6 +92,7 @@ import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.presentation.components.AnimatedJourneyProgressTopBar
 import appcup.uom.polaris.core.presentation.components.BottomBar
+import appcup.uom.polaris.core.presentation.components.Camera
 import appcup.uom.polaris.core.presentation.components.FilterFocus
 import appcup.uom.polaris.core.presentation.components.JourneyCardPager
 import appcup.uom.polaris.core.presentation.components.TrackingWaypointCard
@@ -112,13 +119,22 @@ import appcup.uom.polaris.features.conversational_ai.presentation.conversational
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
 import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryAction
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryBottomSheet
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryEvent
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryViewModel
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
+import appcup.uom.polaris.features.polaris.presentation.journey_details.JourneyDetailsScreen
 import appcup.uom.polaris.features.polaris.presentation.journeys.JourneysScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -186,7 +202,29 @@ fun AuthenticatedApp(
     val mapViewModel: MapViewModel = koinViewModel()
     val mapState = mapViewModel.state.collectAsStateWithLifecycle()
 
-    val isJourneyInProgress = mapState.value.selectedJourney != null && mapState.value.waypointsForSelectedJourney.isNotEmpty()
+    val memoryViewModel: MemoryViewModel = koinViewModel()
+    val memoryState = memoryViewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val createImageFile = remember {
+        {
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val imageFileName = "MEMORY_$timeStamp"
+            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            File.createTempFile(imageFileName, ".jpg", storageDir)
+        }
+    }
+    var tempImageFile by remember { mutableStateOf<File?>(null) }
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { isSuccess ->
+        if (isSuccess && tempImageUri != null) {
+            memoryViewModel.onAction(MemoryAction.OnImageCaptured(tempImageUri!!))
+        }
+    }
+
+    val isJourneyInProgress =
+        mapState.value.selectedJourney != null && mapState.value.waypointsForSelectedJourney.isNotEmpty()
 
 
 
@@ -218,7 +256,7 @@ fun AuthenticatedApp(
                             mapViewModel.onAction(MapActions.OnStartJourneyClicked(journey))
                         },
                         onViewDetails = {
-
+                            backStack.add(Screen.JourneyDetails(it.id!!.toString()))
                         }
                     )
                 }
@@ -513,8 +551,19 @@ fun AuthenticatedApp(
                         JourneysScreen(
                             onBack = { backStack.removeLastOrNull() },
                             onJourneyClick = {
-
+                                backStack.add(Screen.JourneyDetails(it.toString()))
                             },
+                        )
+                    }
+
+                    entry<Screen.JourneyDetails> {
+                        JourneyDetailsScreen(
+                            viewModel = koinViewModel {
+                                parametersOf(
+                                    it.journeyId
+                                )
+                            },
+                            onBack = { backStack.removeLastOrNull() }
                         )
                     }
                 }
@@ -619,7 +668,7 @@ fun AuthenticatedApp(
                             )
                         }
 
-                        if (backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty())
+                        if (backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty()) {
                             IconButton(
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
                                 onClick = {
@@ -631,6 +680,35 @@ fun AuthenticatedApp(
                                     contentDescription = if (mapState.value.shouldShowStartJourneyDialog) "Hide start journey dialog" else "Show start journey dialog"
                                 )
                             }
+                        }
+
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                if (!state.value.hasCameraPermission) {
+                                    viewModel.onAction(AppAction.RequestCameraPermission)
+                                } else {
+                                    try {
+                                        tempImageFile = createImageFile()
+                                        tempImageUri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.provider",
+                                            tempImageFile!!
+                                        )
+                                        cameraLauncher.launch(tempImageUri!!)
+                                    } catch (e: Exception) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(e.message ?: "Error")
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Camera,
+                                contentDescription = "Take a picture"
+                            )
+                        }
                     }
 
                 },
@@ -660,6 +738,42 @@ fun AuthenticatedApp(
                 }
             )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        memoryViewModel.event.collect { event ->
+            when (event) {
+                is MemoryEvent.OnError -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(event.message)
+                    }
+                }
+
+                MemoryEvent.OnSuccess -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Memory saved successfully")
+                    }
+                }
+            }
+        }
+    }
+
+
+    if (memoryState.value.showBottomSheet) {
+        MemoryBottomSheet(
+            imageUri = memoryState.value.capturedImageUri,
+            isSaving = memoryState.value.isSaving,
+            onSave = {
+                memoryViewModel.onAction(
+                    MemoryAction.SaveMemory(
+                        mapState.value.currentLocation.latitude,
+                        mapState.value.currentLocation.longitude,
+                        mapState.value.selectedJourney?.id?.toString()
+                    )
+                )
+            },
+            onDismiss = { memoryViewModel.onAction(MemoryAction.DismissBottomSheet) }
+        )
     }
     StatusBarProtection(
         color = MaterialTheme.colorScheme.surfaceContainer,

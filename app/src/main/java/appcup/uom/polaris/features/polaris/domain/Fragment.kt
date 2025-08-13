@@ -22,21 +22,3 @@ data class Fragment(
     @SerialName("created_at")
     val createdAt: Instant
 )
-
-@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-@Serializable
-data class Memory(
-    val id: Uuid,
-    @SerialName("personal_waypoint_id")
-    val personalWaypointId: Uuid,
-    @SerialName("journey_id")
-    val journeyId: Uuid,
-    @SerialName("user_id")
-    val userId: Uuid,
-    @SerialName("memory_url")
-    val memoryUrl: String,
-    @Serializable(with = InstantSerializer::class)
-    @SerialName("created_at")
-    val createdAt: Instant
-)
-

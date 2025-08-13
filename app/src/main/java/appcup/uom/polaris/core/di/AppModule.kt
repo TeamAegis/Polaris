@@ -1,10 +1,14 @@
 package appcup.uom.polaris.core.di
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import appcup.uom.polaris.Database
 import appcup.uom.polaris.core.data.AppSecrets
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.createPreferencesDataStore
+import appcup.uom.polaris.core.domain.MemoryRepository
 import appcup.uom.polaris.core.presentation.app.AppViewModel
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesViewModel
@@ -47,6 +51,11 @@ class AppModule {
         install(Storage)
     }
 
+    @Single
+    fun provideDatabase(
+        context: Context
+    ) = Database(AndroidSqliteDriver(Database.Schema, context, "polaris.db"))
+
     @KoinViewModel
     fun appViewModel(permissionBridge: PermissionBridge) =
         AppViewModel(permissionBridge = permissionBridge)
@@ -60,8 +69,8 @@ class AppModule {
         MapViewModel(locationManager = locationManager, polarisRepository = polarisRepository)
 
     @KoinViewModel
-    fun memoriesViewModel(userRepository: UserRepository) =
-        MemoriesViewModel(userRepository = userRepository)
+    fun memoriesViewModel(memoryRepository: MemoryRepository) =
+        MemoriesViewModel(memoryRepository = memoryRepository)
 
     @KoinViewModel
     fun moreViewModel(userRepository: UserRepository) =

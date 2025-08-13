@@ -28,6 +28,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ChatRepositoryImpl(
     private val supabaseClient: SupabaseClient,
@@ -60,7 +61,7 @@ class ChatRepositoryImpl(
 
     @OptIn(ExperimentalUuidApi::class, SupabaseExperimental::class)
     override fun getChatHistory(): Flow<List<Message>> = callbackFlow {
-        val channel = supabaseClient.channel("chat_channel_${StaticData.user.id}")
+        val channel = supabaseClient.channel("chat_channel_${StaticData.user.id}_${Uuid.random()}")
         val messageFlow = channel.postgresListDataFlow(
             schema = "public",
             table = "messages",

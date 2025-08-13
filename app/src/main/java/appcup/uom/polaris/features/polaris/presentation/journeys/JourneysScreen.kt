@@ -170,7 +170,7 @@ fun JourneysScreenImpl(
                         count = state.filteredJourneys.size,
                         key = { index -> state.filteredJourneys[index].id!! }) { index ->
                         JourneyCard(state.filteredJourneys[index]) {
-
+                            onAction(JourneysAction.OnJourneyClicked(state.filteredJourneys[index].id!!))
                         }
                     }
                 }

@@ -14,6 +14,10 @@ plugins {
 
 //    google-services
     alias(libs.plugins.google.services)
+
+//    sqldelight
+    alias(libs.plugins.sqldelight)
+
 }
 
 android {
@@ -115,6 +119,7 @@ dependencies {
 
 //    sqldelight
     implementation(libs.sqldelight.android)
+    implementation(libs.sqldelight.coroutines.extensions)
 
 //    koin
     implementation(platform(libs.koin.bom))
@@ -157,7 +162,6 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.android.maps.utils)
     implementation(libs.play.services.location)
-    implementation("com.google.android.libraries.places:places:4.4.1")
 
 //    firebase ai
     implementation(platform(libs.firebase.bom))
@@ -168,6 +172,9 @@ dependencies {
     implementation(libs.androidx.camera.compose)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
+
+//    lottie
+    implementation(libs.dotlottie.android)
 
 }
 
@@ -200,4 +207,12 @@ fun Project.loadLocalProperty(
         throw GradleException("can not find property : $propertyName")
     }
 
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("appcup.uom.polaris")
+        }
+    }
 }

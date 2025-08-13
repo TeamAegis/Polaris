@@ -12,15 +12,11 @@ import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
-import appcup.uom.polaris.features.polaris.domain.Waypoint
-import appcup.uom.polaris.features.polaris.domain.WaypointType
 import appcup.uom.polaris.features.polaris.domain.toWaypoint
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.MarkerState.Companion.invoke
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -418,6 +414,7 @@ class MapViewModel(
                             )
                         }
                     }
+
                     is Result.Success<WeatherData> -> {
                         _state.update {
                             it.copy(
@@ -434,7 +431,8 @@ class MapViewModel(
         locationManager.getWaypointByPlaceId(waypoint.placeId) { placeInfo ->
             if (placeInfo == null) return@getWaypointByPlaceId
             viewModelScope.launch {
-                val result = polarisRepository.getWeatherData(placeInfo.latitude, placeInfo.longitude)
+                val result =
+                    polarisRepository.getWeatherData(placeInfo.latitude, placeInfo.longitude)
                 when (result) {
                     is Result.Error<DataError.Remote> -> {
                         _state.update {
@@ -445,6 +443,7 @@ class MapViewModel(
                             )
                         }
                     }
+
                     is Result.Success<WeatherData> -> {
                         _state.update {
                             it.copy(
