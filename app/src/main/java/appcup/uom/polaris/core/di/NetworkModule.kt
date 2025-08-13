@@ -1,7 +1,9 @@
 package appcup.uom.polaris.core.di
 
 import appcup.uom.polaris.core.data.RoutesApiImpl
+import appcup.uom.polaris.core.data.WeatherApiImpl
 import appcup.uom.polaris.core.domain.RoutesApi
+import appcup.uom.polaris.core.domain.WeatherApi
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -31,4 +33,9 @@ class NetworkModule {
     fun provideRoutesApi(
         httpClient: HttpClient
     ): RoutesApi = RoutesApiImpl(httpClient)
+
+    @Single
+    fun provideWeatherApi(
+        httpClient: HttpClient
+    ): WeatherApi = WeatherApiImpl(httpClient)
 }

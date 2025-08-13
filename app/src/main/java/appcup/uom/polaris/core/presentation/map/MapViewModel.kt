@@ -7,31 +7,44 @@ import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.LatLong
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.ResultState
+import appcup.uom.polaris.core.domain.WeatherData
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.Journey
+import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.polaris.domain.WaypointType
+import appcup.uom.polaris.features.polaris.domain.toWaypoint
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.MarkerState.Companion.invoke
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlinx.coroutines.runBlocking
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class, FlowPreview::class)
 class MapViewModel(
-    locationManager: LocationManager,
+    private val locationManager: LocationManager,
     private val polarisRepository: PolarisRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapState())
     val state = _state.asStateFlow()
+
+    private val _event = MutableSharedFlow<MapEvent>()
+    val event = _event.asSharedFlow()
 
 
     init {
@@ -115,14 +128,12 @@ class MapViewModel(
                         )
                     }
                     if (_state.value.selectedJourney != null) {
-                        _state.update {
-                            it.copy(
-                                waypointsForSelectedJourney = _state.value.allMyWaypoints.filter { waypoint ->
-                                    waypoint.journeyId == _state.value.selectedJourney!!.id
-                                }
-                            )
-                        }
                         checkAndUpdatePersonalWaypointsUnlockStatus(
+                            latitude,
+                            longitude
+                        )
+                    } else if (_state.value.shouldShowStartJourneyDialog) {
+                        showStartJourneyPrompt(
                             latitude,
                             longitude
                         )
@@ -133,10 +144,38 @@ class MapViewModel(
         }.launchIn(viewModelScope)
 
         polarisRepository.getAllMyWaypoints().onEach { waypoints ->
-            _state.update {
-                it.copy(
-                    allMyWaypoints = waypoints
-                )
+            val currentSelectedJourney = _state.value.selectedJourney
+
+            if (currentSelectedJourney != null) {
+                val waypointsForSelectedJourney =
+                    waypoints.filter { it.journeyId == currentSelectedJourney.id }
+
+                val isJourneyCompleted = waypointsForSelectedJourney.isNotEmpty() &&
+                        waypointsForSelectedJourney.all { it.isUnlocked }
+
+                if (isJourneyCompleted) {
+                    _state.update {
+                        it.copy(
+                            allMyWaypoints = waypoints,
+                            waypointsForSelectedJourney = emptyList(),
+                            selectedJourney = null,
+                        )
+                    }
+                    _event.emit(MapEvent.OnJourneyCompleted)
+                } else {
+                    _state.update {
+                        it.copy(
+                            allMyWaypoints = waypoints,
+                            waypointsForSelectedJourney = waypointsForSelectedJourney
+                        )
+                    }
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        allMyWaypoints = waypoints,
+                    )
+                }
             }
         }.launchIn(viewModelScope)
 
@@ -188,7 +227,7 @@ class MapViewModel(
                 }
             }
 
-            MapActions.OnCompassClick -> {
+            MapActions.OnCompassClicked -> {
                 viewModelScope.launch {
                     _state.update {
                         it.copy(
@@ -218,6 +257,66 @@ class MapViewModel(
                             isAnimatingCamera = false
                         )
                     }
+                }
+            }
+
+            is MapActions.OnStartJourneyClicked -> {
+                _state.update {
+                    it.copy(
+                        selectedJourney = action.journey,
+                        waypointsForSelectedJourney = _state.value.allMyWaypoints.filter { waypoint ->
+                            waypoint.journeyId == action.journey.id
+                        },
+                        startableJourneys = emptyList()
+                    )
+                }
+            }
+
+            MapActions.OnStopJourneyClicked -> {
+                _state.update {
+                    it.copy(
+                        selectedJourney = null,
+                        waypointsForSelectedJourney = emptyList()
+                    )
+                }
+            }
+
+            is MapActions.OnJourneyCompletedDialogVisibilityChanged -> {
+                _state.update {
+                    it.copy(
+                        isJourneyCompleted = action.isVisible
+                    )
+                }
+            }
+
+            MapActions.OnToggleShowStartJourneyDialog -> {
+                _state.update {
+                    it.copy(
+                        shouldShowStartJourneyDialog = !_state.value.shouldShowStartJourneyDialog
+                    )
+                }
+            }
+
+            is MapActions.OnPersonalWaypointClicked -> {
+                _state.update {
+                    it.copy(
+                        selectedWaypoint = null,
+                        selectedWeatherData = null,
+                        isSelectedWaypointCardVisible = true,
+                    )
+                }
+                viewModelScope.launch {
+                    showPlaceOnMap(action.waypoint)
+                }
+            }
+
+            MapActions.OnTrackingWaypointCardDismissed -> {
+                _state.update {
+                    it.copy(
+                        isSelectedWaypointCardVisible = false,
+                        selectedWaypoint = null,
+                        selectedWeatherData = null
+                    )
                 }
             }
 
@@ -256,6 +355,106 @@ class MapViewModel(
 
                 is Result.Success<Unit> -> {
 
+                }
+            }
+        }
+    }
+
+    suspend fun showStartJourneyPrompt(
+        latitude: Double,
+        longitude: Double
+    ) {
+        val startableJourneyIds = _state.value.allMyWaypoints
+            .groupBy { it.journeyId }.filter { it.value.any { waypoint -> !waypoint.isUnlocked } }
+            .filter {
+                it.value.any { waypoint ->
+                    SphericalUtil.computeDistanceBetween(
+                        LatLng(
+                            latitude,
+                            longitude
+                        ),
+                        LatLng(
+                            waypoint.latitude,
+                            waypoint.longitude
+                        )
+                    ) <= Constants.MAP_STARTING_PROMPT_RADIUS_IN_METRES
+                }
+            }
+            .map { it.key }
+
+
+        if (startableJourneyIds.isEmpty()) {
+            _state.update {
+                it.copy(
+                    startableJourneys = emptyList()
+                )
+            }
+            return
+        }
+
+        val result = polarisRepository.getStartableJourneys(startableJourneyIds)
+        when (result) {
+            is Result.Error<DataError.JourneyError> -> {}
+            is Result.Success<List<Journey>> -> {
+                _state.update {
+                    it.copy(
+                        startableJourneys = result.data
+                    )
+                }
+            }
+        }
+    }
+
+
+    fun showPlaceOnMap(waypoint: PersonalWaypoint) {
+        if (waypoint.placeId == null) {
+            viewModelScope.launch {
+                val result = polarisRepository.getWeatherData(waypoint.latitude, waypoint.longitude)
+                when (result) {
+                    is Result.Error<DataError.Remote> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = waypoint.toWaypoint()
+                            )
+                        }
+                    }
+                    is Result.Success<WeatherData> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = waypoint.toWaypoint(),
+                                selectedWeatherData = result.data
+                            )
+                        }
+                    }
+                }
+            }
+            return
+        }
+
+        locationManager.getWaypointByPlaceId(waypoint.placeId) { placeInfo ->
+            if (placeInfo == null) return@getWaypointByPlaceId
+            viewModelScope.launch {
+                val result = polarisRepository.getWeatherData(placeInfo.latitude, placeInfo.longitude)
+                when (result) {
+                    is Result.Error<DataError.Remote> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = placeInfo.copy(
+                                    id = waypoint.id ?: Uuid.NIL,
+                                )
+                            )
+                        }
+                    }
+                    is Result.Success<WeatherData> -> {
+                        _state.update {
+                            it.copy(
+                                selectedWaypoint = placeInfo.copy(
+                                    id = waypoint.id ?: Uuid.NIL,
+                                ),
+                                selectedWeatherData = result.data
+                            )
+                        }
+                    }
                 }
             }
         }

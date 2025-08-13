@@ -1,12 +1,12 @@
 package appcup.uom.polaris.features.polaris.data
 
-import android.util.Log
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesApi
 import appcup.uom.polaris.core.domain.RoutesResponse
+import appcup.uom.polaris.core.domain.WeatherApi
+import appcup.uom.polaris.core.domain.WeatherData
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
@@ -18,6 +18,7 @@ import appcup.uom.polaris.features.polaris.domain.WaypointType
 import com.google.firebase.ai.type.PublicPreviewAPI
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.filter.FilterOperation
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.channel
@@ -31,10 +32,12 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(PublicPreviewAPI::class)
 class PolarisRepositoryImpl(
     private val routesApi: RoutesApi,
+    private val weatherApi: WeatherApi,
     private val supabaseClient: SupabaseClient
 ) : PolarisRepository {
     override suspend fun getRoutePolyline(
@@ -99,21 +102,24 @@ class PolarisRepositoryImpl(
                     type = WaypointType.START,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id!!
+                    journeyId = journey.id!!,
+                    id = null
                 )
             ) + intermediaryWaypoints.map {
                 it.toPersonalWaypoint(
                     type = WaypointType.INTERMEDIATE,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id
+                    journeyId = journey.id,
+                    id = null
                 )
             } + listOf(
                 destinationWaypoint.toPersonalWaypoint(
                     type = WaypointType.END,
                     isUnlocked = false,
                     userId = StaticData.user.id,
-                    journeyId = journey.id
+                    journeyId = journey.id,
+                    id = null
                 )
             )
             supabaseClient.from("personal_waypoints").insert(
@@ -198,7 +204,11 @@ class PolarisRepositoryImpl(
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun setPersonalWaypointsAsUnlocked(journey: Journey, unlockedWaypoints: List<PersonalWaypoint>, allWaypoints: List<PersonalWaypoint>): Result<Unit, DataError.JourneyError> {
+    override suspend fun setPersonalWaypointsAsUnlocked(
+        journey: Journey,
+        unlockedWaypoints: List<PersonalWaypoint>,
+        allWaypoints: List<PersonalWaypoint>
+    ): Result<Unit, DataError.JourneyError> {
         return try {
             supabaseClient.from("personal_waypoints").update({
                 PersonalWaypoint::isUnlocked setTo true
@@ -208,7 +218,8 @@ class PolarisRepositoryImpl(
                 }
             }
 
-            val isStillInProgress = unlockedWaypoints.size < allWaypoints.filter { !it.isUnlocked }.size
+            val isStillInProgress =
+                unlockedWaypoints.size < allWaypoints.filter { !it.isUnlocked }.size
 
 
             if (isStillInProgress && journey.status == JourneyStatus.NOT_STARTED) {
@@ -234,5 +245,27 @@ class PolarisRepositoryImpl(
         } catch (e: Exception) {
             Result.Error(DataError.JourneyError.UNKNOWN)
         }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun getStartableJourneys(ids: List<Uuid>): Result<List<Journey>, DataError.JourneyError> {
+        return try {
+            Result.Success(
+                data = supabaseClient.from("journeys").select(columns = Columns.ALL) {
+                    filter {
+                        Journey::id isIn ids
+                    }
+                }.decodeList<Journey>()
+            )
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
+        }
+    }
+
+    override suspend fun getWeatherData(
+        latitude: Double,
+        longitude: Double
+    ): Result<WeatherData, DataError.Remote> {
+        return weatherApi.getWeather(latitude, longitude)
     }
 }

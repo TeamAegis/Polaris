@@ -87,9 +87,9 @@ class GeminiLiveWebsocketTransport(
                             "generation_config" to generationConfig,
                             "system_instruction" to (systemInstruction ?: Value.Null),
                             "tools" to tools,
-                            "proactivity" to Value.Object(
-                                "proactiveAudio" to Value.Bool(true)
-                            )
+//                            "proactivity" to Value.Object(
+//                                "proactiveAudio" to Value.Bool(true)
+//                            )
                         )
                     )
                 )

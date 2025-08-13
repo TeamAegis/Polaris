@@ -41,7 +41,7 @@ fun rememberDraggableFlingStateWithDynamicSize(
             val screenHeightPx = configuration.screenHeightDp.dp.toPx()
 
             val initialX = paddingPx
-            val initialY = (screenHeightPx - initialElementHeight.toPx()) / 2
+            val initialY = (screenHeightPx - initialElementHeight.toPx()) / 4
 
             MutableDraggableFlingState(
                 offsetX = Animatable(initialX),

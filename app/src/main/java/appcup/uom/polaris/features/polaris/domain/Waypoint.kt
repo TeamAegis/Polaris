@@ -18,7 +18,8 @@ data class Waypoint(
     val websiteUri: Uri?,
     val latitude: Double,
     val longitude: Double,
-    val waypointType: WaypointType = WaypointType.CURRENT_LOCATION
+    val waypointType: WaypointType = WaypointType.CURRENT_LOCATION,
+    val placeType: List<String> = emptyList()
 ) {
     constructor() : this(
         id = Uuid.NIL,
@@ -38,9 +39,11 @@ data class Waypoint(
         type: WaypointType,
         isUnlocked: Boolean,
         userId: Uuid,
-        journeyId: Uuid
+        journeyId: Uuid,
+        id: Uuid? = null
     )
     = PersonalWaypoint(
+        id = id,
         placeId = placeId,
         name = name,
         address = address,

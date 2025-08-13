@@ -70,8 +70,6 @@ class RoutesApiImpl(
             }.body<RoutesResponse>())
 
         } catch (e: Exception) {
-            Log.d(Constants.DEBUG_VALUE, e.message ?: "Unknown error")
-
             Result.Error(DataError.Remote.UNKNOWN)
         }
 

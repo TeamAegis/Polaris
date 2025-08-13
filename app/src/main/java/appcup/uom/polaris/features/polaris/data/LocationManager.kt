@@ -2,15 +2,14 @@ package appcup.uom.polaris.features.polaris.data
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.Looper
+import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.LatLong
+import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.ResultState
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import com.google.android.gms.location.DeviceOrientation
@@ -24,15 +23,20 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.libraries.places.api.model.EncodedPolyline
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
+import com.google.android.libraries.places.api.model.SearchAlongRouteParameters
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.api.net.SearchByTextRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.uuid.ExperimentalUuidApi
@@ -46,6 +50,56 @@ class LocationManager(
     private val fusedOrientationProviderClient: FusedOrientationProviderClient =
         LocationServices.getFusedOrientationProviderClient(context)
 ) {
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun getNearbyPlaces(
+        searchQuery: String,
+        polyline: String
+    ): Result<List<Waypoint>, DataError.Remote> {
+        return try {
+            val result = placesClient.searchByText(
+                SearchByTextRequest.builder(
+                    searchQuery,
+                    listOf(
+                        Place.Field.NAME,
+                        Place.Field.ADDRESS,
+                        Place.Field.RATING,
+                        Place.Field.USER_RATINGS_TOTAL,
+                        Place.Field.CURRENT_OPENING_HOURS,
+                        Place.Field.PHONE_NUMBER,
+                        Place.Field.WEBSITE_URI,
+                        Place.Field.LAT_LNG,
+                        Place.Field.TYPES,
+                    )
+                ).setSearchAlongRouteParameters(
+                    SearchAlongRouteParameters.newInstance(
+                        EncodedPolyline.newInstance(polyline)
+                    )
+                )
+                    .setLocationRestriction(RectangularBounds.newInstance(Constants.MAP_LAT_LNG_BOUNDS))
+                    .build()
+            ).await()
+
+            Result.Success(result.places.map { place ->
+                Waypoint(
+                    placeId = place.id,
+                    name = place.displayName ?: "Unknown",
+                    address = place.formattedAddress,
+                    rating = place.rating,
+                    userRatingsTotal = place.rating,
+                    openNow = isPlaceOpenNow(place.currentOpeningHours),
+                    phoneNumber = place.internationalPhoneNumber
+                        ?: place.nationalPhoneNumber,
+                    websiteUri = place.websiteUri,
+                    latitude = place.location?.latitude ?: 0.0,
+                    longitude = place.location?.longitude ?: 0.0,
+                    placeType = place.placeTypes ?: emptyList()
+                )
+            })
+        } catch (e: Exception) {
+            Result.Error(DataError.Remote.UNKNOWN)
+        }
+    }
 
     @OptIn(ExperimentalUuidApi::class)
     @SuppressLint("NewApi")
@@ -272,8 +326,8 @@ class LocationManager(
         fusedOrientationProviderClient.requestOrientationUpdates(
             request,
             executor,
-                listener
-            )
+            listener
+        )
 
         awaitClose {
             fusedOrientationProviderClient.removeOrientationUpdates(listener)

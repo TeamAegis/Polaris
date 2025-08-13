@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,13 +26,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavBackStack
 import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.extras.navigation.rebaseTo
-import appcup.uom.polaris.core.presentation.app.AppState
 
 @Composable
 fun BottomBar(
-    navBackStack: NavBackStack,
-    state: AppState,
-    onLocationPermissionRequest: () -> Unit
+    navBackStack: NavBackStack
 ) {
 
 
@@ -42,7 +38,9 @@ fun BottomBar(
             .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
             .polarisDropShadow()
     ) {
-        CustomBottomNavigation(navBackStack = navBackStack, state = state, onLocationPermissionRequest = onLocationPermissionRequest)
+        CustomBottomNavigation(
+            navBackStack = navBackStack
+        )
     }
 }
 
@@ -52,28 +50,14 @@ enum class BottomBarItem(
     val label: String
 ) {
     Map(Screen.Map, Icons.Default.Map, "Map"),
+    Journeys(Screen.Journeys, Journey, "Journeys"),
     Memories(Screen.Memories, PhotoPrints, "Memories"),
     Search(Screen.More, Icons.Default.MoreHoriz, "More"),
 }
 
 @Composable
-fun NavBackStack.BottomBarVisibility(visible: MutableState<Boolean>) {
-    val currentDestination = this.lastOrNull()
-
-    when (currentDestination) {
-        Screen.Map -> visible.value = true
-        Screen.Memories -> visible.value = true
-        Screen.More -> visible.value = true
-        else -> visible.value = false
-    }
-}
-
-
-@Composable
 fun CustomBottomNavigation(
-    navBackStack: NavBackStack,
-    state: AppState,
-    onLocationPermissionRequest: () -> Unit,
+    navBackStack: NavBackStack
 ) {
     val currentDestination = navBackStack.last()
 
@@ -95,11 +79,6 @@ fun CustomBottomNavigation(
                     if (selected) {
                         navBackStack.removeLastOrNull()
                         navBackStack.add(barItem.screen)
-                        return@CustomBottomNavigationItem
-                    }
-
-                    if (barItem == BottomBarItem.Map && !state.hasLocationPermission) {
-                        onLocationPermissionRequest()
                         return@CustomBottomNavigationItem
                     }
 
