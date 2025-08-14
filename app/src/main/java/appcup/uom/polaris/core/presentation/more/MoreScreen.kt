@@ -43,8 +43,13 @@ fun MoreScreen(
                 MoreActions.OnSettingsClicked -> {
                     navigateToSettings()
                 }
+
                 MoreActions.OnChatClicked -> {
                     navigateToChat()
+                }
+
+                MoreActions.OnRefreshList -> {
+                    viewModel.onAction(MoreActions.OnRefreshList)
                 }
             }
         }
@@ -58,6 +63,8 @@ fun MoreScreenImpl(
     state: MoreState,
     onAction: (MoreActions) -> Unit
 ) {
+
+
     Scaffold(
         topBar = {},
         modifier = Modifier
@@ -70,6 +77,7 @@ fun MoreScreenImpl(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
+
             // User Profile Section
             Column(
                 modifier = Modifier
@@ -93,7 +101,8 @@ fun MoreScreenImpl(
             // Settings Navigation
             Button(
                 onClick = { onAction(MoreActions.OnSettingsClicked) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .polarisDropShadow()
                     .clip(RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp)
@@ -102,11 +111,22 @@ fun MoreScreenImpl(
             // chat navigation
             Button(
                 onClick = { onAction(MoreActions.OnChatClicked) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .polarisDropShadow()
                     .clip(RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp)
             ) { Text("Chat") }
+
+
+            Button(
+                onClick = { onAction(MoreActions.OnRefreshList) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
+            ) { Text("Refresh Quests") }
         }
     }
 

@@ -18,6 +18,7 @@ import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.quest.domain.QuestRepository
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -73,7 +74,7 @@ class AppModule {
         MemoriesViewModel(memoryRepository = memoryRepository)
 
     @KoinViewModel
-    fun moreViewModel(userRepository: UserRepository) =
-        MoreViewModel(userRepository = userRepository)
+    fun moreViewModel(userRepository: UserRepository, questRepository: QuestRepository) =
+        MoreViewModel(userRepository = userRepository, questRepository = questRepository)
 
 }

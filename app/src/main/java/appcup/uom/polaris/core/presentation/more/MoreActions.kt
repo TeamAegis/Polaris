@@ -4,4 +4,6 @@ sealed interface MoreActions {
     object OnSettingsClicked : MoreActions
     object OnChatClicked : MoreActions
 
+    object OnRefreshList: MoreActions
+
 }

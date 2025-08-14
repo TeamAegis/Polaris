@@ -1,0 +1,35 @@
+CREATE TABLE quest (
+        id INTEGER PRIMARY KEY NOT NULL,
+        place_id TEXT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        place_name TEXT,
+        address TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        place_type TEXT,
+        type TEXT,
+        status TEXT,
+        created_date TEXT
+);
+
+selectQuests:
+SELECT *
+FROM quest
+WHERE type = ?;
+
+insert:
+INSERT INTO quest(place_id, title, description, place_name, address, latitude, longitude, place_type, type, status, created_date)
+VALUES (?,?,?,?,?,?,?,?,?, ?,?);
+
+delete:
+DELETE FROM quest
+WHERE id = ?;
+
+deleteAll:
+DELETE FROM quest;
+
+update:
+UPDATE quest
+SET status = ?
+WHERE id = ?;

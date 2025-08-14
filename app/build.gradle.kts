@@ -174,7 +174,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
 
 //    lottie
-    implementation(libs.dotlottie.android)
+//    implementation(libs.dotlottie.android)
 
 }
 

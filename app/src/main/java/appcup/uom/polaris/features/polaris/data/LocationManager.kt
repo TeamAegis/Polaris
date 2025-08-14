@@ -23,13 +23,17 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.EncodedPolyline
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.model.SearchAlongRouteParameters
+import com.google.android.libraries.places.api.model.kotlin.circularBounds
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.SearchByTextRequest
+import com.google.android.libraries.places.api.net.SearchNearbyResponse
+import com.google.android.libraries.places.api.net.kotlin.searchNearbyRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
@@ -334,5 +338,49 @@ class LocationManager(
         }
     }.flowOn(Dispatchers.IO)
 
+
+    @OptIn(ExperimentalUuidApi::class)
+    @SuppressLint("MissingPermission")
+    suspend fun nearbySearchPlaces(): List<Waypoint> {
+        val result = fusedLocationClient.lastLocation.await()
+
+        val restriction = circularBounds(
+            center = LatLng(result.latitude, result.longitude),
+            radius = 5000.0
+        )
+        val request = searchNearbyRequest(
+            locationRestriction = restriction,
+            placeFields = listOf(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.ADDRESS,
+                Place.Field.RATING,
+                Place.Field.USER_RATINGS_TOTAL,
+                Place.Field.CURRENT_OPENING_HOURS,
+                Place.Field.PHONE_NUMBER,
+                Place.Field.WEBSITE_URI,
+                Place.Field.LAT_LNG
+            ),
+            actions = null
+        )
+
+        val places = placesClient.searchNearby(request).await()
+        return places.places.map { place ->
+            Waypoint(
+                placeId = place.id,
+                name = place.displayName ?: "Unknown",
+                address = place.formattedAddress,
+                rating = place.rating,
+                userRatingsTotal = place.rating,
+                openNow = isPlaceOpenNow(place.currentOpeningHours),
+                phoneNumber = place.internationalPhoneNumber
+                    ?: place.nationalPhoneNumber,
+                websiteUri = place.websiteUri,
+                latitude = place.location?.latitude ?: 0.0,
+                longitude = place.location?.longitude ?: 0.0
+            )
+        }
+
+    }
 
 }

@@ -59,7 +59,6 @@ enum class Preferences(val label: String, val types: List<String>) {
         "atm", "bank", "pharmacy", "hospital", "police", "post_office", "gas_station",
         "parking", "bus_station", "train_station", "airport", "fire_station",
         "drugstore", "doctor", "laundry", "electric_vehicle_charging_station"
-    )
-    )
+    ))
 }
 

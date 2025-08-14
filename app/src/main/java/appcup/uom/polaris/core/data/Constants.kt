@@ -44,9 +44,8 @@ object Constants {
         zoomGesturesEnabled = false,
     )
     const val MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES = 500
-    const val MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES = 50
-
-    const val MAP_STARTING_PROMPT_RADIUS_IN_METRES = 50
+    const val MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES = 150
+    const val MAP_STARTING_PROMPT_RADIUS_IN_METRES = 150
 
     fun getSystemInstructions(): String {
         return "Polaris AI Assistant System Instructions for Android App\n" +
