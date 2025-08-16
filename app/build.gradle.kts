@@ -172,10 +172,6 @@ dependencies {
     implementation(libs.androidx.camera.compose)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
-
-//    lottie
-//    implementation(libs.dotlottie.android)
-
 }
 
 kotlin {

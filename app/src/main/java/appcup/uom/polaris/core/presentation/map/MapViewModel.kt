@@ -12,13 +12,18 @@ import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 import appcup.uom.polaris.features.polaris.domain.toWaypoint
+import appcup.uom.polaris.features.quest.domain.QuestRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -35,6 +40,7 @@ import kotlin.uuid.Uuid
 class MapViewModel(
     private val locationManager: LocationManager,
     private val polarisRepository: PolarisRepository,
+    private val questRepository: QuestRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapState())
     val state = _state.asStateFlow()
@@ -44,6 +50,15 @@ class MapViewModel(
 
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            val quests = questRepository.fetchAllPendingQuests()
+            _state.update {
+                it.copy(
+                    quests = quests
+                )
+            }
+        }
+
         viewModelScope.launch {
             locationManager.getCoordinates { latitude, longitude ->
                 if (latitude != null && longitude != null) {
@@ -76,113 +91,122 @@ class MapViewModel(
             }
         }
 
-        locationManager.getLocationUpdatesFlow(500L).onEach { result ->
-            when (result) {
-                is ResultState.Failure -> {}
-                ResultState.Loading -> {}
-                is ResultState.Success<LatLong> -> {
-                    val (latitude, longitude) = result.data
+        viewModelScope.launch {
+            locationManager.getLocationUpdatesFlow(500L).collect { result ->
+                when (result) {
+                    is ResultState.Failure -> {}
+                    ResultState.Loading -> {}
+                    is ResultState.Success<LatLong> -> {
+                        val (latitude, longitude) = result.data
 
-                    if (_state.value.isTrackingUser) {
-                        _state.value.currentCameraPositionState.move(
-                            update = CameraUpdateFactory.newCameraPosition(
-                                CameraPosition.builder(
-                                    _state.value.currentCameraPositionState.position
-                                ).target(
-                                    LatLng(
-                                        latitude,
-                                        longitude
-                                    )
-                                ).build()
-                            )
-                        )
-                    }
-                    _state.update {
-                        it.copy(
-                            currentLocation = _state.value.currentLocation.copy(
-                                latitude = latitude,
-                                longitude = longitude
-                            ),
-                            currentMarkerState = _state.value.currentMarkerState.apply {
-                                position = LatLng(
-                                    latitude,
-                                    longitude
+                        if (_state.value.isTrackingUser) {
+                            _state.value.currentCameraPositionState.move(
+                                update = CameraUpdateFactory.newCameraPosition(
+                                    CameraPosition.builder(
+                                        _state.value.currentCameraPositionState.position
+                                    ).target(
+                                        LatLng(
+                                            latitude,
+                                            longitude
+                                        )
+                                    ).build()
                                 )
-                            },
-                            discoveredPublicWaypoints = _state.value.publicWaypoints.filter { waypoint ->
-                                SphericalUtil.computeDistanceBetween(
-                                    LatLng(
+                            )
+                        }
+                        _state.update {
+                            it.copy(
+                                currentLocation = _state.value.currentLocation.copy(
+                                    latitude = latitude,
+                                    longitude = longitude
+                                ),
+                                currentMarkerState = _state.value.currentMarkerState.apply {
+                                    position = LatLng(
                                         latitude,
                                         longitude
-                                    ),
-                                    LatLng(
-                                        waypoint.latitude,
-                                        waypoint.longitude
                                     )
-                                ) <= Constants.MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES
-                            }
-                        )
-                    }
-                    if (_state.value.selectedJourney != null) {
-                        checkAndUpdatePersonalWaypointsUnlockStatus(
-                            latitude,
-                            longitude
-                        )
-                    } else if (_state.value.shouldShowStartJourneyDialog) {
-                        showStartJourneyPrompt(
-                            latitude,
-                            longitude
-                        )
+                                },
+                                discoveredPublicWaypoints = _state.value.publicWaypoints.filter { waypoint ->
+                                    SphericalUtil.computeDistanceBetween(
+                                        LatLng(
+                                            latitude,
+                                            longitude
+                                        ),
+                                        LatLng(
+                                            waypoint.latitude,
+                                            waypoint.longitude
+                                        )
+                                    ) <= Constants.MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES
+                                }
+                            )
+                        }
+                        if (_state.value.selectedJourney != null) {
+                            checkAndUpdatePersonalWaypointsUnlockStatus(
+                                latitude,
+                                longitude
+                            )
+                        } else if (_state.value.shouldShowStartJourneyDialog) {
+                            showStartJourneyPrompt(
+                                latitude,
+                                longitude
+                            )
+                        }
+
+                        checkAndUpdateQuestStatus(latitude, longitude)
                     }
                 }
             }
+        }
 
-        }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            polarisRepository.getAllMyWaypoints().collect { waypoints ->
+                val currentSelectedJourney = _state.value.selectedJourney
 
-        polarisRepository.getAllMyWaypoints().onEach { waypoints ->
-            val currentSelectedJourney = _state.value.selectedJourney
+                if (currentSelectedJourney != null) {
+                    val waypointsForSelectedJourney =
+                        waypoints.filter { it.journeyId == currentSelectedJourney.id }
 
-            if (currentSelectedJourney != null) {
-                val waypointsForSelectedJourney =
-                    waypoints.filter { it.journeyId == currentSelectedJourney.id }
+                    val isJourneyCompleted = waypointsForSelectedJourney.isNotEmpty() &&
+                            waypointsForSelectedJourney.all { it.isUnlocked }
 
-                val isJourneyCompleted = waypointsForSelectedJourney.isNotEmpty() &&
-                        waypointsForSelectedJourney.all { it.isUnlocked }
-
-                if (isJourneyCompleted) {
-                    _state.update {
-                        it.copy(
-                            allMyWaypoints = waypoints,
-                            waypointsForSelectedJourney = emptyList(),
-                            selectedJourney = null,
-                        )
+                    if (isJourneyCompleted) {
+                        _state.update {
+                            it.copy(
+                                allMyWaypoints = waypoints,
+                                waypointsForSelectedJourney = emptyList(),
+                                selectedJourney = null,
+                            )
+                        }
+                        _event.emit(MapEvent.OnJourneyCompleted)
+                    } else {
+                        _state.update {
+                            it.copy(
+                                allMyWaypoints = waypoints,
+                                waypointsForSelectedJourney = waypointsForSelectedJourney
+                            )
+                        }
                     }
-                    _event.emit(MapEvent.OnJourneyCompleted)
                 } else {
                     _state.update {
                         it.copy(
                             allMyWaypoints = waypoints,
-                            waypointsForSelectedJourney = waypointsForSelectedJourney
+                            isSelectedWaypointCardVisible = false,
+                            selectedWaypoint = null,
+                            selectedWeatherData = null
                         )
                     }
                 }
-            } else {
+            }
+        }
+
+        viewModelScope.launch {
+            polarisRepository.getPublicWaypoints().collect { waypoints ->
                 _state.update {
                     it.copy(
-                        allMyWaypoints = waypoints,
+                        publicWaypoints = waypoints
                     )
                 }
             }
-        }.launchIn(viewModelScope)
-
-        polarisRepository.getPublicWaypoints().onEach { waypoints ->
-            _state.update {
-                it.copy(
-                    publicWaypoints = waypoints
-                )
-            }
-        }.launchIn(viewModelScope)
-
+        }
 
     }
 
@@ -316,7 +340,47 @@ class MapViewModel(
                 }
             }
 
+            MapActions.OnToggleQuests -> {
+                _state.update {
+                    it.copy(
+                        isQuestsVisible = !_state.value.isQuestsVisible
+                    )
+                }
+            }
+
             else -> {}
+        }
+
+    }
+
+    suspend fun CoroutineScope.checkAndUpdateQuestStatus(
+        latitude: Double,
+        longitude: Double
+    ) {
+        val completedQuests = _state.value.quests.filter { quest ->
+            SphericalUtil.computeDistanceBetween(
+                LatLng(
+                    latitude,
+                    longitude
+                ),
+                LatLng(
+                    quest.latitude,
+                    quest.longitude
+                )
+            ) <= Constants.MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES
+        }
+
+        if (completedQuests.isNotEmpty()) {
+            completedQuests.map { quest ->
+                async {
+                    questRepository.setQuestCompleted(quest.id ?: 0, quest.type)
+                }
+            }.awaitAll()
+            _state.update {
+                it.copy(
+                    quests = questRepository.fetchAllPendingQuests()
+                )
+            }
         }
 
     }
@@ -458,4 +522,33 @@ class MapViewModel(
             }
         }
     }
+
+    fun isFragmentInteractable(waypoint: PublicWaypoint): Boolean {
+        return SphericalUtil.computeDistanceBetween(
+            LatLng(
+                _state.value.currentLocation.latitude,
+                _state.value.currentLocation.longitude
+            ),
+            LatLng(
+                waypoint.latitude,
+                waypoint.longitude
+            )
+        ) <= Constants.MAP_FRAGMENT_INTERACTABLE_RADIUS_IN_METRES
+    }
+
+
+    fun canUserCreatePublicWaypoint() =
+        _state.value.discoveredPublicWaypoints.none { waypoint ->
+            SphericalUtil.computeDistanceBetween(
+                LatLng(
+                    _state.value.currentLocation.latitude,
+                    _state.value.currentLocation.longitude
+                ),
+                LatLng(
+                    waypoint.latitude,
+                    waypoint.longitude
+                )
+            ) <= Constants.MAP_FRAGMENT_CREATION_RADIUS_IN_METRES
+        }
+
 }

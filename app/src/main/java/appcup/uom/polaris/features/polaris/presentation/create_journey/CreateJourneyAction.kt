@@ -18,7 +18,11 @@ sealed interface CreateJourneyAction {
 
     data class OnIntermediateWaypointRemoved(val index: Int) : CreateJourneyAction
 
+    object OnIntermediateWaypointGenerate : CreateJourneyAction
+
     object OnCreateJourneyClicked : CreateJourneyAction
 
+    object OnSuggestedNameClicked : CreateJourneyAction
+    object OnSuggestedDescriptionClicked : CreateJourneyAction
 
 }

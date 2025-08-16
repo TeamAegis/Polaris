@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxDefaults
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -288,6 +289,14 @@ fun CreateJourneyScreenImpl(
                                 capitalization = KeyboardCapitalization.Words
                             )
                         )
+                        if (state.suggestedName != null) {
+                            SuggestionChip(
+                                label = { Text("Use AI suggested name") },
+                                onClick = {
+                                    onAction(CreateJourneyAction.OnSuggestedNameClicked)
+                                }
+                            )
+                        }
                         PolarisInputField(
                             label = "Journey Description",
                             value = state.journeyDescription,
@@ -302,6 +311,15 @@ fun CreateJourneyScreenImpl(
                                 capitalization = KeyboardCapitalization.Sentences
                             )
                         )
+
+                        if (state.suggestedDescription != null) {
+                            SuggestionChip(
+                                label = { Text("Use AI suggested description") },
+                                onClick = {
+                                    onAction(CreateJourneyAction.OnSuggestedDescriptionClicked)
+                                }
+                            )
+                        }
                     }
                 }
                 item {
@@ -454,12 +472,17 @@ fun CreateJourneyScreenImpl(
 
                         OutlinedButton(
                             onClick = {
-
+                                onAction(CreateJourneyAction.OnIntermediateWaypointGenerate)
                             }
                         ) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null)
-                            Spacer(Modifier.width(4.dp))
-                            Text("Generate")
+                            if (state.isGeneratingIntermediateWaypoints) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Generating...")
+                            } else {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text(text = "Generate")
+                            }
                         }
                     }
                 }
@@ -587,7 +610,7 @@ fun CreateJourneyScreenImpl(
         }
     }
 
-    LoadingOverlay(state.isCreatingJourney)
+    LoadingOverlay(state.isCreatingJourney || state.isGeneratingIntermediateWaypoints)
 }
 
 @Composable

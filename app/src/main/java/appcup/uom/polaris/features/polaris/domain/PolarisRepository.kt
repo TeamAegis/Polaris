@@ -48,5 +48,7 @@ interface PolarisRepository {
 
     suspend fun getWeatherData(latitude: Double, longitude: Double): Result<WeatherData, DataError.Remote>
 
+    suspend fun generateIntermediateWaypoints(name: String, description: String, preferences: List<Preferences>, encodedPolyline: String): Result<GeneratedWaypoints, DataError.JourneyError>
+
 
 }

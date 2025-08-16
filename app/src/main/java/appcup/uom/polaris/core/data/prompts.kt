@@ -1,44 +1,74 @@
 package appcup.uom.polaris.core.data
 
-fun createJourney(startingPoint: String, endPoint: String, nearbyPlaces: String, userPreference: String): String {
-    /*
-     * Formats the journey creation prompt based on input parameters:
-     * - startingPoint: The journey's starting location.
-     * - endPoint: The journey's ending location (optional).
-     * - nearbyPlaces: A list of nearby places to include as waypoints.
-     */
+fun createJourneyFunctionCallingPrompt(
+    journeyName: String,
+    journeyDescription: String,
+    userPreference: String,
+    encodedPolyline: String
+): String {
     return """
-        Create a journey in Mauritius using the provided information:
-        - User Preference: $userPreference
-        - Starting Point: $startingPoint
-        - End Point: $endPoint
-        - Nearby Places: $nearbyPlaces
+        You are tasked with creating a complete and engaging journey in Mauritius.
+
+        Journey Details:
+        - Name: $journeyName
+        - Description: $journeyDescription
+        - User Preferences: $userPreference
+        - Encoded Polyline: $encodedPolyline
 
         Instructions:
-        - If the end point is not specified, select one of the nearby places as the default end point.
-        - Design a logical journey starting from `$startingPoint`, ending at `$endPoint`, and including nearby places as waypoints.
-        - Use relevant nearby places to form interesting or efficient routes.
-        - Make use of the user preference to decide how the journey should be structured.
-
-        Return the output in the following JSON format:
-
-        {
-            "EndPoint": "String",
-            "MiddleWayPoints": [
-                {
-                    "PlaceName": "String",
-                    "PlaceLat": Double,
-                    "PlaceLong": Double,
-                    "PlaceType": ["String", ...],
-                    "PlaceAddress": "String",
-                    "PlaceDescription": "String"
-                }
-            ]
-        }
+        1. Based on the user preferences, perform multiple **parallel calls** to the tool `getNearbyPlacesAlongRoute`:
+            - Calls should pass both a search text (derived from user preferences, title and description) **and** the `encodedPolyline`.
+        2. Collect all returned waypoints from these parallel calls.
+        3. Evaluate these waypoints considering:
+            - Relevance to user preferences
+            - Logical geographic progression
+            - Variety and uniqueness of experiences
+            - Balance between scenic, cultural, and activity-based stops
+            - Optimal travel efficiency while maintaining engagement
+        4. Select the best waypoints to form a journey that feels **complete, worthwhile, and memorable**.
+        5. Ensure the route has a natural flow and progression, ending in a **satisfying final destination**.
+        6. Include enough waypoints to make the experience rich, but avoid overloading it.
+        7. Whenever possible, ensure there is **at least one scenic stop, one cultural stop, and one activity-based stop**.
     """.trimIndent()
 }
 
-fun createQuest(placesList: String, preference: String) : String {
+fun createJourneyFromExistingWaypointsPrompt(
+    journeyName: String,
+    journeyDescription: String,
+    userPreference: String,
+    encodedPolyline: String,
+    intermediateWaypoints: String // Can be JSON or formatted list
+): String {
+    return """
+        You are tasked with creating a meaningful and engaging journey in Mauritius.
+
+        Journey Details:
+        - Name: $journeyName
+        - Description: $journeyDescription
+        - User Preferences: $userPreference
+        - Encoded Polyline: $encodedPolyline
+        - Provided Intermediate Waypoints: $intermediateWaypoints
+
+        Instructions:
+        1. From the provided intermediate waypoints, select the best ones based on:
+            - Relevance to user preferences
+            - Logical geographic progression
+            - Variety and uniqueness of experiences
+            - Balance between scenic, cultural, and activity-based stops
+            - Optimal travel efficiency while maintaining engagement
+        2. Select the best waypoints to form a journey that feels **complete, worthwhile, and memorable**.
+        3. Ensure the route has a natural flow and progression, ending in a **satisfying final destination**.
+        4. Include enough waypoints to make the experience rich, but avoid overloading it.
+        5. Whenever possible, ensure there is **at least one scenic stop, one cultural stop, and one activity-based stop**.
+        6. Create a **better journey title** that captures the theme and appeal.
+        7. Write an **improved journey description** that conveys excitement and purpose.
+        8. Ensure the route has a satisfying final destination and is well-balanced.
+    """.trimIndent()
+}
+
+
+
+fun createQuestPrompt(placesList: String, preference: String) : String {
     return """
         Generate a quest list for traveler/tourist/locals in Mauritius.
 

@@ -293,7 +293,10 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
             id = Uuid.parse(user.id),
             name = user.userMetadata!!.getOrElse("name") { "" }.toString()
                 .removeSurrounding("\""),
-            email = user.email!!
+            email = user.email!!,
+            experience = user.userMetadata!!.getOrElse("experience") { 0 }.toString()
+                .toInt(),
+            points = user.userMetadata!!.getOrElse("points") { 0 }.toString().toInt()
         )
     }
 }

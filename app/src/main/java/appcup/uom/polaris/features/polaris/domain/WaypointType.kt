@@ -9,6 +9,5 @@ enum class WaypointType(val label: String) {
     END("End"),
     CURRENT_LOCATION("Current Location"),
     FRAGMENT("Fragment"),
-    UNLOCKED_WAYPOINT("Unlocked Waypoint"),
     QUEST_WAYPOINT("Quest Waypoint")
 }

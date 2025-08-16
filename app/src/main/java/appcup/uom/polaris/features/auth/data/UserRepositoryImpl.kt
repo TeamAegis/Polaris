@@ -1,8 +1,8 @@
 package appcup.uom.polaris.features.auth.data
 
+import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
-import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.features.auth.domain.User
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import io.github.jan.supabase.SupabaseClient
@@ -81,19 +81,21 @@ class UserRepositoryImpl(
             return Result.Error(DataError.AuthError.PASSWORD_MISMATCH)
         }
 
-         try {
+        try {
             val user = supabaseClient.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
                 this.data = buildJsonObject {
                     this.put("name", name)
+                    this.put("experience", 0)
+                    this.put("points", 0)
                 }
             }
-             return if (user != null) {
-                 Result.Success(Unit)
-             } else {
-                 Result.Error(DataError.AuthError.UNKNOWN)
-             }
+            return if (user != null) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(DataError.AuthError.UNKNOWN)
+            }
         } catch (_: AuthRestException) {
             return Result.Error(DataError.AuthError.ACCOUNT_EXISTS)
         } catch (_: Exception) {
@@ -101,12 +103,19 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun confirmRegistration(email: String, otp: String): Result<User, DataError.AuthError> {
+    override suspend fun confirmRegistration(
+        email: String,
+        otp: String
+    ): Result<User, DataError.AuthError> {
         if (email.isBlank() || otp.isBlank()) {
             return Result.Error(DataError.AuthError.EMPTY_FIELD)
         }
         try {
-            supabaseClient.auth.verifyEmailOtp(type = OtpType.Email.EMAIL, email = email, token = otp)
+            supabaseClient.auth.verifyEmailOtp(
+                type = OtpType.Email.EMAIL,
+                email = email,
+                token = otp
+            )
             return getUser()
         } catch (_: AuthRestException) {
             return Result.Error(DataError.AuthError.INVALID_OTP)
@@ -170,7 +179,9 @@ class UserRepositoryImpl(
             StaticData.user = User(
                 id = Uuid.NIL,
                 name = "",
-                email = ""
+                email = "",
+                experience = 0,
+                points = 0
             )
             return Result.Success(Unit)
         } catch (_: Exception) {
@@ -184,11 +195,17 @@ class UserRepositoryImpl(
         return if (user == null) {
             Result.Error(DataError.AuthError.UNKNOWN)
         } else {
-            Result.Success(User(
-                id = Uuid.parse(user.id),
-                name = user.userMetadata!!.getOrElse("name", {""}).toString().removeSurrounding("\""),
-                email = user.email!!
-            ))
+            Result.Success(
+                User(
+                    id = Uuid.parse(user.id),
+                    name = user.userMetadata!!.getOrElse("name") { "" }.toString()
+                        .removeSurrounding("\""),
+                    email = user.email!!,
+                    experience = user.userMetadata!!.getOrElse("experience") { 0 }.toString()
+                        .toInt(),
+                    points = user.userMetadata!!.getOrElse("points") { 0 }.toString().toInt()
+                )
+            )
         }
     }
 
@@ -255,6 +272,52 @@ class UserRepositoryImpl(
             supabaseClient.auth.updateUser {
                 this.password = password
             }
+            return Result.Success(Unit)
+        } catch (_: Exception) {
+            return Result.Error(DataError.AuthError.UNKNOWN)
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun addExperienceAndPoints(
+        experience: Int,
+        points: Int
+    ): Result<Unit, DataError.AuthError> {
+        try {
+            val currentUser = supabaseClient.auth.currentUserOrNull()
+                ?: return Result.Error(DataError.AuthError.UNKNOWN)
+            val currentExperience =
+                currentUser.userMetadata?.get("experience")?.toString()?.toInt() ?: 0
+            val currentPoints = currentUser.userMetadata?.get("points")?.toString()?.toInt() ?: 0
+            supabaseClient.auth.updateUser {
+                data = buildJsonObject {
+                    put("experience", currentExperience + experience)
+                    put("points", currentPoints + points)
+                }
+            }
+            StaticData.user = StaticData.user.copy(experience = currentExperience + experience, points = currentPoints + points)
+            return Result.Success(Unit)
+        } catch (_: Exception) {
+            return Result.Error(DataError.AuthError.UNKNOWN)
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun usePoints(points: Int): Result<Unit, DataError.AuthError> {
+        try {
+            val currentUser = supabaseClient.auth.currentUserOrNull()
+                ?: return Result.Error(DataError.AuthError.UNKNOWN)
+            val currentPoints = currentUser.userMetadata?.get("points")?.toString()?.toInt() ?: 0
+
+            if (currentPoints < points) {
+                return Result.Error(DataError.AuthError.INSUFFICIENT_POINTS)
+            }
+            supabaseClient.auth.updateUser {
+                data = buildJsonObject {
+                    put("points", currentPoints - points)
+                }
+            }
+            StaticData.user = StaticData.user.copy(points = currentPoints - points)
             return Result.Success(Unit)
         } catch (_: Exception) {
             return Result.Error(DataError.AuthError.UNKNOWN)

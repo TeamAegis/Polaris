@@ -7,9 +7,11 @@ import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesResponse
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.GeneratedWaypoints
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
 import appcup.uom.polaris.features.polaris.domain.WaypointType
+import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyEvent.*
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
@@ -217,10 +219,10 @@ class CreateJourneyViewModel(
 
                     when (result) {
                         is Result.Error<DataError.JourneyError> -> {
-                            _event.emit(CreateJourneyEvent.OnError(result.error.message))
+                            _event.emit(OnError(result.error.message))
                         }
                         is Result.Success<Journey> -> {
-                            _event.emit(CreateJourneyEvent.OnJourneyCreated(result.data))
+                            _event.emit(OnJourneyCreated(result.data))
                         }
                     }
                     _state.update {
@@ -230,6 +232,78 @@ class CreateJourneyViewModel(
                     }
                 }
             }
+
+            CreateJourneyAction.OnIntermediateWaypointGenerate -> {
+                generateIntermediateWaypoints()
+            }
+
+            CreateJourneyAction.OnSuggestedDescriptionClicked -> {
+                _state.update {
+                    it.copy(
+                        journeyDescription = _state.value.suggestedDescription ?: "",
+                        suggestedDescription = null
+                    )
+                }
+            }
+            CreateJourneyAction.OnSuggestedNameClicked -> {
+                _state.update {
+                    it.copy(
+                        journeyName = _state.value.suggestedName ?: "",
+                        suggestedName = null
+                    )
+                }
+            }
+        }
+    }
+
+    fun generateIntermediateWaypoints() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (_state.value.endingWaypoint.latitude == 0.0 && _state.value.endingWaypoint.longitude == 0.0) {
+                _event.emit(OnError("End location not set"))
+                return@launch
+            }
+
+            _state.update {
+                it.copy(
+                    isGeneratingIntermediateWaypoints = true
+                )
+            }
+
+            val result = polarisRepository.generateIntermediateWaypoints(
+                name = _state.value.journeyName,
+                description = _state.value.journeyDescription,
+                preferences = _state.value.selectedPreferences,
+                encodedPolyline = PolyUtil.encode(state.value.polyline)
+            )
+
+            when (result) {
+                is Result.Error<DataError.JourneyError> -> {
+                    _event.emit(OnError(result.error.message))
+                }
+                is Result.Success<GeneratedWaypoints> -> {
+                    _state.update {
+                        it.copy(
+                            intermediateWaypoints = it.intermediateWaypoints + result.data.waypoints,
+                            intermediateMarkerStates = it.intermediateMarkerStates + result.data.waypoints.map { waypoint ->
+                                MarkerState(
+                                    position = LatLng(
+                                        waypoint.latitude,
+                                        waypoint.longitude
+                                    )
+                                )
+                            },
+                            suggestedName = result.data.title,
+                            suggestedDescription = result.data.description
+                        )
+                    }
+                }
+            }
+            _state.update {
+                it.copy(
+                    isGeneratingIntermediateWaypoints = false
+                )
+            }
+            getJourneyPolyline()
         }
     }
 
@@ -244,7 +318,7 @@ class CreateJourneyViewModel(
             )
             when (response) {
                 is Result.Error<DataError.JourneyError> -> {
-                    _event.emit(CreateJourneyEvent.OnError(response.error.message))
+                    _event.emit(OnError(response.error.message))
                 }
 
                 is Result.Success<RoutesResponse> -> {

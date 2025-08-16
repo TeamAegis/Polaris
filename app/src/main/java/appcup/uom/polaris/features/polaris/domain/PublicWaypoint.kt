@@ -1,17 +1,16 @@
 package appcup.uom.polaris.features.polaris.domain
 
-import kotlinx.serialization.SerialName
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalSerializationApi::class)
 @Serializable
 data class PublicWaypoint(
-    val id: Uuid,
-    @SerialName("place_id")
-    val placeId: String? = null,
-    val name: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val id: Uuid? = null,
     val address: String? = null,
     val longitude: Double,
     val latitude: Double

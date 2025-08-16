@@ -46,6 +46,8 @@ object Constants {
     const val MAP_FRAGMENT_DISCOVERY_RADIUS_IN_METRES = 500
     const val MAP_SET_TO_UNLOCKED_RADIUS_IN_METRES = 150
     const val MAP_STARTING_PROMPT_RADIUS_IN_METRES = 150
+    const val MAP_FRAGMENT_INTERACTABLE_RADIUS_IN_METRES = 100
+    const val MAP_FRAGMENT_CREATION_RADIUS_IN_METRES = 100
 
     fun getSystemInstructions(): String {
         return """

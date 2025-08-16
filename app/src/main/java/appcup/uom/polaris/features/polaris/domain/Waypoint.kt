@@ -1,10 +1,18 @@
 package appcup.uom.polaris.features.polaris.domain
 
 import android.net.Uri
+import appcup.uom.polaris.core.presentation.app.utils.NullableUriSerializer
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@Serializable
 @OptIn(ExperimentalSerializationApi::class,ExperimentalUuidApi::class)
 data class Waypoint(
     val id: Uuid = Uuid.NIL,
@@ -15,6 +23,7 @@ data class Waypoint(
     val userRatingsTotal: Double?,
     val openNow: Boolean?,
     val phoneNumber: String?,
+    @Serializable(with = NullableUriSerializer::class)
     val websiteUri: Uri?,
     val latitude: Double,
     val longitude: Double,

@@ -275,12 +275,25 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
     }
 
     @Serializable
-    data class JourneyDetails(val journeyId: String): Screen() {
+    data class JourneyDetails(val journeyId: String) : Screen() {
         override fun getScreenDetails(): Value {
             return Value.Object(
                 values = arrayOf(
                     "name" to Value.Str("Journey Details"),
                     "description" to Value.Str("This is the journey details screen of the app."),
+                    "navigation_arguments" to Value.Null
+                )
+            )
+        }
+    }
+
+    @Serializable
+    data class Fragments(val publicWaypointId: String?) : Screen() {
+        override fun getScreenDetails(): Value {
+            return Value.Object(
+                values = arrayOf(
+                    "name" to Value.Str("Fragments"),
+                    "description" to Value.Str("This is the fragments screen of the app. It should not be navigated to."),
                     "navigation_arguments" to Value.Null
                 )
             )

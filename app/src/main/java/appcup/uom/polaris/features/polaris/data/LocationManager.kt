@@ -7,9 +7,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import appcup.uom.polaris.core.data.Constants
-import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.LatLong
-import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.ResultState
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import com.google.android.gms.location.DeviceOrientation
@@ -32,7 +30,6 @@ import com.google.android.libraries.places.api.model.kotlin.circularBounds
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.SearchByTextRequest
-import com.google.android.libraries.places.api.net.SearchNearbyResponse
 import com.google.android.libraries.places.api.net.kotlin.searchNearbyRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -56,10 +53,10 @@ class LocationManager(
 ) {
 
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun getNearbyPlaces(
+    suspend fun getNearbyPlacesAlongRoute(
         searchQuery: String,
         polyline: String
-    ): Result<List<Waypoint>, DataError.Remote> {
+    ): List<Waypoint> {
         return try {
             val result = placesClient.searchByText(
                 SearchByTextRequest.builder(
@@ -80,11 +77,12 @@ class LocationManager(
                         EncodedPolyline.newInstance(polyline)
                     )
                 )
+                    .setMaxResultCount(5)
                     .setLocationRestriction(RectangularBounds.newInstance(Constants.MAP_LAT_LNG_BOUNDS))
                     .build()
             ).await()
 
-            Result.Success(result.places.map { place ->
+            result.places.map { place ->
                 Waypoint(
                     placeId = place.id,
                     name = place.displayName ?: "Unknown",
@@ -99,9 +97,9 @@ class LocationManager(
                     longitude = place.location?.longitude ?: 0.0,
                     placeType = place.placeTypes ?: emptyList()
                 )
-            })
+            }
         } catch (e: Exception) {
-            Result.Error(DataError.Remote.UNKNOWN)
+            emptyList()
         }
     }
 

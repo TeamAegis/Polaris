@@ -2,6 +2,7 @@ package appcup.uom.polaris.features.quest.di
 
 import appcup.uom.polaris.Database
 import appcup.uom.polaris.QuestQueries
+import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.quest.data.QuestRepositoryImpl
 import appcup.uom.polaris.features.quest.domain.QuestRepository
@@ -16,9 +17,10 @@ class QuestModule {
     @Single
     fun provideQuestRepository(
         questDataSource: QuestQueries,
-        locationManager: LocationManager
+        locationManager: LocationManager,
+        userRepository: UserRepository
         ): QuestRepository =
-        QuestRepositoryImpl(questDataSource, locationManager)
+        QuestRepositoryImpl(questDataSource, locationManager, userRepository)
 
 
 

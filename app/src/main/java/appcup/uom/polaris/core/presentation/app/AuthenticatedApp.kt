@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonMenu
@@ -103,6 +105,10 @@ import appcup.uom.polaris.core.presentation.map.MapActions
 import appcup.uom.polaris.core.presentation.map.MapScreen
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesScreen
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryAction
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryBottomSheet
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryEvent
+import appcup.uom.polaris.core.presentation.memories.memory.MemoryViewModel
 import appcup.uom.polaris.core.presentation.more.MoreScreen
 import appcup.uom.polaris.core.presentation.settings.SettingsScreen
 import appcup.uom.polaris.features.auth.presentation.change_password.ChangePasswordScreen
@@ -119,12 +125,9 @@ import appcup.uom.polaris.features.conversational_ai.presentation.conversational
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
 import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
-import appcup.uom.polaris.core.presentation.memories.memory.MemoryAction
-import appcup.uom.polaris.core.presentation.memories.memory.MemoryBottomSheet
-import appcup.uom.polaris.core.presentation.memories.memory.MemoryEvent
-import appcup.uom.polaris.core.presentation.memories.memory.MemoryViewModel
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
+import appcup.uom.polaris.features.polaris.presentation.fragments.FragmentsScreen
 import appcup.uom.polaris.features.polaris.presentation.journey_details.JourneyDetailsScreen
 import appcup.uom.polaris.features.polaris.presentation.journeys.JourneysScreen
 import kotlinx.coroutines.launch
@@ -177,6 +180,16 @@ fun AuthenticatedApp(
                 AppEvent.LocationPermissionDeniedPermanent -> {
                     scope.launch {
                         snackbarHostState.showSnackbar("Location permission denied. Please enable it from settings.")
+                    }
+                }
+
+                is AppEvent.PublicWaypointCreated -> {
+                    backStack.add(Screen.Fragments(event.waypoint.id!!.toString()))
+                }
+
+                is AppEvent.OnError -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(event.error)
                     }
                 }
 
@@ -270,7 +283,7 @@ fun AuthenticatedApp(
                             mapViewModel.onAction(MapActions.OnTrackingWaypointCardDismissed)
                         },
                         onViewMore = {
-
+                            backStack.add(Screen.JourneyDetails(mapState.value.selectedWaypoint!!.id.toString()))
                         }
                     )
                 }
@@ -366,6 +379,16 @@ fun AuthenticatedApp(
 
                                     FabMenuItem.VoiceAssistant -> {
                                         conversationAIViewModel.onAction(ConversationalAIAction.StartRecording)
+                                    }
+
+                                    FabMenuItem.CreateFragment -> {
+                                        if (mapViewModel.canUserCreatePublicWaypoint()) {
+                                            viewModel.onAction(AppAction.OnCreatePublicWaypointClicked)
+                                        } else {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Cannot create new fragment: existing fragment nearby. Add to it instead.")
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -477,7 +500,10 @@ fun AuthenticatedApp(
                     entry<Screen.Map> {
                         MapScreen(
                             viewModel = mapViewModel,
-                            snackbarHostState = snackbarHostState
+                            snackbarHostState = snackbarHostState,
+                            onFragmentClicked = { waypoint ->
+                                backStack.add(Screen.Fragments(waypoint.id!!.toString()))
+                            }
                         )
                     }
 
@@ -564,6 +590,16 @@ fun AuthenticatedApp(
                                 )
                             },
                             onBack = { backStack.removeLastOrNull() }
+                        )
+                    }
+
+                    entry<Screen.Fragments> {
+                        FragmentsScreen(
+                            snackBarHostState = snackbarHostState,
+                            onBack = { backStack.removeLastOrNull() },
+                            viewModel = koinViewModel {
+                                parametersOf(it.publicWaypointId)
+                            }
                         )
                     }
                 }
@@ -668,7 +704,7 @@ fun AuthenticatedApp(
                             )
                         }
 
-                        if (backStack.last() is Screen.Map && mapState.value.selectedJourney == null && mapState.value.startableJourneys.isNotEmpty()) {
+                        if (backStack.last() is Screen.Map && mapState.value.selectedJourney == null) {
                             IconButton(
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
                                 onClick = {
@@ -681,6 +717,19 @@ fun AuthenticatedApp(
                                 )
                             }
                         }
+
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                mapViewModel.onAction(MapActions.OnToggleQuests)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (mapState.value.isQuestsVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = if (mapState.value.isQuestsVisible) "Hide quests" else "Show quests"
+                            )
+                        }
+
 
                         IconButton(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
