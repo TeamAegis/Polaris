@@ -1,7 +1,5 @@
 package appcup.uom.polaris.features.polaris.data
 
-import android.util.Log
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.data.createJourneyFromExistingWaypointsPrompt
 import appcup.uom.polaris.core.data.createJourneyFunctionCallingPrompt
@@ -94,8 +92,7 @@ class PolarisRepositoryImpl(
         }
 
         return try {
-            val journey = supabaseClient.from("journeys")
-                .insert(
+            val journey = supabaseClient.from("journeys").insert(
                     Journey(
                         name = name,
                         description = description,
@@ -151,9 +148,7 @@ class PolarisRepositoryImpl(
         val channel =
             supabaseClient.channel("journey_channel_${StaticData.user.id}_${Uuid.random()}")
         val journeyFlow = channel.postgresListDataFlow(
-            schema = "public",
-            table = "journeys",
-            primaryKey = Journey::id
+            schema = "public", table = "journeys", primaryKey = Journey::id
         )
         channel.subscribe()
         val job = launch {
@@ -314,18 +309,14 @@ class PolarisRepositoryImpl(
     }
 
     override suspend fun getWeatherData(
-        latitude: Double,
-        longitude: Double
+        latitude: Double, longitude: Double
     ): Result<WeatherData, DataError.Remote> {
         return weatherApi.getWeather(latitude, longitude)
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun generateIntermediateWaypoints(
-        name: String,
-        description: String,
-        preferences: List<Preferences>,
-        encodedPolyline: String
+        name: String, description: String, preferences: List<Preferences>, encodedPolyline: String
     ): Result<GeneratedWaypoints, DataError.JourneyError> {
         if (name.isBlank()) {
             return Result.Error(DataError.JourneyError.NAME_EMPTY)
@@ -351,13 +342,9 @@ class PolarisRepositoryImpl(
                         if (functionCall.name == "getNearbyPlacesAlongRoute") {
                             val searchQuery =
                                 functionCall.args.getOrDefault("searchQuery", "landmarks")
-                            Log.d(
-                                Constants.DEBUG_VALUE,
-                                "generateIntermediateWaypoints: $searchQuery"
-                            )
+
                             locationManager.getNearbyPlacesAlongRoute(
-                                searchQuery.toString(),
-                                encodedPolyline
+                                searchQuery.toString(), encodedPolyline
                             )
                         } else {
                             emptyList()
@@ -381,17 +368,12 @@ class PolarisRepositoryImpl(
 
             Result.Success(
                 content.copy(
-                    waypoints = content.waypoints.map {
-                        it.copy(
-                            id = Uuid.random()
-                        )
-                    }
-                ))
+                waypoints = content.waypoints.map {
+                    it.copy(
+                        id = Uuid.random()
+                    )
+                }))
         } catch (e: Exception) {
-            Log.d(
-                Constants.DEBUG_VALUE,
-                "generateIntermediateWaypoints: ${e.message}"
-            )
             Result.Error(DataError.JourneyError.UNKNOWN)
         }
     }

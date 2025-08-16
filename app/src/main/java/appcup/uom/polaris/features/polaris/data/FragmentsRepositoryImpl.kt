@@ -1,8 +1,6 @@
 package appcup.uom.polaris.features.polaris.data
 
 import android.net.Uri
-import android.util.Log
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
@@ -39,8 +37,6 @@ class FragmentsRepositoryImpl(
             }.decodeSingle<PublicWaypoint>()
             Result.Success(result)
         } catch (e: Exception) {
-            Log.d(Constants.DEBUG_VALUE, "createPublicWaypoint: " + e.message)
-
             Result.Error(DataError.FragmentError.UNKNOWN)
         }
     }
@@ -76,7 +72,6 @@ class FragmentsRepositoryImpl(
             supabaseClient.from("fragments").insert(fragment)
             Result.Success(Unit)
         } catch (e: Exception) {
-            Log.d(Constants.DEBUG_VALUE, "addFragment: " + e.message)
             Result.Error(DataError.FragmentError.UNKNOWN)
         }
     }

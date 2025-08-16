@@ -35,7 +35,7 @@ class FragmentsViewModel(
     init {
         job = viewModelScope.launch {
             fragmentsRepository.getFragments(Uuid.parse(publicWaypointId)).collect { fragments ->
-                _state.update { it.copy(fragments = fragments.reversed()) }
+                _state.update { it.copy(fragments = fragments.reversed(), isLoading = false) }
             }
         }
     }

@@ -77,7 +77,7 @@ class LocationManager(
                         EncodedPolyline.newInstance(polyline)
                     )
                 )
-                    .setMaxResultCount(5)
+                    .setMaxResultCount(3)
                     .setLocationRestriction(RectangularBounds.newInstance(Constants.MAP_LAT_LNG_BOUNDS))
                     .build()
             ).await()
