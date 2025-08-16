@@ -220,11 +220,11 @@ fun MapScreenImpl(
                             painter = painterResource(
                                 when (waypoint.type) {
                                     WaypointType.START -> R.drawable.icon_start
-                                    WaypointType.INTERMEDIATE -> if (waypoint.isUnlocked) R.drawable.icon_start else R.drawable.icon_start
+                                    WaypointType.INTERMEDIATE -> if (waypoint.isUnlocked) R.drawable.icon_unlocked else R.drawable.icon_intermidiate
                                     WaypointType.END -> R.drawable.icon_end
                                     WaypointType.CURRENT_LOCATION -> R.drawable.icon_start
-                                    WaypointType.FRAGMENT -> R.drawable.icon_start
-                                    WaypointType.QUEST_WAYPOINT -> R.drawable.icon_start
+                                    WaypointType.FRAGMENT -> R.drawable.icon_fragment
+                                    WaypointType.QUEST_WAYPOINT -> R.drawable.icon_quest
                                 }
                             ),
                             contentDescription = null,
