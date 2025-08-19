@@ -90,21 +90,20 @@ fun createQuestPrompt(placesList: String, preference: String) : String {
     """.trimIndent()
 }
 
-
 fun waypointReachTriggerPrompt(
     currentWaypoints:String,
     nearbySearchItems: String
 ): String {
     return """
-        I have just received new data. The user has successfully unlocked a waypoint.
-
+        Assume that you are the one who fetched these data. These data needs to be analysed and output a response to the user.\
+        
         Current waypoint: $currentWaypoints
         Nearby places: $nearbySearchItems
 
-        My task is to format a response to the user. I need to:
-            Congratulate them warmly on reaching the waypoint.
-            Say something positive and encouraging.
-            Suggest a few places from the nearbySearchItems list, using their names, as potential next stops for the user's adventure.
+        Your task is to format a response to the user. You need to:
+            - Congratulate them warmly on reaching the 'current waypoint' which is a checkpoints in their current journey.
+            - Say something positive and encouraging.
+            - Suggest a few places from the 'Nearby Places' list, using their names, as potential next stops for the user's adventure.
 
         The final output should be a friendly, engaging message that feels like a natural part of a conversation, as if I'm the one sending it to the user.
     """.trimIndent()

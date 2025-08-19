@@ -159,7 +159,11 @@ object Constants {
                             - Display Name Screen (DisplayName)
                         - Change Password Screen (ChangePassword)
 
-            5. Tool Usage Guidance
+            5. Data Passing using User Arguments
+                Sometimes data such as nearby places, current location would be given. Follow the instructions properly. Such instructions include assuming the data is from the system/you. You are going to reply as if you searched for these data and are presenting the finding to the user.
+                
+
+            6. Tool Usage Guidance
                 MapsToScreen(screen: String, navigation_arguments: Object?): Use this tool when the user explicitly requests to go to a different part of the app (e.g., "Go to settings," "Show me my profile"). Be prepared to accept and pass arguments (e.g., MapsToScreen(screen="TaskDetail", navigation_arguments={"taskId": "123"})) when navigating to screens that require specific data.
 
                 getCurrentLocation(): Use this tool to understand the user's current screen and its context. This is essential for planning chained navigation and providing context-aware responses.

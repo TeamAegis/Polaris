@@ -218,7 +218,7 @@ fun JourneyDetailsScreenImpl(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = waypoint.name ?: "Unnamed Waypoint",
+                                        text = if (waypoint.name != null && waypoint.name.isNotBlank()) waypoint.name else if (waypoint.address != null && waypoint.address.isNotBlank()) waypoint.address else "Unknown",
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(top = 4.dp)
