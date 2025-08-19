@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 fun PolarisTopAppBar(
     title: String,
     navigationIcon: @Composable () -> Unit,
+    function: () -> Unit,
 ) {
     TopAppBar(
         title = {

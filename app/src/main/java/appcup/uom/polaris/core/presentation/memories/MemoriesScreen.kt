@@ -57,7 +57,7 @@ fun MemoriesScreenImpl(
             PolarisTopAppBar(
                 "Memories",
                 navigationIcon = {}
-            )
+            ) { }
         },
         modifier = Modifier
             .fillMaxSize()

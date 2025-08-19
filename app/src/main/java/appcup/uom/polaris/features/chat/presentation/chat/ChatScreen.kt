@@ -185,7 +185,8 @@ fun ChatScreenImpl(
                         }
                     }
 
-                })
+                }
+            ) { }
         },
         bottomBar = {
             ChatInputBar(state, onAction)

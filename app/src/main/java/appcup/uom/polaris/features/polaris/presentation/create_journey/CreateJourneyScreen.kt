@@ -210,7 +210,8 @@ fun CreateJourneyScreenImpl(
                     ) {
                         onAction(CreateJourneyAction.OnBackClicked)
                     }
-                })
+                }
+            ) { }
         }
     ) { contentPadding ->
         Box(
