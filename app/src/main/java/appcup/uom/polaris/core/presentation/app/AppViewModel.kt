@@ -35,6 +35,7 @@ class AppViewModel(
                 hasLocationPermission = permissionBridge.isFineLocationPermissionGranted()
             )
         }
+
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -119,7 +120,7 @@ class AppViewModel(
                         return@getAddressAndCoordinates
 
                     viewModelScope.launch {
-                        val result =  fragmentsRepository.createPublicWaypoint(
+                        val result = fragmentsRepository.createPublicWaypoint(
                             waypoint = PublicWaypoint(
                                 id = null,
                                 address = address,
@@ -131,6 +132,7 @@ class AppViewModel(
                             is Result.Error<DataError.FragmentError> -> {
                                 _event.emit(AppEvent.OnError(result.error.message))
                             }
+
                             is Result.Success<PublicWaypoint> -> {
                                 _event.emit(AppEvent.PublicWaypointCreated(result.data))
                             }

@@ -130,6 +130,14 @@ class WaypointSelectorViewModel(
                 showPlaceOnMap(action.placeId)
             }
 
+            WaypointSelectorAction.OnMapLoaded -> {
+                _state.update {
+                    it.copy(
+                        isMapLoaded = true
+                    )
+                }
+            }
+
             else -> {}
         }
 
@@ -152,18 +160,29 @@ class WaypointSelectorViewModel(
                     )
                 )
             }
-            viewModelScope.launch {
-                _state.value.waypointCameraPositionState.animate(
-                    update = CameraUpdateFactory.newCameraPosition(
-                        CameraPosition.fromLatLngZoom(
-                            LatLng(
-                                latitude,
-                                longitude
-                            ), Constants.MAP_DEFAULT_ZOOM
+            if (_state.value.isMapLoaded && !_state.value.isAnimating)
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isAnimating = true
+                        )
+                    }
+                    _state.value.waypointCameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.fromLatLngZoom(
+                                LatLng(
+                                    latitude,
+                                    longitude
+                                ), Constants.MAP_DEFAULT_ZOOM
+                            )
                         )
                     )
-                )
-            }
+                    _state.update {
+                        it.copy(
+                            isAnimating = false
+                        )
+                    }
+                }
 
         }
     }
@@ -183,18 +202,29 @@ class WaypointSelectorViewModel(
                 )
             }
 
-            viewModelScope.launch {
-                _state.value.waypointCameraPositionState.animate(
-                    update = CameraUpdateFactory.newCameraPosition(
-                        CameraPosition.fromLatLngZoom(
-                            LatLng(
-                                placeInfo.latitude,
-                                placeInfo.longitude
-                            ), Constants.MAP_DEFAULT_ZOOM
+            if (_state.value.isMapLoaded && !_state.value.isAnimating)
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isAnimating = true
+                        )
+                    }
+                    _state.value.waypointCameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.fromLatLngZoom(
+                                LatLng(
+                                    placeInfo.latitude,
+                                    placeInfo.longitude
+                                ), Constants.MAP_DEFAULT_ZOOM
+                            )
                         )
                     )
-                )
-            }
+                    _state.update {
+                        it.copy(
+                            isAnimating = false
+                        )
+                    }
+                }
         }
     }
 
@@ -219,18 +249,29 @@ class WaypointSelectorViewModel(
                     }
                 }
 
-                viewModelScope.launch {
-                    _state.value.waypointCameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.fromLatLngZoom(
-                                LatLng(
-                                    latitude!!,
-                                    longitude!!
-                                ), Constants.MAP_DEFAULT_ZOOM
+                if (_state.value.isMapLoaded && !_state.value.isAnimating)
+                    viewModelScope.launch {
+                        _state.update {
+                            it.copy(
+                                isAnimating = true
+                            )
+                        }
+                        _state.value.waypointCameraPositionState.animate(
+                            update = CameraUpdateFactory.newCameraPosition(
+                                CameraPosition.fromLatLngZoom(
+                                    LatLng(
+                                        latitude!!,
+                                        longitude!!
+                                    ), Constants.MAP_DEFAULT_ZOOM
+                                )
                             )
                         )
-                    )
-                }
+                        _state.update {
+                            it.copy(
+                                isAnimating = false
+                            )
+                        }
+                    }
             }
         }
     }

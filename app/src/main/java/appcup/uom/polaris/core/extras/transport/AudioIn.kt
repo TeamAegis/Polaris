@@ -49,7 +49,7 @@ internal class AudioIn @RequiresPermission(Manifest.permission.RECORD_AUDIO) con
                     val bufferBytes = (frameSizeBytes * sampleRateHz * BUFFER_MS) / 1000
 
                     val record = AudioRecord(
-                        AudioSource.VOICE_RECOGNITION,
+                        AudioSource.VOICE_COMMUNICATION,
                         sampleRateHz,
                         AudioFormat.CHANNEL_IN_MONO,
                         AudioFormat.ENCODING_PCM_16BIT,

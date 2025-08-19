@@ -101,6 +101,7 @@ fun MapScreen(
                         onFragmentClicked(action.waypoint)
                     }
                 }
+
                 else -> {
                     viewModel.onAction(action)
                 }
@@ -180,6 +181,9 @@ fun MapScreenImpl(
                 isBuildingEnabled = true,
                 mapStyleOptions = MapStyleOptions(map_style)
             ),
+            onMapClick = {
+                onAction(MapActions.OnMapLoaded)
+            },
             onPOIClick = { poi ->
                 onAction(
                     MapActions.OnPersonalWaypointClicked(

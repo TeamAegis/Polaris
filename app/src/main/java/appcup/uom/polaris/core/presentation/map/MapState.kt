@@ -16,6 +16,8 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 data class MapState(
+    val isMapLoaded: Boolean = false,
+
     val isTrackingUser: Boolean = false,
     val isAnimatingCamera: Boolean = false,
     val bearing: Float = 0f,

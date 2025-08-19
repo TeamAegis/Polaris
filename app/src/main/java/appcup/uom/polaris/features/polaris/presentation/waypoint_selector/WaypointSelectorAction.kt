@@ -12,4 +12,6 @@ sealed interface WaypointSelectorAction {
     data class OnMapClick(val latitude: Double, val longitude: Double): WaypointSelectorAction
     data class OnPoiClick(val placeId: String): WaypointSelectorAction
 
+    object OnMapLoaded: WaypointSelectorAction
+
 }

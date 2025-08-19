@@ -128,6 +128,152 @@ object ConversationalAITools {
         )
     )
 
+    val searchPlacesTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.SEARCH_PLACES.name),
+            "description" to Value.Str("Searches for places based on a search query. Use this when the user asks for specific types of places like restaurants, hotels, attractions, etc."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object(
+                        values = arrayOf(
+                            "search_query" to Value.Object(
+                                values = arrayOf(
+                                    "type" to Value.Str("STRING"),
+                                    "description" to Value.Str("The search query for places (e.g., 'restaurants', 'gas stations', 'tourist attractions', 'coffee shops').")
+                                )
+                            )
+                        )
+                    ),
+                    "required" to Value.Array(
+                        values = arrayOf(
+                            Value.Str("search_query")
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+    val searchNearbyPlacesTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.SEARCH_NEARBY_PLACES.name),
+            "description" to Value.Str("Retrieves all nearby places within a specified radius from the user's current location. Useful for discovering what's around the user."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object(
+                        values = arrayOf(
+                            "radius" to Value.Object(
+                                values = arrayOf(
+                                    "type" to Value.Str("NUMBER"),
+                                    "description" to Value.Str("The search radius in meters from the user's current location (e.g., 1000 for 1km, 5000 for 5km).")
+                                )
+                            )
+                        )
+                    ),
+                    "required" to Value.Array(
+                        values = arrayOf(
+                            Value.Str("radius")
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+    val getUserLocationTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.GET_USER_LOCATION.name),
+            "description" to Value.Str("Gets the user's current location including address and coordinates. Use this to understand where the user is currently located."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object()
+                )
+            )
+        )
+    )
+
+    val sendWaypointTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.SEND_WAYPOINT.name),
+            "description" to Value.Str("Sends a waypoint to the user based on their request. Use this after searching for places and getting user confirmation. The waypoint will be added to their journey or navigation or provided as a recommended place."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object(
+                        values = arrayOf(
+                            "place_id" to Value.Object(
+                                values = arrayOf(
+                                    "type" to Value.Str("STRING"),
+                                    "description" to Value.Str("The unique place ID from the search results.")
+                                )
+                            )
+                        )
+                    ),
+                    "required" to Value.Array(
+                        values = arrayOf(
+                            Value.Str("place_id")
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+    val getAvailableJourneysTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.GET_AVAILABLE_JOURNEYS.name),
+            "description" to Value.Str("Retrieves all available journeys that the user can start. Use this to show the user their journey options."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object()
+                )
+            )
+        )
+    )
+
+    val startJourneyTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.START_JOURNEY.name),
+            "description" to Value.Str("Starts a specific journey based on the journey ID. Use this after getting available journeys and user confirmation."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object(
+                        values = arrayOf(
+                            "journey_id" to Value.Object(
+                                values = arrayOf(
+                                    "type" to Value.Str("STRING"),
+                                    "description" to Value.Str("The unique ID of the journey to start, obtained from the available journeys list.")
+                                )
+                            )
+                        )
+                    ),
+                    "required" to Value.Array(
+                        values = arrayOf(
+                            Value.Str("journey_id")
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+    val stopJourneyTool = Value.Object(
+        values = arrayOf(
+            "name" to Value.Str(FunctionCallAction.STOP_JOURNEY.name),
+            "description" to Value.Str("Stops the currently active journey. Use this when the user wants to end their current journey."),
+            "parameters" to Value.Object(
+                values = arrayOf(
+                    "type" to Value.Str("OBJECT"),
+                    "properties" to Value.Object()
+                )
+            )
+        )
+    )
 
     val toolsArray = arrayOf(
         navigateToScreenTool,
@@ -135,6 +281,13 @@ object ConversationalAITools {
         changeThemeTool,
         navigateBackTool,
         getScreenDetailsTool,
+        searchPlacesTool,
+        searchNearbyPlacesTool,
+        getUserLocationTool,
+        sendWaypointTool,
+        getAvailableJourneysTool,
+        startJourneyTool,
+        stopJourneyTool
     )
 
 }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.util.Log
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
@@ -21,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.EventBus
 import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.features.conversational_ai.data.ConversationalAI
@@ -150,6 +152,12 @@ class ConversationalAIViewModel(
 
     fun onMessageAction(action: ConversationalAIMessageAction) {
         when (action) {
+            is ConversationalAIMessageAction.OnWaypointUnlocked -> {
+                if (_state.value.isRecording) {
+                    sendMessage(action.message)
+                }
+            }
+
             ConversationalAIMessageAction.SendMessage -> {
                 _messageState.update {
                     it.copy(isLoading = true)
@@ -187,9 +195,11 @@ class ConversationalAIViewModel(
 
         }
     }
-    private fun sendMessage() {
+
+    private fun sendMessage(message: String? = null) {
+        Log.d(Constants.DEBUG_VALUE, "sendMessage: $message")
         viewModelScope.launch {
-            val res = conversationalAI.sendUserMessage(_messageState.value.message)
+            val res = conversationalAI.sendUserMessage(message ?: _messageState.value.message)
             res?.withCallback { it ->
                 when (it) {
                     is Result.Err<RTVIError> -> {

@@ -7,6 +7,7 @@ import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MarkerState
 
 data class WaypointSelectorState(
+    val isMapLoaded: Boolean = false,
     val predictions: List<AutocompletePrediction> = emptyList(),
     val selectedPlace: AutocompletePlace? = null,
     val expanded: Boolean = false,
@@ -16,4 +17,5 @@ data class WaypointSelectorState(
     val waypointCameraPositionState: CameraPositionState = CameraPositionState(),
 
     val selectedWaypoint: Waypoint? = Waypoint(),
+    val isAnimating: Boolean = false
 )

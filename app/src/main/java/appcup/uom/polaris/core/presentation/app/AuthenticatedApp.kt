@@ -125,6 +125,7 @@ import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAI
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
+import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai_message.ConversationalAIMessageAction
 import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
 import appcup.uom.polaris.features.polaris.domain.Waypoint
@@ -201,21 +202,50 @@ fun AuthenticatedApp(
     }
 
 
+    val conversationAIViewModel: ConversationalAIViewModel = koinViewModel()
+    val conversationAIState = conversationAIViewModel.state.collectAsStateWithLifecycle()
+
+    val mapViewModel: MapViewModel = koinViewModel()
+    val mapState = mapViewModel.state.collectAsStateWithLifecycle()
+
     val functionCallHandler = FunctionCallHandler(navBackStack = backStack)
     LaunchedEffect(Unit) {
         EventBus.collectEvents { event ->
-            if (event is Event.OnFunctionCall) {
-                functionCallHandler.handleFunctionCall(event.func, event.args, event.onResult)
+            when (event) {
+                is Event.OnFunctionCall -> {
+                    functionCallHandler.handleFunctionCall(event.func, event.args, event.onResult)
+                }
+                is Event.OnGetAvailableJourneys -> {
+                    event.onResult(mapViewModel.getStartableJourneys())
+                }
+                is Event.OnGetUserLocation -> {
+                    mapViewModel.getUserCurrentLocation(event.onResult)
+                }
+                is Event.OnSearchNearbyPlaces -> {
+                    event.onResult(mapViewModel.getNearbyPlaces(event.radius))
+                }
+                is Event.OnSearchPlaces -> {
+                    event.onResult(mapViewModel.searchPlaces(event.searchQuery))
+                }
+                is Event.OnSendWaypoint -> {
+                    mapViewModel.onWaypointReceived(event.placeId, event.onResult)
+                }
+                is Event.OnStartJourney -> {
+                    event.onResult(mapViewModel.startJourney(event.journeyId))
+                }
+                is Event.OnStopJourney -> {
+                    event.onResult(mapViewModel.stopJourney())
+                }
+                is Event.OnWaypointUnlocked -> {
+                    conversationAIViewModel.onMessageAction(ConversationalAIMessageAction.OnWaypointUnlocked(event.message))
+                }
+                else -> {}
             }
         }
     }
 
-    val conversationAIViewModel: ConversationalAIViewModel = koinViewModel()
-    val conversationAIState = conversationAIViewModel.state.collectAsStateWithLifecycle()
 
 
-    val mapViewModel: MapViewModel = koinViewModel()
-    val mapState = mapViewModel.state.collectAsStateWithLifecycle()
 
     val memoryViewModel: MemoryViewModel = koinViewModel()
     val memoryState = memoryViewModel.state.collectAsStateWithLifecycle()

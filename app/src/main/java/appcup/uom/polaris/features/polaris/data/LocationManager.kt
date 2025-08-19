@@ -340,7 +340,7 @@ class LocationManager(
 
     @OptIn(ExperimentalUuidApi::class)
     @SuppressLint("MissingPermission")
-    suspend fun nearbySearchPlaces(): List<Waypoint> {
+    suspend fun nearbySearchPlaces(radius: Double = 5000.0): List<Waypoint> {
         val result = fusedLocationClient.lastLocation.await()
 
         val restriction = circularBounds(
@@ -379,7 +379,54 @@ class LocationManager(
                 longitude = place.location?.longitude ?: 0.0
             )
         }
+    }
 
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun searchPlaces(
+        searchQuery: String,
+    ): List<Waypoint> {
+        return try {
+            val result = placesClient.searchByText(
+                SearchByTextRequest.builder(
+                    searchQuery,
+                    listOf(
+                        Place.Field.ID,
+                        Place.Field.NAME,
+                        Place.Field.ADDRESS,
+                        Place.Field.RATING,
+                        Place.Field.USER_RATINGS_TOTAL,
+                        Place.Field.CURRENT_OPENING_HOURS,
+                        Place.Field.PHONE_NUMBER,
+                        Place.Field.WEBSITE_URI,
+                        Place.Field.LAT_LNG,
+                        Place.Field.TYPES,
+                    )
+                )
+                    .setMaxResultCount(5)
+                    .setLocationRestriction(RectangularBounds.newInstance(Constants.MAP_LAT_LNG_BOUNDS))
+                    .build()
+            ).await()
+
+            result.places.map { place ->
+                Waypoint(
+                    placeId = place.id,
+                    name = place.displayName ?: "Unknown",
+                    address = place.formattedAddress,
+                    rating = place.rating,
+                    userRatingsTotal = place.rating,
+                    openNow = isPlaceOpenNow(place.currentOpeningHours),
+                    phoneNumber = place.internationalPhoneNumber
+                        ?: place.nationalPhoneNumber,
+                    websiteUri = place.websiteUri,
+                    latitude = place.location?.latitude ?: 0.0,
+                    longitude = place.location?.longitude ?: 0.0,
+                    placeType = place.placeTypes ?: emptyList()
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
 }

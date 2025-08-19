@@ -177,9 +177,7 @@ fun CreateJourneyScreenImpl(
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (state.isWaypointSelectorVisible) {
-        WaypointSelectorBottomSheet(
-            waypointType = state.waypointType
-        ) { placeInfo ->
+        WaypointSelectorBottomSheet { placeInfo ->
             if (placeInfo != null) {
                 onAction(CreateJourneyAction.OnWaypointSelectorResult(placeInfo))
             }

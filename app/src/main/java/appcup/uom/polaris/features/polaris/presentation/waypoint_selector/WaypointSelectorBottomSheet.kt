@@ -35,8 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.features.polaris.domain.Waypoint
-import appcup.uom.polaris.features.polaris.domain.WaypointType
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.MapSearchBar
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.WaypointCard
 import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace
@@ -44,7 +44,6 @@ import com.google.android.libraries.places.compose.autocomplete.models.toPlaceDe
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerComposable
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -53,7 +52,6 @@ import kotlin.uuid.Uuid
 @Composable
 fun WaypointSelectorBottomSheet(
     viewModel: WaypointSelectorViewModel = koinViewModel(),
-    waypointType: WaypointType,
     onDismiss: (Waypoint?) -> Unit
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle()
@@ -61,7 +59,6 @@ fun WaypointSelectorBottomSheet(
 
     WaypointSelectorBottomSheetImpl(
         state = state.value,
-        waypointType = waypointType,
         searchState = searchState.value,
         onAction = { action ->
             when (action) {
@@ -86,11 +83,9 @@ fun WaypointSelectorBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 fun WaypointSelectorBottomSheetImpl(
     state: WaypointSelectorState,
-    waypointType: WaypointType,
     searchState: TextFieldState,
     onAction: (WaypointSelectorAction) -> Unit
 ) {
-
     ModalBottomSheet(
         sheetGesturesEnabled = false,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -144,81 +139,90 @@ fun WaypointSelectorBottomSheetImpl(
             }
         }
     ) {
-        Scaffold(
-            topBar = {
-                MapSearchBar(
-                    textFieldState = searchState,
-                    isSearching = state.isSearching,
-                    onQueryChange = {
-                        onAction(WaypointSelectorAction.OnSearchQueryChanged(it))
-                    },
-                    onSearch = { autocompletePlace: AutocompletePlace? ->
-                        onAction(WaypointSelectorAction.OnSelectedPlaceChanged(autocompletePlace))
-                    },
-                    predictions = state.predictions.map { it.toPlaceDetails() },
-                    selectedPlace = state.selectedPlace,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    onSelected = { autocompletePlace: AutocompletePlace ->
-                        onAction(WaypointSelectorAction.OnSelectedPlaceChanged(autocompletePlace))
-                    },
-                    expanded = state.expanded,
-                    onExpandedChange = {
-                        onAction(WaypointSelectorAction.OnSearchExpandedChanged(it))
-                    }
-                )
-            },
-            floatingActionButton = {
-                if (!state.expanded) {
-                    FloatingActionButton(
-                        onClick = {
-                            onAction(WaypointSelectorAction.SetToCurrentLocation)
+        Box {
+            Scaffold(
+                topBar = {
+                    MapSearchBar(
+                        textFieldState = searchState,
+                        isSearching = state.isSearching,
+                        onQueryChange = {
+                            onAction(WaypointSelectorAction.OnSearchQueryChanged(it))
                         },
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ) {
-                        Icon(Icons.Filled.LocationOn, "Current Location")
-                    }
-                }
-            },
-            bottomBar = {
-                if (state.selectedWaypoint != null && !state.expanded) {
-                    WaypointCard(state.selectedWaypoint)
-                }
-            }
-        ) { contentPadding ->
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxSize(),
-                cameraPositionState = state.waypointCameraPositionState,
-                properties = Constants.MAP_DEFAULT_PROPERTIES,
-                uiSettings = MapUiSettings(
-                    compassEnabled = false,
-                    indoorLevelPickerEnabled = false,
-                    mapToolbarEnabled = false,
-                    myLocationButtonEnabled = false,
-                    zoomControlsEnabled = false,
-                ),
-                onMapClick = { location ->
-                    onAction(
-                        WaypointSelectorAction.OnMapClick(
-                            location.latitude,
-                            location.longitude
-                        )
+                        onSearch = { autocompletePlace: AutocompletePlace? ->
+                            onAction(
+                                WaypointSelectorAction.OnSelectedPlaceChanged(
+                                    autocompletePlace
+                                )
+                            )
+                        },
+                        predictions = state.predictions.map { it.toPlaceDetails() },
+                        selectedPlace = state.selectedPlace,
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        onSelected = { autocompletePlace: AutocompletePlace ->
+                            onAction(
+                                WaypointSelectorAction.OnSelectedPlaceChanged(
+                                    autocompletePlace
+                                )
+                            )
+                        },
+                        expanded = state.expanded,
+                        onExpandedChange = {
+                            onAction(WaypointSelectorAction.OnSearchExpandedChanged(it))
+                        }
                     )
                 },
-                onPOIClick = { poi ->
-                    onAction(WaypointSelectorAction.OnPoiClick(poi.placeId))
+                floatingActionButton = {
+                    if (!state.expanded) {
+                        FloatingActionButton(
+                            onClick = {
+                                onAction(WaypointSelectorAction.SetToCurrentLocation)
+                            },
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Icon(Icons.Filled.LocationOn, "Current Location")
+                        }
+                    }
+                },
+                bottomBar = {
+                    if (state.selectedWaypoint != null && !state.expanded) {
+                        WaypointCard(state.selectedWaypoint)
+                    }
                 }
-            ) {
-//                MarkerComposable(
-//                    state = state.waypointMarkerState
-//                ) {
-//                    AnimatedMarkerIcon(waypointType)
-//                }
-                Marker(
-                    state = state.waypointMarkerState,
-                )
+            ) { contentPadding ->
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    cameraPositionState = state.waypointCameraPositionState,
+                    properties = Constants.MAP_DEFAULT_PROPERTIES,
+                    uiSettings = MapUiSettings(
+                        compassEnabled = false,
+                        indoorLevelPickerEnabled = false,
+                        mapToolbarEnabled = false,
+                        myLocationButtonEnabled = false,
+                        zoomControlsEnabled = false,
+                    ),
+                    onMapClick = { location ->
+                        onAction(
+                            WaypointSelectorAction.OnMapClick(
+                                location.latitude,
+                                location.longitude
+                            )
+                        )
+                    },
+                    onMapLoaded = {
+                        onAction(WaypointSelectorAction.OnMapLoaded)
+                    },
+                    onPOIClick = { poi ->
+                        onAction(WaypointSelectorAction.OnPoiClick(poi.placeId))
+                    }
+                ) {
+                    Marker(
+                        state = state.waypointMarkerState,
+                    )
+                }
             }
+            LoadingOverlay(!state.isMapLoaded || state.isAnimating, 0f)
         }
     }
 }

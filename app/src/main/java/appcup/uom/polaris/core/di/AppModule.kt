@@ -13,13 +13,13 @@ import appcup.uom.polaris.core.presentation.app.AppViewModel
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesViewModel
 import appcup.uom.polaris.core.presentation.more.MoreViewModel
-import appcup.uom.polaris.features.qr_code_analyzer.QRScannerViewModel
 import appcup.uom.polaris.core.presentation.settings.SettingsViewModel
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.FragmentsRepository
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.qr_code_analyzer.QRScannerViewModel
 import appcup.uom.polaris.features.quest.domain.QuestRepository
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -79,12 +79,14 @@ class AppModule {
     fun mapViewModel(
         locationManager: LocationManager,
         polarisRepository: PolarisRepository,
-        questRepository: QuestRepository
+        questRepository: QuestRepository,
+        json: Json
     ) =
         MapViewModel(
             locationManager = locationManager,
             polarisRepository = polarisRepository,
-            questRepository = questRepository
+            questRepository = questRepository,
+            json = json
         )
 
     @KoinViewModel

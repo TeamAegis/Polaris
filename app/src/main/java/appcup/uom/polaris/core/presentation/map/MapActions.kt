@@ -19,4 +19,6 @@ sealed interface MapActions {
 
     data class OnFragmentClicked(val waypoint: PublicWaypoint) : MapActions
 
+    object OnMapLoaded : MapActions
+
 }
