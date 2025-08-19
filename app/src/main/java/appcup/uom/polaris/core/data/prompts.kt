@@ -89,3 +89,23 @@ fun createQuestPrompt(placesList: String, preference: String) : String {
         Make the quests fun and localized to Mauritius. Include local flavor, cultural landmarks, food spots, or nature trails when relevant.
     """.trimIndent()
 }
+
+
+fun waypointReachTriggerPrompt(
+    currentWaypoints:String,
+    nearbySearchItems: String
+): String {
+    return """
+        I have just received new data. The user has successfully unlocked a waypoint.
+
+        Current waypoint: $currentWaypoints
+        Nearby places: $nearbySearchItems
+
+        My task is to format a response to the user. I need to:
+            Congratulate them warmly on reaching the waypoint.
+            Say something positive and encouraging.
+            Suggest a few places from the nearbySearchItems list, using their names, as potential next stops for the user's adventure.
+
+        The final output should be a friendly, engaging message that feels like a natural part of a conversation, as if I'm the one sending it to the user.
+    """.trimIndent()
+}
