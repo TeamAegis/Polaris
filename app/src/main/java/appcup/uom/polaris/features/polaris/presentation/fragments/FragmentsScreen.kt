@@ -147,7 +147,7 @@ fun FragmentsScreenImpl(
                     ) {
                         onAction(FragmentsAction.OnBackClicked)
                     }
-                })
+                }, {})
             if (state.isLoading)
                 LinearWavyProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
