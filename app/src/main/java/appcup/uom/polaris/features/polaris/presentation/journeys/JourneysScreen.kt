@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -33,9 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import appcup.uom.polaris.core.presentation.components.PolarisIconButton
 import appcup.uom.polaris.core.presentation.components.PolarisInputField
-import appcup.uom.polaris.core.presentation.components.PolarisTopAppBar
 import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import appcup.uom.polaris.features.polaris.presentation.journeys.components.EmptyJourneyList
 import appcup.uom.polaris.features.polaris.presentation.journeys.components.JourneyCard
@@ -129,7 +126,8 @@ fun JourneysScreenImpl(
 
                     items(JourneyStatus.entries.size) { index ->
                         val status = JourneyStatus.entries[index]
-                        val selected = state.selectedStatus != null && state.selectedStatus == status
+                        val selected =
+                            state.selectedStatus != null && state.selectedStatus == status
                         FilterChip(
                             leadingIcon = {
                                 if (selected) {

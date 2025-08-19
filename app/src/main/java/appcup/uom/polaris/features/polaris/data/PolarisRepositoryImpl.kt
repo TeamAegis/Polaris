@@ -168,7 +168,11 @@ class PolarisRepositoryImpl(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun getJourney(id: Uuid): Result<Journey, DataError.JourneyError> {
         return try {
-            Result.Success(supabaseClient.from("journeys").select().decodeSingle<Journey>())
+            Result.Success(supabaseClient.from("journeys").select(){
+                filter {
+                    Journey::id eq id
+                }
+            }.decodeSingle<Journey>())
         } catch (e: Exception) {
             Result.Error(DataError.JourneyError.UNKNOWN)
         }

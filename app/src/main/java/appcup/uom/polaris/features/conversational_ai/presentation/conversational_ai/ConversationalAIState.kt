@@ -9,7 +9,8 @@ data class ConversationalAIState(
     val botAudioLevel: Float = 0f,
     val userAudioLevel: Float = 0f,
     val connectionState: ConversationalAIConnectionState = ConversationalAIConnectionState.Idle,
-    val lastSent: Long = 0L
+    val lastSent: Long = 0L,
+    val isMuted: Boolean = false,
 )
 
 enum class ConversationalAIConnectionState {

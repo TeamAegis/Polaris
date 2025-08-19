@@ -21,7 +21,7 @@ class FunctionCallHandler(
                 functionCallNavigationHandler.getCurrentScreenDetails(args, onResult)
             }
 
-            FunctionCallAction.GET_CURRENT_LOCATION -> {
+            FunctionCallAction.GET_CURRENT_LOCATION_IN_APP -> {
                 functionCallNavigationHandler.getCurrentLocation(onResult)
             }
 

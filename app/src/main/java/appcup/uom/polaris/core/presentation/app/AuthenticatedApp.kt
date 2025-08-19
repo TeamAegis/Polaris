@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationSearching
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.StopCircle
@@ -576,8 +578,8 @@ fun AuthenticatedApp(
                     entry<Screen.Journeys> {
                         JourneysScreen(
                             onBack = { backStack.removeLastOrNull() },
-                            onJourneyClick = {
-                                backStack.add(Screen.JourneyDetails(it.toString()))
+                            onJourneyClick = { id ->
+                                backStack.add(Screen.JourneyDetails(id.toString()))
                             },
                         )
                     }
@@ -636,6 +638,20 @@ fun AuthenticatedApp(
                     .polarisDropShadow(),
                 expanded = state.value.isControlPanelExpanded,
                 leadingContent = {
+                    if (conversationAIState.value.isRecording) {
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                conversationAIViewModel.onAction(ConversationalAIAction.OnMuteStateChanged(!conversationAIState.value.isMuted))
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (conversationAIState.value.isMuted) Icons.Filled.MicOff else Icons.Filled.Mic,
+                                contentDescription = if (conversationAIState.value.isMuted) "Unmute" else "Mute"
+                            )
+                        }
+                    }
+
                     if (backStack.last() is Screen.Map && conversationAIState.value.isRecording) {
                         IconButton(
                             modifier = Modifier.align(Alignment.CenterHorizontally),

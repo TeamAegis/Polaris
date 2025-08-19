@@ -174,6 +174,15 @@ dependencies {
     implementation(libs.androidx.camera.compose)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
+
+//    arcore
+//    implementation(libs.sceneform.ux)
+    implementation(libs.maps.utils.ktx)
+    implementation(libs.fragment.compose)
+    implementation("io.github.sceneview:arsceneview:2.3.0")
+
+//    barcode
+    implementation ("com.google.mlkit:barcode-scanning:17.3.0")
 }
 
 kotlin {

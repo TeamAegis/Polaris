@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +66,7 @@ fun MapScreen(
     LaunchedEffect(
         state.allMyWaypoints
     ) {
+        if (state.selectedJourney != null) return@LaunchedEffect
         if (state.allMyWaypoints.isEmpty()) return@LaunchedEffect
         val boundsBuilder = LatLngBounds.builder()
         state.allMyWaypoints.forEach { waypoint ->
@@ -269,7 +269,7 @@ fun MapScreenImpl(
                             onAction(MapActions.OnPersonalWaypointClicked(waypoint))
                             true
                         },
-                        anchor = Offset(1.0f, 1.1f)
+//                        anchor = Offset(1.0f, 1.1f)
                     ) {
                         Image(
                             painter = painterResource(
@@ -301,7 +301,7 @@ fun MapScreenImpl(
                                 quest.longitude
                             )
                         ),
-                        anchor = Offset(1.0f, 1.1f)
+//                        anchor = Offset(1.0f, 1.1f)
                     ) {
                         Image(
                             painter = painterResource(R.drawable.icon_quest),

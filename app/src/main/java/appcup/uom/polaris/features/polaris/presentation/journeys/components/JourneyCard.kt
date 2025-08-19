@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -29,20 +31,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import appcup.uom.polaris.R
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.PolyUtil
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -100,10 +103,7 @@ fun JourneyCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 8.dp,
             pressedElevation = 12.dp
-        ),
-        onClick = {
-            onJourneyClick(journey.id!!)
-        }
+        )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
@@ -122,16 +122,26 @@ fun JourneyCard(
                 )
 
                 if (routePoints.isNotEmpty()) {
-                    Marker(
+                    MarkerComposable(
                         state = MarkerState(position = routePoints.first()),
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                    )
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.icon_start),
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
 
                     if (routePoints.size > 1) {
-                        Marker(
+                        MarkerComposable(
                             state = MarkerState(position = routePoints.last()),
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                        )
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.icon_end),
+                                contentDescription = null,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
                     }
                 }
             }

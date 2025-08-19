@@ -138,6 +138,13 @@ class ConversationalAIViewModel(
                     )
                 }
             }
+
+            is ConversationalAIAction.OnMuteStateChanged -> {
+                _state.update {
+                    it.copy(isMuted = action.isMuted)
+                }
+                conversationalAI.enableMic(!action.isMuted)
+            }
         }
     }
 

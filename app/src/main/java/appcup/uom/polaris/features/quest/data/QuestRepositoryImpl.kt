@@ -19,6 +19,7 @@ import com.google.firebase.ai.type.generationConfig
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class QuestRepositoryImpl(
@@ -27,6 +28,7 @@ class QuestRepositoryImpl(
     private val userRepository: UserRepository
 ) : QuestRepository {
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun createQuests() {
         try {
             val waypoints = locationManager.nearbySearchPlaces()
@@ -91,7 +93,7 @@ class QuestRepositoryImpl(
                     ),
                     type = quest.type.name,
                     status = quest.status.name,
-                    created_date = quest.createdDate
+                    created_date = Clock.System.now().toString()
                 )
             }
 
@@ -110,7 +112,7 @@ class QuestRepositoryImpl(
                     ),
                     type = quest.type.name,
                     status = quest.status.name,
-                    created_date = quest.createdDate
+                    created_date = Clock.System.now().toString()
                 )
             }
 

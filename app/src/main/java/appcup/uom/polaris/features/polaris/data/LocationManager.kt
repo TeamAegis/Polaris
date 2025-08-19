@@ -62,6 +62,7 @@ class LocationManager(
                 SearchByTextRequest.builder(
                     searchQuery,
                     listOf(
+                        Place.Field.ID,
                         Place.Field.NAME,
                         Place.Field.ADDRESS,
                         Place.Field.RATING,

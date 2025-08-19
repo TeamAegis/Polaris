@@ -1,5 +1,6 @@
 package appcup.uom.polaris.features.polaris.presentation.create_journey
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,11 +61,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import appcup.uom.polaris.R
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
@@ -82,7 +85,7 @@ import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.Waypoi
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.Polyline
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.ExperimentalUuidApi
@@ -240,21 +243,39 @@ fun CreateJourneyScreenImpl(
                             uiSettings = Constants.MAP_PREVIEW_UI_SETTINGS,
                             properties = Constants.MAP_DEFAULT_PROPERTIES
                         ) {
-                            Marker(
+                            MarkerComposable(
                                 state = state.startingMarkerState,
-                            )
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.icon_start),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
 
                             state.intermediateMarkerStates.forEach { markerState ->
-                                Marker(
-                                    state = markerState
-                                )
+                                MarkerComposable(
+                                    state = markerState,
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.icon_intermidiate),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
 
                             }
 
                             if (state.endingMarkerState != null)
-                                Marker(
+                                MarkerComposable(
                                     state = state.endingMarkerState,
-                                )
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.icon_end),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
 
                             if (state.polyline.isNotEmpty() && (state.endingMarkerState != null || state.intermediateWaypoints.isNotEmpty())) {
                                 Polyline(

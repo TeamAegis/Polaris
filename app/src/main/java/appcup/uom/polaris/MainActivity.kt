@@ -37,9 +37,11 @@ import io.github.jan.supabase.auth.handleDeeplinks
 import io.github.jan.supabase.auth.status.SessionSource
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.android.ext.android.inject
 import org.koin.core.context.GlobalContext
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -66,11 +68,17 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
 
             var userInitialized by rememberSaveable { mutableStateOf(false) }
             var themeInitialized by rememberSaveable { mutableStateOf(false) }
+            var delayedAppInitialized by rememberSaveable { mutableStateOf(false) }
 
             installSplashScreen().apply {
                 setKeepOnScreenCondition {
-                    !userInitialized || !themeInitialized
+                    (!userInitialized || !themeInitialized) && !delayedAppInitialized
                 }
+            }
+
+            LaunchedEffect(Unit) {
+                delay(2.seconds)
+                delayedAppInitialized = true
             }
 
 
@@ -299,4 +307,5 @@ class MainActivity : ComponentActivity(), PermissionsBridgeListener {
             points = user.userMetadata!!.getOrElse("points") { 0 }.toString().toInt()
         )
     }
+
 }

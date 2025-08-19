@@ -56,6 +56,11 @@ firebaseBom = "34.1.0"
 camerax = "1.5.0-beta02"
 # google-services
 googleServices = "4.4.3"
+# arcode
+sceneformUxVersion = "1.17.1"
+mapsUtilsVersion = "5.2.0"
+fragmentComposeVersion = "1.8.9"
+uiViewbinding = "1.9.0"
 
 [libraries]
 # ... your other libraries
@@ -139,6 +144,10 @@ androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "
 androidx-camera-compose = { module = "androidx.camera:camera-compose", version.ref = "camerax" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+# arcore
+sceneform-ux = { module = "com.google.ar.sceneform.ux:sceneform-ux", version.ref = "sceneformUxVersion" }
+maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.ref = "mapsUtilsVersion" }
+fragment-compose = { module = "androidx.fragment:fragment-compose", version.ref = "fragmentComposeVersion" }
 
 
 [plugins]

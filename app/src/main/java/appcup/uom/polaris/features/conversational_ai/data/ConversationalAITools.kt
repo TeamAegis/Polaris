@@ -74,7 +74,7 @@ object ConversationalAITools {
     )
     val getCurrentLocationTool = Value.Object(
         values = arrayOf(
-            "name" to Value.Str(FunctionCallAction.GET_CURRENT_LOCATION.name),
+            "name" to Value.Str(FunctionCallAction.GET_CURRENT_LOCATION_IN_APP.name),
             "description" to Value.Str("Gets the current screen that the user is currently viewing in the application, This enable in providing context-aware assistance or information."),
             "parameters" to Value.Object(
                 values = arrayOf(

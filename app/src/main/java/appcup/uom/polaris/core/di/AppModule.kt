@@ -13,6 +13,7 @@ import appcup.uom.polaris.core.presentation.app.AppViewModel
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesViewModel
 import appcup.uom.polaris.core.presentation.more.MoreViewModel
+import appcup.uom.polaris.features.qr_code_analyzer.QRScannerViewModel
 import appcup.uom.polaris.core.presentation.settings.SettingsViewModel
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
@@ -93,5 +94,12 @@ class AppModule {
     @KoinViewModel
     fun moreViewModel(userRepository: UserRepository, questRepository: QuestRepository) =
         MoreViewModel(userRepository = userRepository, questRepository = questRepository)
+
+    @KoinViewModel
+    fun qrScannerViewModel(
+        userRepository: UserRepository
+    ) = QRScannerViewModel(
+        userRepository = userRepository
+    )
 
 }

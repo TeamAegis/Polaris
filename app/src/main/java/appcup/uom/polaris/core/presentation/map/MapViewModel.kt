@@ -414,7 +414,6 @@ class MapViewModel(
                 }
 
                 is Result.Success<Unit> -> {
-
                 }
             }
         }
@@ -493,17 +492,20 @@ class MapViewModel(
         }
 
         locationManager.getWaypointByPlaceId(waypoint.placeId) { placeInfo ->
-            if (placeInfo == null) return@getWaypointByPlaceId
             viewModelScope.launch {
-                val result =
+                val result = if (placeInfo == null) {
+                    polarisRepository.getWeatherData(waypoint.latitude, waypoint.longitude)
+                } else {
                     polarisRepository.getWeatherData(placeInfo.latitude, placeInfo.longitude)
+                }
+
                 when (result) {
                     is Result.Error<DataError.Remote> -> {
                         _state.update {
                             it.copy(
-                                selectedWaypoint = placeInfo.copy(
+                                selectedWaypoint = placeInfo?.copy(
                                     id = waypoint.id ?: Uuid.NIL,
-                                )
+                                ) ?: waypoint.toWaypoint()
                             )
                         }
                     }
@@ -511,9 +513,9 @@ class MapViewModel(
                     is Result.Success<WeatherData> -> {
                         _state.update {
                             it.copy(
-                                selectedWaypoint = placeInfo.copy(
+                                selectedWaypoint = placeInfo?.copy(
                                     id = waypoint.id ?: Uuid.NIL,
-                                ),
+                                ) ?: waypoint.toWaypoint(),
                                 selectedWeatherData = result.data
                             )
                         }

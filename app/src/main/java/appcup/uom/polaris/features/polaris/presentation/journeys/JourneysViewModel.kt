@@ -1,9 +1,7 @@
 package appcup.uom.polaris.features.polaris.presentation.journeys
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +14,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class JourneysViewModel(
     polarisRepository: PolarisRepository
-): ViewModel() {
+) : ViewModel() {
     private val _state = MutableStateFlow(JourneysState())
     val state = _state.asStateFlow()
 
@@ -31,7 +29,6 @@ class JourneysViewModel(
         channelJob = polarisRepository.getJourneys()
             .onEach { journeys ->
                 val sorted = journeys.sortedByDescending { it.createdAt }
-
                 _state.update {
                     it.copy(
                         isLoading = false,
@@ -53,20 +50,28 @@ class JourneysViewModel(
                     it.copy(
                         searchQuery = action.searchQuery,
                         filteredJourneys = _state.value.journeys.filter { journey ->
-                            journey.name.contains(action.searchQuery.trim(), ignoreCase = true) && (_state.value.selectedStatus == null || (_state.value.selectedStatus != null && journey.status == _state.value.selectedStatus))
+                            journey.name.contains(
+                                action.searchQuery.trim(),
+                                ignoreCase = true
+                            ) && (_state.value.selectedStatus == null || (_state.value.selectedStatus != null && journey.status == _state.value.selectedStatus))
                         }
                     )
                 }
             }
+
             is JourneysAction.OnStatusSelected -> {
                 _state.update {
                     it.copy(
                         selectedStatus = action.status,
                         filteredJourneys = _state.value.journeys.filter { journey ->
-                            journey.name.contains(_state.value.searchQuery.trim(), ignoreCase = true) && (action.status == null || (action.status != null && journey.status == action.status))
+                            journey.name.contains(
+                                _state.value.searchQuery.trim(),
+                                ignoreCase = true
+                            ) && (action.status == null || journey.status == action.status)
                         })
                 }
             }
+
             else -> {}
         }
 
