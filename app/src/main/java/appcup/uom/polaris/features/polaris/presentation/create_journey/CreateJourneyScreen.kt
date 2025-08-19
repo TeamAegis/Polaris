@@ -367,7 +367,17 @@ fun CreateJourneyScreenImpl(
                                         onAction(CreateJourneyAction.OnPreferencesAdded(preference))
                                     }
                                 },
-                                label = { Text(preference.label) },
+                                label = {
+                                    Row {
+                                        Image(
+                                            painter = painterResource(preference.icon),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(36.dp)
+                                        )
+                                        Text(preference.label)
+                                    }
+
+                                        },
                                 leadingIcon = {
                                     if (selected) {
                                         Icon(
