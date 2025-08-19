@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -121,8 +120,8 @@ fun MoreScreenImpl(
                 UserProfileCard(
                     user = user,
                     onScanQR = { onAction(MoreActions.OnBottomSheetVisibilityChanged(true)) },
-                    onChatClicked = { onAction(MoreActions.OnChatClicked)},
-                    onSettingsClicked = { onAction(MoreActions.OnSettingsClicked)}
+                    onChatClicked = { onAction(MoreActions.OnChatClicked) },
+                    onSettingsClicked = { onAction(MoreActions.OnSettingsClicked) }
                 )
             }
             item {
@@ -144,27 +143,6 @@ fun MoreScreenImpl(
                     QuestCompletionCard(quest = quest)
                 }
             }
-
-            item {
-                TransactionsSectionHeader(
-                    title = "Latest Transactions",
-                    transactionCount = 0
-                )
-            }
-
-//            if (state.latestTransactions.isEmpty()) {
-//                item {
-//                    EmptyStateCard(
-//                        icon = Icons.Default.Receipt,
-//                        title = "No transactions yet",
-//                        description = "Your point transactions will appear here"
-//                    )
-//                }
-//            } else {
-//                items(state.latestTransactions) { transaction ->
-//                    TransactionCard(transaction = transaction)
-//                }
-//            }
         }
     }
 
@@ -291,7 +269,8 @@ fun UserProfileCard(
             ) {
                 Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Settings") }
+                Text("Settings")
+            }
         }
     }
 }
@@ -402,7 +381,10 @@ fun QuestCompletionCard(quest: Quest) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(Instant.parse(quest.createdDate).toEpochMilliseconds())),
+                    text = SimpleDateFormat(
+                        "dd MMM yyyy",
+                        Locale.getDefault()
+                    ).format(Date(Instant.parse(quest.createdDate).toEpochMilliseconds())),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -454,39 +436,6 @@ fun EmptyStateCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-fun TransactionsSectionHeader(
-    title: String,
-    transactionCount: Int
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Receipt,
-            contentDescription = "Transactions",
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        if (transactionCount > 0) {
-            Text(
-                text = "$transactionCount",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -157,8 +157,12 @@ class QRScannerViewModel(
                     )
                 }
 
-                _event.send(QRScannerEvent.OnTransactionSuccess)
+                _state.update {
+                    QRScannerState()
+                }
 
+                _event.send(QRScannerEvent.OnTransactionSuccess)
+                loadUserPoints()
             } catch (e: Exception) {
                 _state.update { it.copy(isProcessingTransaction = false) }
                 _event.send(QRScannerEvent.OnError(e.message ?: "Transaction failed"))

@@ -31,15 +31,9 @@ import android.media.AudioManager
 import android.util.Log
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.conversational_ai.utils.toByteArray
-import com.google.firebase.ai.type.SpeechConfig
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import kotlin.apply
-import kotlin.collections.map
-import kotlin.let
-import kotlin.reflect.typeOf
-import kotlin.to
 
 
 private val JSON = Json { ignoreUnknownKeys = true }
