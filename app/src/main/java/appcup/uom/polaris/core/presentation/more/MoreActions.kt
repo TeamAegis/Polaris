@@ -5,7 +5,4 @@ sealed interface MoreActions {
     object OnChatClicked : MoreActions
 
     data class OnBottomSheetVisibilityChanged(val visibility: Boolean) : MoreActions
-
-    object OnRefreshList: MoreActions
-
 }

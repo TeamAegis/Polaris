@@ -14,6 +14,7 @@ import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.domain.Value.Str
+import appcup.uom.polaris.features.quest.domain.QuestRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -23,7 +24,8 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val userRepository: UserRepository,
-    private val prefs: DataStore<Preferences>
+    private val prefs: DataStore<Preferences>,
+    private val questRepository: QuestRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(SettingsState())
     val state = _state.asStateFlow()
@@ -66,6 +68,22 @@ class SettingsViewModel(
 
     fun onAction(action: SettingsAction) {
         when (action) {
+            SettingsAction.OnRefreshList -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isRefreshingQuestList = true,
+                        )
+                    }
+                    questRepository.createQuests()
+                    _state.update {
+                        it.copy(
+                            isRefreshingQuestList = false,
+                        )
+                    }
+                }
+            }
+
             is SettingsAction.OnThemeChanged -> {
                 viewModelScope.launch {
                     prefs.edit {

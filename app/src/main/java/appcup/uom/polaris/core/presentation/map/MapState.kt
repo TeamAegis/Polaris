@@ -22,7 +22,6 @@ data class MapState(
     val isAnimatingCamera: Boolean = false,
     val bearing: Float = 0f,
 
-
     val currentLocation: Waypoint = Waypoint(),
     val currentMarkerState: MarkerState = MarkerState(),
     val currentCameraPositionState: CameraPositionState = CameraPositionState().apply {
@@ -32,11 +31,9 @@ data class MapState(
         )
     },
 
-
     val allMyWaypoints: List<PersonalWaypoint> = emptyList(),
     val publicWaypoints: List<PublicWaypoint> = emptyList(),
     val discoveredPublicWaypoints: List<PublicWaypoint> = emptyList(),
-
 
     val shouldShowStartJourneyDialog: Boolean = false,
     val startableJourneys: List<Journey> = emptyList(),

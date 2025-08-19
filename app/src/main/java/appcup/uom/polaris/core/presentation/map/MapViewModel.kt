@@ -14,6 +14,7 @@ import appcup.uom.polaris.core.domain.WeatherData
 import appcup.uom.polaris.features.conversational_ai.domain.Value
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.Journey
+import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
 import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
@@ -37,7 +38,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlinx.serialization.json.Json
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -45,8 +46,7 @@ import kotlin.uuid.Uuid
 class MapViewModel(
     private val locationManager: LocationManager,
     private val polarisRepository: PolarisRepository,
-    private val questRepository: QuestRepository,
-    private val json: Json
+    private val questRepository: QuestRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapState())
     val state = _state.asStateFlow()
@@ -533,6 +533,7 @@ class MapViewModel(
         ) <= Constants.MAP_FRAGMENT_CREATION_RADIUS_IN_METRES
     }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun getStartableJourneys(): Map<String, Value> {
         val startableJourneyIds = _state.value.allMyWaypoints.groupBy { it.journeyId }
             .filter { it.value.any { waypoint -> !waypoint.isUnlocked } }.map { it.key }
@@ -554,7 +555,11 @@ class MapViewModel(
 
             is Result.Success<List<Journey>> -> {
                 mapOf(
-                    "journeys" to Value.Str(result.data.toString())
+                    "journeys" to Value.Str(result.data.map {
+                        it.copy(
+                            status = JourneyStatus.NOT_STARTED
+                        )
+                    }.toString())
                 )
             }
         }
@@ -669,7 +674,8 @@ class MapViewModel(
                 it.copy(
                     isSelectedWaypointCardVisible = true,
                     selectedWaypoint = placeInfo.copy(
-                        id = Uuid.NIL
+                        id = Uuid.NIL,
+                        isReceivedFromAI = true
                     )
                 )
             }
