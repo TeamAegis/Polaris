@@ -6,4 +6,6 @@ sealed interface AppAction {
     object RequestLocationPermission : AppAction
 
     object OnControlPanelExpandedChanged: AppAction
+
+    object OnCreatePublicWaypointClicked: AppAction
 }

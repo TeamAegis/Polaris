@@ -1,8 +1,9 @@
 package appcup.uom.polaris.core.presentation.app
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.ui.graphics.vector.ImageVector
 import appcup.uom.polaris.core.presentation.components.FilterFocus
-import appcup.uom.polaris.core.presentation.components.Journals
 import appcup.uom.polaris.core.presentation.components.Robot
 
 data class AppState(
@@ -16,4 +17,5 @@ data class AppState(
 enum class FabMenuItem(val imageVector: ImageVector, val label: String) {
     LiveTranslate(FilterFocus, "Live Translate"),
     VoiceAssistant(Robot, "Voice Assistant"),
+    CreateFragment(Icons.Default.Public, "Create Fragment"),
 }

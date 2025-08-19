@@ -1,12 +1,15 @@
 package appcup.uom.polaris.features.polaris.data
 
 import appcup.uom.polaris.core.data.StaticData
+import appcup.uom.polaris.core.data.createJourneyFromExistingWaypointsPrompt
+import appcup.uom.polaris.core.data.createJourneyFunctionCallingPrompt
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.core.domain.RoutesApi
 import appcup.uom.polaris.core.domain.RoutesResponse
 import appcup.uom.polaris.core.domain.WeatherApi
 import appcup.uom.polaris.core.domain.WeatherData
+import appcup.uom.polaris.features.polaris.domain.GeneratedWaypoints
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.JourneyStatus
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
@@ -15,20 +18,24 @@ import appcup.uom.polaris.features.polaris.domain.Preferences
 import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.domain.WaypointType
+import com.google.firebase.ai.Chat
+import com.google.firebase.ai.GenerativeModel
 import com.google.firebase.ai.type.PublicPreviewAPI
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.filter.FilterOperation
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresListDataFlow
 import io.github.jan.supabase.realtime.realtime
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -38,7 +45,11 @@ import kotlin.uuid.Uuid
 class PolarisRepositoryImpl(
     private val routesApi: RoutesApi,
     private val weatherApi: WeatherApi,
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    private val locationManager: LocationManager,
+    private val firebaseWaypointAiFunctionCallChat: Chat,
+    private val firebaseWaypointGenerativeModel: GenerativeModel
+
 ) : PolarisRepository {
     override suspend fun getRoutePolyline(
         startingWaypoint: Waypoint,
@@ -81,8 +92,7 @@ class PolarisRepositoryImpl(
         }
 
         return try {
-            val journey = supabaseClient.from("journeys")
-                .insert(
+            val journey = supabaseClient.from("journeys").insert(
                     Journey(
                         name = name,
                         description = description,
@@ -138,9 +148,7 @@ class PolarisRepositoryImpl(
         val channel =
             supabaseClient.channel("journey_channel_${StaticData.user.id}_${Uuid.random()}")
         val journeyFlow = channel.postgresListDataFlow(
-            schema = "public",
-            table = "journeys",
-            primaryKey = Journey::id
+            schema = "public", table = "journeys", primaryKey = Journey::id
         )
         channel.subscribe()
         val job = launch {
@@ -201,7 +209,6 @@ class PolarisRepositoryImpl(
             schema = "public",
             table = "personal_waypoints",
             primaryKey = PersonalWaypoint::id,
-            filter = FilterOperation("user_id", FilterOperator.EQ, StaticData.user.id)
         )
         channel.subscribe()
         val job = launch {
@@ -302,9 +309,72 @@ class PolarisRepositoryImpl(
     }
 
     override suspend fun getWeatherData(
-        latitude: Double,
-        longitude: Double
+        latitude: Double, longitude: Double
     ): Result<WeatherData, DataError.Remote> {
         return weatherApi.getWeather(latitude, longitude)
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun generateIntermediateWaypoints(
+        name: String, description: String, preferences: List<Preferences>, encodedPolyline: String
+    ): Result<GeneratedWaypoints, DataError.JourneyError> {
+        if (name.isBlank()) {
+            return Result.Error(DataError.JourneyError.NAME_EMPTY)
+        }
+        if (description.isBlank()) {
+            return Result.Error(DataError.JourneyError.DESCRIPTION_EMPTY)
+        }
+
+        return try {
+            var prompt = createJourneyFunctionCallingPrompt(
+                journeyName = name,
+                journeyDescription = description,
+                userPreference = preferences.joinToString { it.name },
+                encodedPolyline = encodedPolyline
+            )
+
+            val result = firebaseWaypointAiFunctionCallChat.sendMessage(prompt)
+
+
+            val functionResponses = coroutineScope {
+                result.functionCalls.map { functionCall ->
+                    async {
+                        if (functionCall.name == "getNearbyPlacesAlongRoute") {
+                            val searchQuery =
+                                functionCall.args.getOrDefault("searchQuery", "landmarks")
+
+                            locationManager.getNearbyPlacesAlongRoute(
+                                searchQuery.toString(), encodedPolyline
+                            )
+                        } else {
+                            emptyList()
+                        }
+                    }
+                }.awaitAll().flatten()
+            }
+
+            prompt = createJourneyFromExistingWaypointsPrompt(
+                journeyName = name,
+                journeyDescription = description,
+                userPreference = preferences.joinToString { it.name },
+                encodedPolyline = encodedPolyline,
+                intermediateWaypoints = functionResponses.toString()
+            )
+
+            val res = firebaseWaypointGenerativeModel.generateContent(prompt)
+
+            val content = Json.decodeFromString(GeneratedWaypoints.serializer(), res.text!!)
+
+
+            Result.Success(
+                content.copy(
+                waypoints = content.waypoints.map {
+                    it.copy(
+                        id = Uuid.random()
+                    )
+                }))
+        } catch (e: Exception) {
+            Result.Error(DataError.JourneyError.UNKNOWN)
+        }
     }
 }

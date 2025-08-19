@@ -37,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.domain.WaypointType
-import appcup.uom.polaris.features.polaris.presentation.components.AnimatedMarkerIcon
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.MapSearchBar
 import appcup.uom.polaris.features.polaris.presentation.waypoint_selector.components.WaypointCard
 import com.google.android.libraries.places.compose.autocomplete.models.AutocompletePlace

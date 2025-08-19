@@ -1,12 +1,9 @@
 package appcup.uom.polaris.core.presentation.more
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.quest.domain.QuestRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -22,7 +19,6 @@ class MoreViewModel(userRepository: UserRepository, val questRepository: QuestRe
                     questRepository.createQuests()
 
                     val quests = questRepository.fetchDailyQuest()
-                    Log.d(Constants.DEBUG_VALUE, quests.toString())
                 }
             }
             else -> {}

@@ -1,9 +1,9 @@
 package appcup.uom.polaris.features.quest.data
 
-import android.util.Log
 import appcup.uom.polaris.QuestQueries
 import appcup.uom.polaris.core.data.Constants
-import appcup.uom.polaris.core.data.createQuest
+import appcup.uom.polaris.core.data.createQuestPrompt
+import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.polaris.data.LocationManager
 import appcup.uom.polaris.features.polaris.domain.Preferences
 import appcup.uom.polaris.features.quest.domain.Quest
@@ -24,6 +24,7 @@ import kotlin.time.ExperimentalTime
 class QuestRepositoryImpl(
     private val questDataSource: QuestQueries,
     private val locationManager: LocationManager,
+    private val userRepository: UserRepository
 ) : QuestRepository {
 
     override suspend fun createQuests() {
@@ -67,7 +68,7 @@ class QuestRepositoryImpl(
                     responseSchema = questsSchema
                 })
 
-            val prompt = createQuest(
+            val prompt = createQuestPrompt(
                 waypoints.toString(),
                 Preferences.NATURE.types.random() + Preferences.FOOD.types.random() + Preferences.ATTRACTIONS.types.random()
             )
@@ -175,7 +176,111 @@ class QuestRepositoryImpl(
         }
     }
 
-    override suspend fun setQuestCompleted(questId: Long) {
-        questDataSource.update(QuestStatus.COMPLETED.name, questId)
+    override suspend fun fetchAllPendingQuests(): List<Quest> {
+        val weeklyQuests = questDataSource.selectQuests(QuestType.WEEKLY.name).executeAsList()
+        val dailyQuests = questDataSource.selectQuests(QuestType.DAILY.name).executeAsList()
+        val quests = (weeklyQuests + dailyQuests).filter { quest ->
+            quest.status == QuestStatus.PENDING.name
+        }
+
+        if (quests.isNotEmpty()) {
+            return quests.map { quest ->
+                Quest(
+                    id = quest.id,
+                    placeId = quest.place_id,
+                    title = quest.title,
+                    description = quest.description,
+                    placeName = quest.place_name ?: "",
+                    address = quest.address ?: "",
+                    longitude = quest.longitude,
+                    latitude = quest.latitude,
+                    placeType = Json.decodeFromString(
+                        ListSerializer(String.serializer()),
+                        quest.place_type ?: "[]"
+                    ),
+                    type = QuestType.valueOf(quest.type ?: QuestType.WEEKLY.name),
+                    status = QuestStatus.valueOf(quest.status ?: QuestStatus.PENDING.name),
+                    createdDate = quest.created_date!!
+                )
+            }
+        } else {
+            createQuests()
+            return emptyList()
+        }
     }
+
+    override suspend fun fetchAllCompletedQuests(): List<Quest> {
+        val weeklyQuests = questDataSource.selectQuests(QuestType.WEEKLY.name).executeAsList()
+        val dailyQuests = questDataSource.selectQuests(QuestType.DAILY.name).executeAsList()
+        val quests = (weeklyQuests + dailyQuests).filter { quest ->
+            quest.status == QuestStatus.COMPLETED.name
+        }
+
+        if (quests.isNotEmpty()) {
+            return quests.map { quest ->
+                Quest(
+                    id = quest.id,
+                    placeId = quest.place_id,
+                    title = quest.title,
+                    description = quest.description,
+                    placeName = quest.place_name ?: "",
+                    address = quest.address ?: "",
+                    longitude = quest.longitude,
+                    latitude = quest.latitude,
+                    placeType = Json.decodeFromString(
+                        ListSerializer(String.serializer()),
+                        quest.place_type ?: "[]"
+                    ),
+                    type = QuestType.valueOf(quest.type ?: QuestType.WEEKLY.name),
+                    status = QuestStatus.valueOf(quest.status ?: QuestStatus.PENDING.name),
+                    createdDate = quest.created_date!!
+                )
+            }
+        } else {
+            createQuests()
+            return emptyList()
+        }
+    }
+
+    override suspend fun fetchAllQuests(): List<Quest> {
+        val weeklyQuests = questDataSource.selectQuests(QuestType.WEEKLY.name).executeAsList()
+        val dailyQuests = questDataSource.selectQuests(QuestType.DAILY.name).executeAsList()
+        val quests = weeklyQuests + dailyQuests
+
+        if (quests.isNotEmpty()) {
+            return quests.map { quest ->
+                Quest(
+                    id = quest.id,
+                    placeId = quest.place_id,
+                    title = quest.title,
+                    description = quest.description,
+                    placeName = quest.place_name ?: "",
+                    address = quest.address ?: "",
+                    longitude = quest.longitude,
+                    latitude = quest.latitude,
+                    placeType = Json.decodeFromString(
+                        ListSerializer(String.serializer()),
+                        quest.place_type ?: "[]"
+                    ),
+                    type = QuestType.valueOf(quest.type ?: QuestType.WEEKLY.name),
+                    status = QuestStatus.valueOf(quest.status ?: QuestStatus.PENDING.name),
+                    createdDate = quest.created_date!!
+                )
+            }
+        } else {
+            createQuests()
+            return emptyList()
+        }
+    }
+
+    override suspend fun setQuestCompleted(questId: Long, type: QuestType) {
+        questDataSource.update(QuestStatus.COMPLETED.name, questId)
+        if (type == QuestType.DAILY) {
+            userRepository.addExperienceAndPoints(100, 20)
+        } else {
+            userRepository.addExperienceAndPoints(500, 100)
+        }
+    }
+
+
 }

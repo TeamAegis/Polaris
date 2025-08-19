@@ -78,6 +78,8 @@ class JourneyDetailsViewModel(
                     )
                 }
                 viewModelScope.launch {
+                    if (_state.value.journey == null) return@launch
+                    if (_state.value.journey!!.id == null) return@launch
                     polarisRepository.deleteJourney(_state.value.journey!!.id!!)
                     action.onDelete()
                 }

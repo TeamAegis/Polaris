@@ -2,6 +2,7 @@ package appcup.uom.polaris.core.presentation.map
 
 import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
+import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 
 sealed interface MapActions {
     data class OnTrackingUserChanged(val isTrackingUser: Boolean) : MapActions
@@ -13,5 +14,9 @@ sealed interface MapActions {
 
     data class OnPersonalWaypointClicked(val waypoint: PersonalWaypoint) : MapActions
     object OnTrackingWaypointCardDismissed : MapActions
+
+    object OnToggleQuests : MapActions
+
+    data class OnFragmentClicked(val waypoint: PublicWaypoint) : MapActions
 
 }

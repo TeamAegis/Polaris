@@ -11,7 +11,7 @@ object ConversationalAITools {
     val navigateToScreenTool = Value.Object(
         values = arrayOf(
             "name" to Value.Str(FunctionCallAction.NAVIGATE_TO_SCREEN.name),
-            "description" to Value.Str("Navigates the user to a specific screen within the application. Before navigating, check the current screen you are in and also the details of each screen being navigated to. This is useful for guiding the user through the app or directly accessing features based on their request."),
+            "description" to Value.Str("A navigation tool that navigate to the desired screen within the application. Ensures that the you take into context the current screen that you in, so as to give the user a visual guide of where the screen is."),
             "parameters" to Value.Object(
                 values = arrayOf(
                     "type" to Value.Str("OBJECT"),
@@ -20,7 +20,7 @@ object ConversationalAITools {
                             "screen" to Value.Object(
                                 values = arrayOf(
                                     "type" to Value.Str("STRING"),
-                                    "description" to Value.Str("The name of the screen to navigate to. This must be one of the available screens in the application."),
+                                    "description" to Value.Str("The name of the destination screen to navigate to. This must be one of the available screens in the application based on the enum."),
                                     "enum" to Value.Array(
                                         values = screens
                                     )
@@ -29,7 +29,7 @@ object ConversationalAITools {
                             "navigation_arguments" to Value.Object(
                                 values = arrayOf(
                                     "type" to Value.Str("OBJECT"),
-                                    "description" to Value.Str("Optional arguments to pass to the screen during navigation. This can be used to provide context or data to the destination screen."),
+                                    "description" to Value.Str("Optional argument(s) provided to pass to the destination screen during navigation. This will be used as context and data to to auto-fill for the destination screen."),
                                 )
                             )
                         )
@@ -46,7 +46,7 @@ object ConversationalAITools {
     val getScreenDetailsTool = Value.Object(
         values = arrayOf(
             "name" to Value.Str(FunctionCallAction.GET_SCREEN_DETAILS.name),
-            "description" to Value.Str("Retrieves details about a specific screen in the application. This is useful for understanding the content and functionality of a particular screen without navigating to it."),
+            "description" to Value.Str("Retrieves details available about a specific screen in the application. This is useful for understanding the content and functionality of a particular screen without navigating to it."),
             "parameters" to Value.Object(
                 values = arrayOf(
                     "type" to Value.Str("OBJECT"),
@@ -75,7 +75,7 @@ object ConversationalAITools {
     val getCurrentLocationTool = Value.Object(
         values = arrayOf(
             "name" to Value.Str(FunctionCallAction.GET_CURRENT_LOCATION.name),
-            "description" to Value.Str("Gets the current location of the user within the application, specifically the current screen they are viewing. This helps in providing context-aware assistance or information."),
+            "description" to Value.Str("Gets the current screen that the user is currently viewing in the application, This enable in providing context-aware assistance or information."),
             "parameters" to Value.Object(
                 values = arrayOf(
                     "type" to Value.Str("OBJECT"),
@@ -87,7 +87,7 @@ object ConversationalAITools {
     val navigateBackTool = Value.Object(
         values = arrayOf(
             "name" to Value.Str(FunctionCallAction.NAVIGATE_BACK.name),
-            "description" to Value.Str("Navigates the user to the previous screen in the application's navigation stack. Always check the current screen it is in currently. This is useful for allowing the user to go back to a prior view or step."),
+            "description" to Value.Str("Navigates the user to the previous screen in the application's navigation stack. Always check the current screen it is in currently. This is enables the user to go back to a prior view or step."),
             "parameters" to Value.Object(
                 values = arrayOf(
                     "type" to Value.Str("OBJECT"),

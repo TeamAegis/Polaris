@@ -38,4 +38,8 @@ data class CreateJourneyState @OptIn(ExperimentalUuidApi::class) constructor(
     val waypointType: WaypointType = WaypointType.START,
 
     val polyline: List<LatLng> = emptyList(),
+
+    val isGeneratingIntermediateWaypoints: Boolean = false,
+    val suggestedName: String? = null,
+    val suggestedDescription: String? = null,
 )

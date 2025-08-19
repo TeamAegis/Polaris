@@ -6,6 +6,7 @@ import appcup.uom.polaris.features.polaris.domain.Journey
 import appcup.uom.polaris.features.polaris.domain.PersonalWaypoint
 import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 import appcup.uom.polaris.features.polaris.domain.Waypoint
+import appcup.uom.polaris.features.quest.domain.Quest
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -35,7 +36,7 @@ data class MapState(
     val discoveredPublicWaypoints: List<PublicWaypoint> = emptyList(),
 
 
-    val shouldShowStartJourneyDialog: Boolean = true,
+    val shouldShowStartJourneyDialog: Boolean = false,
     val startableJourneys: List<Journey> = emptyList(),
     val selectedJourney: Journey? = null,
     val waypointsForSelectedJourney: List<PersonalWaypoint> = emptyList(),
@@ -44,4 +45,7 @@ data class MapState(
     val isSelectedWaypointCardVisible: Boolean = false,
     val selectedWaypoint: Waypoint? = null,
     val selectedWeatherData: WeatherData? = null,
+
+    val quests: List<Quest> = emptyList(),
+    val isQuestsVisible: Boolean = false,
 )

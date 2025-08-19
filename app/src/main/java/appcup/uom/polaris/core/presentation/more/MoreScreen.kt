@@ -127,6 +127,7 @@ fun MoreScreenImpl(
                     .clip(RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp)
             ) { Text("Refresh Quests") }
+
         }
     }
 

@@ -22,6 +22,11 @@ sealed interface DataError: Error {
         END_LOCATION_NOT_SET("Please set an end location for your journey."),
     }
 
+    enum class FragmentError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        IMAGE_MESSAGE_EMPTY("Either image or message must be provided."),
+    }
+
     enum class ChatError(val message: String) : DataError {
         UNKNOWN("An unknown error occurred."),
         MESSAGE_EMPTY("Message cannot be empty."),
@@ -36,6 +41,7 @@ sealed interface DataError: Error {
         INVALID_OTP("Invalid OTP."),
         INVALID_EMAIL("Please enter a valid email address."),
         PASSWORD_TOO_SHORT("Password must be at least 8 characters long."),
-        PASSWORD_MISMATCH("Passwords do not match.")
+        PASSWORD_MISMATCH("Passwords do not match."),
+        INSUFFICIENT_POINTS("Insufficient points to complete this action."),
     }
 }

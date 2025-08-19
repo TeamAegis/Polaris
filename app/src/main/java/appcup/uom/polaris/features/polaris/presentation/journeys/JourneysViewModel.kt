@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class JourneysViewModel(
     polarisRepository: PolarisRepository
 ): ViewModel() {
@@ -28,11 +30,13 @@ class JourneysViewModel(
         }
         channelJob = polarisRepository.getJourneys()
             .onEach { journeys ->
+                val sorted = journeys.sortedByDescending { it.createdAt }
+
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        journeys = journeys,
-                        filteredJourneys = journeys.filter { journey ->
+                        journeys = sorted,
+                        filteredJourneys = sorted.filter { journey ->
                             journey.name.contains(_state.value.searchQuery, ignoreCase = true) &&
                                     (_state.value.selectedStatus == null || journey.status == _state.value.selectedStatus)
                         }

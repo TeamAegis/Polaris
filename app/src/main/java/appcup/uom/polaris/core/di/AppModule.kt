@@ -17,6 +17,7 @@ import appcup.uom.polaris.core.presentation.settings.SettingsViewModel
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.FragmentsRepository
 import appcup.uom.polaris.features.polaris.domain.PolarisRepository
 import appcup.uom.polaris.features.quest.domain.QuestRepository
 import io.github.jan.supabase.auth.Auth
@@ -58,16 +59,32 @@ class AppModule {
     ) = Database(AndroidSqliteDriver(Database.Schema, context, "polaris.db"))
 
     @KoinViewModel
-    fun appViewModel(permissionBridge: PermissionBridge) =
-        AppViewModel(permissionBridge = permissionBridge)
+    fun appViewModel(
+        permissionBridge: PermissionBridge,
+        fragmentsRepository: FragmentsRepository,
+        locationManager: LocationManager
+    ) =
+        AppViewModel(
+            permissionBridge = permissionBridge,
+            fragmentsRepository = fragmentsRepository,
+            locationManager = locationManager
+        )
 
     @KoinViewModel
     fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>) =
         SettingsViewModel(userRepository = userRepository, prefs = prefs)
 
     @KoinViewModel
-    fun mapViewModel(locationManager: LocationManager, polarisRepository: PolarisRepository) =
-        MapViewModel(locationManager = locationManager, polarisRepository = polarisRepository)
+    fun mapViewModel(
+        locationManager: LocationManager,
+        polarisRepository: PolarisRepository,
+        questRepository: QuestRepository
+    ) =
+        MapViewModel(
+            locationManager = locationManager,
+            polarisRepository = polarisRepository,
+            questRepository = questRepository
+        )
 
     @KoinViewModel
     fun memoriesViewModel(memoryRepository: MemoryRepository) =

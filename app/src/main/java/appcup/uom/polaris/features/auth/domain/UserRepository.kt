@@ -14,4 +14,6 @@ interface UserRepository {
     suspend fun updateDisplayName(name: String): Result<Unit, DataError.AuthError>
     suspend fun forgotPassword(email: String): Result<Unit, DataError.AuthError>
     suspend fun resetPassword(password: String, confirmPassword: String): Result<Unit, DataError.AuthError>
+    suspend fun addExperienceAndPoints(experience: Int, points: Int): Result<Unit, DataError.AuthError>
+    suspend fun usePoints(points: Int): Result<Unit, DataError.AuthError>
 }
