@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
+    implementation(libs.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -100,7 +101,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.reflect)
-
+//    implementation("com.google.accompanist:accompanist-pager-indicators:0.34.0")
+// You likely have this for the indicator
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    // Make sure you also have this for the Pager itself
+    implementation("com.google.accompanist:accompanist-pager:0.36.0") // Use the same version as your indicators
 //    splashscreen
     implementation(libs.core.splashscreen)
 
