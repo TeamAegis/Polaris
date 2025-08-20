@@ -236,12 +236,12 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
     }
 
     @Serializable
-    object LiveTranslate : Screen() {
+    object AICamera : Screen() {
         override fun getScreenDetails(): Value {
             return Value.Object(
                 values = arrayOf(
-                    "name" to Value.Str("LiveTranslate"),
-                    "description" to Value.Str("This is the live translate screen of the app. It should not be navigated to."),
+                    "name" to Value.Str("AICamera"),
+                    "description" to Value.Str("This is the AI Camera screen of the app. It can be used to see objects, describe them, and do live translation."),
                     "navigation_arguments" to Value.Null
                 )
             )
@@ -254,7 +254,7 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
             return Value.Object(
                 values = arrayOf(
                     "name" to Value.Str("Chat"),
-                    "description" to Value.Str("This is the chat screen of the app. It should not be navigated to."),
+                    "description" to Value.Str("This is the chat screen of the app."),
                     "navigation_arguments" to Value.Null
                 )
             )
@@ -267,7 +267,7 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
             return Value.Object(
                 values = arrayOf(
                     "name" to Value.Str("Journeys"),
-                    "description" to Value.Str("This is the journeys screen of the app. It should not be navigated to."),
+                    "description" to Value.Str("This is the journeys screen of the app."),
                     "navigation_arguments" to Value.Null
                 )
             )
@@ -280,8 +280,17 @@ sealed class Screen() : FunctionCallNavigation, NavKey {
             return Value.Object(
                 values = arrayOf(
                     "name" to Value.Str("Journey Details"),
-                    "description" to Value.Str("This is the journey details screen of the app."),
-                    "navigation_arguments" to Value.Null
+                    "description" to Value.Str("This is the journey details screen of the app. Fetch all journeys available then make the user choose and then use the id as argument"),
+                    "navigation_arguments" to Value.Object(
+                        values = arrayOf(
+                            "journeyId" to Value.Object(
+                                values = arrayOf(
+                                    "type" to Value.Str("STRING"),
+                                    "description" to Value.Str("The ID of the journey being viewed."),
+                                )
+                            )
+                        )
+                    )
                 )
             )
         }

@@ -67,7 +67,7 @@ class MapViewModel(
 
         viewModelScope.launch {
             locationManager.getCoordinates { latitude, longitude ->
-                if (latitude != null && longitude != null && _state.value.isMapLoaded) {
+                if (latitude != null && longitude != null) {
                     _state.value.currentCameraPositionState.move(
                         update = CameraUpdateFactory.newCameraPosition(
                             CameraPosition.builder(_state.value.currentCameraPositionState.position)
@@ -80,7 +80,7 @@ class MapViewModel(
                                 bearing = orientation.headingDegrees
                             )
                         }
-                        if (_state.value.isTrackingUser && _state.value.isMapLoaded) {
+                        if (_state.value.isTrackingUser) {
                             _state.value.currentCameraPositionState.move(
                                 update = CameraUpdateFactory.newCameraPosition(
                                     CameraPosition.builder(_state.value.currentCameraPositionState.position)
@@ -101,7 +101,7 @@ class MapViewModel(
                     is ResultState.Success<LatLong> -> {
                         val (latitude, longitude) = result.data
 
-                        if (_state.value.isTrackingUser && _state.value.isMapLoaded) {
+                        if (_state.value.isTrackingUser) {
                             _state.value.currentCameraPositionState.move(
                                 update = CameraUpdateFactory.newCameraPosition(
                                     CameraPosition.builder(
@@ -205,68 +205,65 @@ class MapViewModel(
 
     fun onAction(action: MapActions) {
         when (action) {
-
             is MapActions.OnTrackingUserChanged -> {
-                if (_state.value.isMapLoaded)
-                    viewModelScope.launch {
-                        _state.update {
-                            it.copy(
-                                isAnimatingCamera = true, isTrackingUser = false
-                            )
-                        }
-                        _state.value.currentCameraPositionState.animate(
-                            update = CameraUpdateFactory.newCameraPosition(
-                                CameraPosition.builder(
-                                    _state.value.currentCameraPositionState.position
-                                ).target(
-                                    LatLng(
-                                        _state.value.currentLocation.latitude,
-                                        _state.value.currentLocation.longitude
-                                    )
-                                ).bearing(
-                                    if (action.isTrackingUser) _state.value.bearing else 0f
-                                )
-                                    .zoom(if (action.isTrackingUser) Constants.MAP_DEFAULT_ZOOM else 10f)
-                                    .tilt(if (action.isTrackingUser) Constants.MAP_DEFAULT_TILT else 0f)
-                                    .build()
-                            )
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isAnimatingCamera = true, isTrackingUser = false
                         )
-                        _state.update {
-                            it.copy(
-                                isAnimatingCamera = false, isTrackingUser = action.isTrackingUser
-                            )
-                        }
                     }
+                    _state.value.currentCameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.builder(
+                                _state.value.currentCameraPositionState.position
+                            ).target(
+                                LatLng(
+                                    _state.value.currentLocation.latitude,
+                                    _state.value.currentLocation.longitude
+                                )
+                            ).bearing(
+                                if (action.isTrackingUser) _state.value.bearing else 0f
+                            )
+                                .zoom(if (action.isTrackingUser) Constants.MAP_DEFAULT_ZOOM else 10f)
+                                .tilt(if (action.isTrackingUser) Constants.MAP_DEFAULT_TILT else 0f)
+                                .build()
+                        )
+                    )
+                    _state.update {
+                        it.copy(
+                            isAnimatingCamera = false, isTrackingUser = action.isTrackingUser
+                        )
+                    }
+                }
             }
 
             MapActions.OnCompassClicked -> {
-                if (_state.value.isMapLoaded)
-                    viewModelScope.launch {
-                        _state.update {
-                            it.copy(
-                                isTrackingUser = false, isAnimatingCamera = true
-                            )
-                        }
-                        _state.value.currentCameraPositionState.animate(
-                            update = CameraUpdateFactory.newCameraPosition(
-                                CameraPosition.builder(
-                                    _state.value.currentCameraPositionState.position
-                                ).target(
-                                    LatLng(
-                                        _state.value.currentLocation.latitude,
-                                        _state.value.currentLocation.longitude
-                                    )
-                                ).bearing(
-                                    0f
-                                ).zoom(10f).tilt(0f).build()
-                            )
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isTrackingUser = false, isAnimatingCamera = true
                         )
-                        _state.update {
-                            it.copy(
-                                isAnimatingCamera = false
-                            )
-                        }
                     }
+                    _state.value.currentCameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.builder(
+                                _state.value.currentCameraPositionState.position
+                            ).target(
+                                LatLng(
+                                    _state.value.currentLocation.latitude,
+                                    _state.value.currentLocation.longitude
+                                )
+                            ).bearing(
+                                0f
+                            ).zoom(10f).tilt(0f).build()
+                        )
+                    )
+                    _state.update {
+                        it.copy(
+                            isAnimatingCamera = false
+                        )
+                    }
+                }
             }
 
             is MapActions.OnStartJourneyClicked -> {
@@ -332,14 +329,6 @@ class MapViewModel(
                 _state.update {
                     it.copy(
                         isQuestsVisible = !_state.value.isQuestsVisible
-                    )
-                }
-            }
-
-            MapActions.OnMapLoaded -> {
-                _state.update {
-                    it.copy(
-                        isMapLoaded = true
                     )
                 }
             }

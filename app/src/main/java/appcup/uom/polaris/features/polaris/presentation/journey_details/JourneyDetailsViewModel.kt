@@ -27,6 +27,11 @@ class JourneyDetailsViewModel(
     init {
         _state.update {
             it.copy(
+                journeyId = journeyId
+            )
+        }
+        _state.update {
+            it.copy(
                 isLoading = true
             )
         }

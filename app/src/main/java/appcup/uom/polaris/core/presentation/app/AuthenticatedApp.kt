@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationSearching
@@ -38,8 +37,6 @@ import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.StopCircle
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonMenu
@@ -93,12 +90,12 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
+import appcup.uom.polaris.R
 import appcup.uom.polaris.core.data.EventBus
 import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.extras.navigation.Screen
 import appcup.uom.polaris.core.presentation.components.AnimatedJourneyProgressTopBar
 import appcup.uom.polaris.core.presentation.components.BottomBar
-import appcup.uom.polaris.core.presentation.components.Camera
 import appcup.uom.polaris.core.presentation.components.FilterFocus
 import appcup.uom.polaris.core.presentation.components.JourneyCardPager
 import appcup.uom.polaris.core.presentation.components.TrackingWaypointCard
@@ -125,10 +122,10 @@ import appcup.uom.polaris.features.auth.presentation.otp_reauthenticate.OtpReaut
 import appcup.uom.polaris.features.chat.presentation.chat.ChatScreen
 import appcup.uom.polaris.features.chat.presentation.chat.ChatViewModel
 import appcup.uom.polaris.features.conversational_ai.presentation.ConversationalAIViewModel
+import appcup.uom.polaris.features.conversational_ai.presentation.ai_camera.AICameraScreen
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAI
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai.ConversationalAIAction
 import appcup.uom.polaris.features.conversational_ai.presentation.conversational_ai_message.ConversationalAIMessageAction
-import appcup.uom.polaris.features.conversational_ai.presentation.live_translate.LiveTranslateScreen
 import appcup.uom.polaris.features.conversational_ai.utils.function_call.FunctionCallHandler
 import appcup.uom.polaris.features.polaris.domain.Waypoint
 import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyScreen
@@ -145,7 +142,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
-import appcup.uom.polaris.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -218,36 +214,47 @@ fun AuthenticatedApp(
                 is Event.OnFunctionCall -> {
                     functionCallHandler.handleFunctionCall(event.func, event.args, event.onResult)
                 }
+
                 is Event.OnGetAvailableJourneys -> {
                     event.onResult(mapViewModel.getStartableJourneys())
                 }
+
                 is Event.OnGetUserLocation -> {
                     mapViewModel.getUserCurrentLocation(event.onResult)
                 }
+
                 is Event.OnSearchNearbyPlaces -> {
                     event.onResult(mapViewModel.getNearbyPlaces(event.radius))
                 }
+
                 is Event.OnSearchPlaces -> {
                     event.onResult(mapViewModel.searchPlaces(event.searchQuery))
                 }
+
                 is Event.OnSendWaypoint -> {
                     mapViewModel.onWaypointReceived(event.placeId, event.onResult)
                 }
+
                 is Event.OnStartJourney -> {
                     event.onResult(mapViewModel.startJourney(event.journeyId))
                 }
+
                 is Event.OnStopJourney -> {
                     event.onResult(mapViewModel.stopJourney())
                 }
+
                 is Event.OnWaypointUnlocked -> {
-                    conversationAIViewModel.onMessageAction(ConversationalAIMessageAction.OnWaypointUnlocked(event.message))
+                    conversationAIViewModel.onMessageAction(
+                        ConversationalAIMessageAction.OnWaypointUnlocked(
+                            event.message
+                        )
+                    )
                 }
+
                 else -> {}
             }
         }
     }
-
-
 
 
     val memoryViewModel: MemoryViewModel = koinViewModel()
@@ -408,7 +415,7 @@ fun AuthenticatedApp(
                                         if (!state.value.hasCameraPermission) {
                                             viewModel.onAction(AppAction.RequestCameraPermission)
                                         } else {
-                                            backStack.add(Screen.LiveTranslate)
+                                            backStack.add(Screen.AICamera)
                                         }
                                     }
 
@@ -563,8 +570,8 @@ fun AuthenticatedApp(
                         )
                     }
 
-                    entry<Screen.LiveTranslate> {
-                        LiveTranslateScreen(
+                    entry<Screen.AICamera> {
+                        AICameraScreen(
                             viewModel = conversationAIViewModel,
                             onBack = { backStack.removeLastOrNull() })
                     }
@@ -624,7 +631,13 @@ fun AuthenticatedApp(
                                     it.journeyId
                                 )
                             },
-                            onBack = { backStack.removeLastOrNull() }
+                            journeyIdInProgress = mapState.value.selectedJourney?.id?.toString(),
+                            onBack = { backStack.removeLastOrNull() },
+                            onJourneyStart = { journeyId ->
+                                scope.launch {
+                                    mapViewModel.startJourney(journeyId)
+                                }
+                            }
                         )
                     }
 
@@ -675,7 +688,11 @@ fun AuthenticatedApp(
                         IconButton(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             onClick = {
-                                conversationAIViewModel.onAction(ConversationalAIAction.OnMuteStateChanged(!conversationAIState.value.isMuted))
+                                conversationAIViewModel.onAction(
+                                    ConversationalAIAction.OnMuteStateChanged(
+                                        !conversationAIState.value.isMuted
+                                    )
+                                )
                             }
                         ) {
                             Icon(
@@ -692,7 +709,7 @@ fun AuthenticatedApp(
                                 if (!state.value.hasCameraPermission) {
                                     viewModel.onAction(AppAction.RequestCameraPermission)
                                 } else {
-                                    backStack.add(Screen.LiveTranslate)
+                                    backStack.add(Screen.AICamera)
                                 }
                             }
                         ) {
@@ -713,14 +730,14 @@ fun AuthenticatedApp(
                                 viewModel = conversationAIViewModel,
                                 snackbarHostState = snackbarHostState
                             )
-                            if (backStack.last() !is Screen.LiveTranslate) {
+                            if (backStack.last() !is Screen.AICamera) {
                                 IconButton(
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
                                     onClick = {
                                         if (!state.value.hasCameraPermission) {
                                             viewModel.onAction(AppAction.RequestCameraPermission)
                                         } else {
-                                            backStack.add(Screen.LiveTranslate)
+                                            backStack.add(Screen.AICamera)
                                         }
                                     }
                                 ) {
@@ -780,13 +797,13 @@ fun AuthenticatedApp(
                                 mapViewModel.onAction(MapActions.OnToggleQuests)
                             }
                         ) {
-                            Icon(modifier= Modifier.size(24.dp),
-                                painter = if (mapState.value.isQuestsVisible){
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                painter = if (mapState.value.isQuestsVisible) {
 
                                     painterResource(id = R.drawable.icon_scroll)
 
-                                } else
-                                {
+                                } else {
                                     painterResource(id = R.drawable.icon_danger)
                                 },
                                 contentDescription = if (mapState.value.isQuestsVisible) "Hide quests" else "Show quests"

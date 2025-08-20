@@ -1,4 +1,4 @@
-package appcup.uom.polaris.features.conversational_ai.presentation.live_translate
+package appcup.uom.polaris.features.conversational_ai.presentation.ai_camera
 
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
@@ -37,7 +37,7 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun LiveTranslateScreen(
+fun AICameraScreen(
     viewModel: ConversationalAIViewModel,
     onBack: () -> Unit,
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current

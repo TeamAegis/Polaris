@@ -43,8 +43,6 @@ class MemoryViewModel(
                     capturedImageUri = null
                 )
             }
-
-            else -> {}
         }
     }
 

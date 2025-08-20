@@ -16,8 +16,6 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 data class MapState(
-    val isMapLoaded: Boolean = false,
-
     val isTrackingUser: Boolean = false,
     val isAnimatingCamera: Boolean = false,
     val bearing: Float = 0f,
@@ -25,8 +23,12 @@ data class MapState(
     val currentLocation: Waypoint = Waypoint(),
     val currentMarkerState: MarkerState = MarkerState(),
     val currentCameraPositionState: CameraPositionState = CameraPositionState().apply {
+        val bounds = Constants.MAP_LAT_LNG_BOUNDS
         this.position = CameraPosition.fromLatLngZoom(
-            LatLng(0.0, 0.0),
+            LatLng(
+                (bounds.northeast.latitude + bounds.southwest.latitude) / 2,
+                (bounds.northeast.longitude + bounds.southwest.longitude) / 2
+            ),
             Constants.MAP_DEFAULT_ZOOM
         )
     },

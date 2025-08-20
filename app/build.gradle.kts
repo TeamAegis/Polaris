@@ -59,7 +59,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -92,7 +92,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
-    implementation(libs.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -180,14 +179,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
 
-//    arcore
-//    implementation(libs.sceneform.ux)
-    implementation(libs.maps.utils.ktx)
-    implementation(libs.fragment.compose)
-    implementation("io.github.sceneview:arsceneview:2.3.0")
-
 //    barcode
-    implementation ("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation (libs.barcode.scanning)
 }
 
 kotlin {

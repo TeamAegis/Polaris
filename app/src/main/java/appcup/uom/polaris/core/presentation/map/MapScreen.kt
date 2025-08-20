@@ -181,9 +181,6 @@ fun MapScreenImpl(
                 isBuildingEnabled = true,
                 mapStyleOptions = MapStyleOptions(map_style)
             ),
-            onMapClick = {
-                onAction(MapActions.OnMapLoaded)
-            },
             onPOIClick = { poi ->
                 onAction(
                     MapActions.OnPersonalWaypointClicked(
