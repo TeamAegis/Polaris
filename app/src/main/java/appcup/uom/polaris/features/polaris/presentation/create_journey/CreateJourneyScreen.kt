@@ -372,7 +372,7 @@ fun CreateJourneyScreenImpl(
                                         Image(
                                             painter = painterResource(preference.icon),
                                             contentDescription = null,
-                                            modifier = Modifier.size(36.dp)
+                                            modifier = Modifier.size(25.dp)
                                         )
                                         Text(preference.label)
                                     }
