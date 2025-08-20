@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,7 +25,9 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -43,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
 import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
+import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -266,11 +271,36 @@ fun SettingsScreenImpl(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    onAction(SettingsAction.OnRefreshList)
+                }, modifier = Modifier
+                    .fillMaxWidth()
+                    .polarisDropShadow()
+                    .clip(RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (state.isRefreshingQuestList) {
+                    Text(text = "Refreshing...")
+                    Spacer(modifier = Modifier.width(16.dp))
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text(text = "Refresh")
+                }
+
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
 
-    LoadingOverlay(isLoading = state.isLoading)
+    LoadingOverlay(isLoading = state.isLoading || state.isRefreshingQuestList)
 }
 
 @Composable

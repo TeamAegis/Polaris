@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -143,6 +145,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
+import appcup.uom.polaris.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -694,8 +697,12 @@ fun AuthenticatedApp(
                             }
                         ) {
                             Icon(
+                                //insert nav images here
+
+
                                 imageVector = FilterFocus,
                                 contentDescription = "Live Translate"
+
                             )
                         }
                     }
@@ -732,8 +739,11 @@ fun AuthenticatedApp(
                             }
                         ) {
                             Icon(
-                                modifier = Modifier.rotate(animatedBearing),
-                                imageVector = Icons.Default.Explore,
+                                modifier = Modifier
+                                    .rotate(animatedBearing)
+                                    .size(32.dp),
+                                painter = painterResource(id = R.drawable.icon_star),
+
                                 contentDescription = "Explore"
                             )
                         }
@@ -770,8 +780,15 @@ fun AuthenticatedApp(
                                 mapViewModel.onAction(MapActions.OnToggleQuests)
                             }
                         ) {
-                            Icon(
-                                imageVector = if (mapState.value.isQuestsVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            Icon(modifier= Modifier.size(24.dp),
+                                painter = if (mapState.value.isQuestsVisible){
+
+                                    painterResource(id = R.drawable.icon_scroll)
+
+                                } else
+                                {
+                                    painterResource(id = R.drawable.icon_danger)
+                                },
                                 contentDescription = if (mapState.value.isQuestsVisible) "Hide quests" else "Show quests"
                             )
                         }
@@ -800,7 +817,9 @@ fun AuthenticatedApp(
                             }
                         ) {
                             Icon(
-                                imageVector = Camera,
+
+                                painter = painterResource(id = R.drawable.icon_apature),
+                                modifier = Modifier.size(24.dp),
                                 contentDescription = "Take a picture"
                             )
                         }

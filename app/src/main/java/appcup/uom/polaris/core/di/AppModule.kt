@@ -72,21 +72,19 @@ class AppModule {
         )
 
     @KoinViewModel
-    fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>) =
-        SettingsViewModel(userRepository = userRepository, prefs = prefs)
+    fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>, questRepository: QuestRepository) =
+        SettingsViewModel(userRepository = userRepository, prefs = prefs, questRepository = questRepository)
 
     @KoinViewModel
     fun mapViewModel(
         locationManager: LocationManager,
         polarisRepository: PolarisRepository,
         questRepository: QuestRepository,
-        json: Json
     ) =
         MapViewModel(
             locationManager = locationManager,
             polarisRepository = polarisRepository,
-            questRepository = questRepository,
-            json = json
+            questRepository = questRepository
         )
 
     @KoinViewModel
@@ -94,8 +92,8 @@ class AppModule {
         MemoriesViewModel(memoryRepository = memoryRepository)
 
     @KoinViewModel
-    fun moreViewModel(userRepository: UserRepository, questRepository: QuestRepository) =
-        MoreViewModel(userRepository = userRepository, questRepository = questRepository)
+    fun moreViewModel(questRepository: QuestRepository) =
+        MoreViewModel(questRepository = questRepository)
 
     @KoinViewModel
     fun qrScannerViewModel(

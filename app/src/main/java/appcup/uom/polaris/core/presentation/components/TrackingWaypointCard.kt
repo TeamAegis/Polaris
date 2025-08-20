@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -203,28 +204,30 @@ fun TrackingWaypointCard(
                 }
 
                 // Contact information
-                waypoint.phoneNumber?.let { phoneNumber ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = "Phone",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = phoneNumber,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable {
-                                val intent = Intent(Intent.ACTION_DIAL, "tel:$phoneNumber".toUri())
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
-                            }
-                        )
+                if (!waypoint.isReceivedFromAI)
+                    waypoint.phoneNumber?.let { phoneNumber ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = "Phone",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = phoneNumber,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable {
+                                    val intent =
+                                        Intent(Intent.ACTION_DIAL, "tel:$phoneNumber".toUri())
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                }
+                            )
+                        }
                     }
-                }
 
                 // Website
                 waypoint.websiteUri?.let { uri ->
@@ -268,6 +271,32 @@ fun TrackingWaypointCard(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "View More",
                             modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                if (waypoint.isReceivedFromAI && waypoint.phoneNumber != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            val intent =
+                                Intent(Intent.ACTION_DIAL, "tel:${waypoint.phoneNumber}".toUri())
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Phone,
+                            contentDescription = "Call",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Call ${waypoint.name}",
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }

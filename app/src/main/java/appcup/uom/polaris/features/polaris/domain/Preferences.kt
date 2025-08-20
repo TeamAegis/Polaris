@@ -1,10 +1,13 @@
 package appcup.uom.polaris.features.polaris.domain
 
+import android.graphics.drawable.Icon
+import androidx.compose.ui.res.painterResource
+import appcup.uom.polaris.R
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class Preferences(val label: String, val types: List<String>) {
-    FOOD(label = "\uD83C\uDF7D\uFE0F Food", types = listOf(
+enum class Preferences(val label: String, val types: List<String>, var icon: Int) {
+    FOOD(label = "Food", types = listOf(
         "acai_shop", "afghani_restaurant", "african_restaurant", "american_restaurant",
         "asian_restaurant", "bagel_shop", "bakery", "bar", "bar_and_grill", "barbecue_restaurant",
         "brazilian_restaurant", "breakfast_restaurant", "brunch_restaurant", "buffet_restaurant",
@@ -19,9 +22,9 @@ enum class Preferences(val label: String, val types: List<String>) {
         "spanish_restaurant", "steak_house", "sushi_restaurant", "tea_house", "thai_restaurant",
         "turkish_restaurant", "vegan_restaurant", "vegetarian_restaurant", "vietnamese_restaurant",
         "wine_bar"
-    )
+    ), icon = R.drawable.icon_restaurant
     ),
-    ATTRACTIONS(label = "\uD83C\uDFDB\uFE0F Attractions", types = listOf(
+    ATTRACTIONS(label = "Attractions", types = listOf(
         "art_gallery", "art_studio", "auditorium", "cultural_landmark", "historical_place", "monument",
         "museum", "performing_arts_theater", "sculpture", "adventure_sports_center", "amphitheatre",
         "amusement_center", "amusement_park", "aquarium", "banquet_hall", "barbecue_area",
@@ -33,32 +36,32 @@ enum class Preferences(val label: String, val types: List<String>) {
         "roller_coaster", "skateboard_park", "state_park", "tourist_attraction", "video_arcade",
         "visitor_center", "water_park", "wedding_venue", "wildlife_park", "wildlife_refuge", "zoo",
         "tour_agency", "tourist_information_center", "travel_agency"
-    )
+    ), icon = R.drawable.icon_attraction
     ),
-    NATURE(label = "\uD83C\uDF3F Nature", types = listOf(
+    NATURE(label = " Nature", types = listOf(
         "beach", "botanical_garden", "garden", "hiking_area", "national_park", "park",
         "picnic_ground", "state_park", "wildlife_park", "wildlife_refuge", "natural_feature"
-    )
+    ), icon = R.drawable.icon_nature
     ),
-    HOTELS(label = "\uD83C\uDFE8 Hotels", types = listOf(
+    HOTELS(label = "Hotels", types = listOf(
         "bed_and_breakfast", "campground", "camping_cabin", "cottage", "extended_stay_hotel",
         "farmstay", "guest_house", "hostel", "hotel", "inn", "japanese_inn", "lodging",
         "motel", "private_guest_room", "resort_hotel", "rv_park"
-    )
+    ), icon = R.drawable.icon_hotels
     ),
-    SHOPPING(label = "\uD83D\uDECD\uFE0F Shopping", types = listOf(
+    SHOPPING(label = " Shopping", types = listOf(
         "asian_grocery_store", "auto_parts_store", "bicycle_store", "book_store", "butcher_shop",
         "cell_phone_store", "clothing_store", "convenience_store", "department_store",
         "discount_store", "electronics_store", "food_store", "furniture_store", "gift_shop",
         "grocery_store", "hardware_store", "home_goods_store", "home_improvement_store",
         "jewelry_store", "liquor_store", "market", "pet_store", "shoe_store", "shopping_mall",
         "sporting_goods_store", "store", "supermarket", "warehouse_store", "wholesaler"
-    )
+    ), icon = R.drawable.icon_shopping
     ),
-    ESSENTIALS(label = "\uD83D\uDEBB Essentials", types = listOf(
+    ESSENTIALS(label = " Essentials", types = listOf(
         "atm", "bank", "pharmacy", "hospital", "police", "post_office", "gas_station",
         "parking", "bus_station", "train_station", "airport", "fire_station",
         "drugstore", "doctor", "laundry", "electric_vehicle_charging_station"
-    ))
-}
+    ), icon = R.drawable.icon_important
+    )}
 

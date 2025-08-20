@@ -2,13 +2,8 @@ package appcup.uom.polaris.features.polaris.domain
 
 import android.net.Uri
 import appcup.uom.polaris.core.presentation.app.utils.NullableUriSerializer
-import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -28,7 +23,8 @@ data class Waypoint(
     val latitude: Double,
     val longitude: Double,
     val waypointType: WaypointType = WaypointType.CURRENT_LOCATION,
-    val placeType: List<String> = emptyList()
+    val placeType: List<String> = emptyList(),
+    val isReceivedFromAI: Boolean = false
 ) {
     constructor() : this(
         id = Uuid.NIL,

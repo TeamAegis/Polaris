@@ -8,4 +8,7 @@ sealed interface SettingsAction {
     data class OnThemeBottomSheetToggled(val show: Boolean) : SettingsAction
     object OnChangeDisplayNameClicked : SettingsAction
     object OnChangePasswordClicked : SettingsAction
+
+    object OnRefreshList : SettingsAction
+
 }
