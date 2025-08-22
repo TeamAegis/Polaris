@@ -411,7 +411,7 @@ fun AuthenticatedApp(
                             onClick = {
                                 viewModel.onAction(AppAction.OnFabMenuExpanded(false))
                                 when (item) {
-                                    FabMenuItem.LiveTranslate -> {
+                                    FabMenuItem.AI_CAMERA -> {
                                         if (!state.value.hasCameraPermission) {
                                             viewModel.onAction(AppAction.RequestCameraPermission)
                                         } else {
@@ -718,7 +718,7 @@ fun AuthenticatedApp(
 
 
                                 imageVector = FilterFocus,
-                                contentDescription = "Live Translate"
+                                contentDescription = "AI Camera"
 
                             )
                         }
@@ -743,7 +743,7 @@ fun AuthenticatedApp(
                                 ) {
                                     Icon(
                                         imageVector = FilterFocus,
-                                        contentDescription = "Live Translate"
+                                        contentDescription = "AI Camera"
                                     )
                                 }
                             }

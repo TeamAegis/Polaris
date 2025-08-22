@@ -15,7 +15,7 @@ data class AppState(
 )
 
 enum class FabMenuItem(val imageVector: ImageVector, val label: String) {
-    LiveTranslate(FilterFocus, "Live Translate"),
+    AI_CAMERA(FilterFocus, "AI Camera"),
     VoiceAssistant(Robot, "Voice Assistant"),
     CreateFragment(Icons.Default.Public, "Create Fragment"),
 }

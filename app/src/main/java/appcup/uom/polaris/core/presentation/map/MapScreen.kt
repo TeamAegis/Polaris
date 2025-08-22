@@ -54,6 +54,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun MapScreen(
@@ -112,7 +113,7 @@ fun MapScreen(
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 fun MapScreenImpl(
     state: MapState,
@@ -260,6 +261,7 @@ fun MapScreenImpl(
             if (state.selectedJourney != null) {
                 state.waypointsForSelectedJourney.forEach { waypoint ->
                     MarkerComposable(
+                        keys = arrayOf(waypoint.id!!.toString(), waypoint.isUnlocked.toString()),
                         state = MarkerState(
                             position = LatLng(
                                 waypoint.latitude,
