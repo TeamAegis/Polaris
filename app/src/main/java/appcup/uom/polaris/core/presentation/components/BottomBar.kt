@@ -10,14 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,22 +35,12 @@ fun BottomBar(
 
     Box(
         modifier = Modifier
-<<<<<<< Updated upstream
             .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
-            .dropShadow(
-                shape = RoundedCornerShape(16.dp),
-                shadow = Shadow(
-                    radius = 10.dp,
-                    alpha = 0.25f,
-                    offset = DpOffset(0.dp, 0.dp)
-                )
-            )
-=======
-            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
             .polarisDropShadow()
->>>>>>> Stashed changes
     ) {
-        CustomBottomNavigation(navBackStack = navBackStack)
+        CustomBottomNavigation(
+            navBackStack = navBackStack
+        )
     }
 }
 
@@ -61,29 +49,15 @@ enum class BottomBarItem(
     val icon: ImageVector,
     val label: String
 ) {
-    Home(Screen.Home, Icons.Default.Home, "Home"),
     Map(Screen.Map, Icons.Default.Map, "Map"),
+    Journeys(Screen.Journeys, Journey, "Journeys"),
     Memories(Screen.Memories, PhotoPrints, "Memories"),
     Search(Screen.More, Icons.Default.MoreHoriz, "More"),
 }
 
 @Composable
-fun NavBackStack.BottomBarVisibility(visible: MutableState<Boolean>) {
-    val currentDestination = this.lastOrNull()
-
-    when (currentDestination) {
-        Screen.Home -> visible.value = true
-        Screen.Map -> visible.value = true
-        Screen.Memories -> visible.value = true
-        Screen.More -> visible.value = true
-        else -> visible.value = false
-    }
-}
-
-
-@Composable
 fun CustomBottomNavigation(
-    navBackStack: NavBackStack,
+    navBackStack: NavBackStack
 ) {
     val currentDestination = navBackStack.last()
 
@@ -108,7 +82,7 @@ fun CustomBottomNavigation(
                         return@CustomBottomNavigationItem
                     }
 
-                    navBackStack.rebaseTo(listOf(Screen.Home, barItem.screen))
+                    navBackStack.rebaseTo(listOf(Screen.Map, barItem.screen))
                 }
             )
         }

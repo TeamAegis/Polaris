@@ -25,7 +25,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.presentation.components.LoadingOverlay
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import org.koin.compose.viewmodel.koinViewModel
@@ -130,7 +130,7 @@ fun RegisterScreenImpl(
                 .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.name,
                 onValueChange = {
                     onAction(RegisterAction.OnNameChanged(it))
@@ -144,13 +144,11 @@ fun RegisterScreenImpl(
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.AccountCircle, contentDescription = null)
                 },
-                label = {
-                    Text(text = "Name")
-                },
+                label = "Name",
                 singleLine = true
             )
 
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.email,
                 onValueChange = {
                     onAction(RegisterAction.OnEmailChanged(it))
@@ -164,13 +162,11 @@ fun RegisterScreenImpl(
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Email, contentDescription = null)
                 },
-                label = {
-                    Text(text = "Email")
-                },
+                label = "Email",
                 singleLine = true
             )
 
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.password,
                 onValueChange = {
                     onAction(RegisterAction.OnPasswordChanged(it))
@@ -187,9 +183,7 @@ fun RegisterScreenImpl(
                     Icon(imageVector = Icons.Default.Password, contentDescription = null)
                 },
                 singleLine = true,
-                label = {
-                    Text(text = "Password")
-                },
+                label = "Password",
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (state.isPasswordVisible)
@@ -205,7 +199,7 @@ fun RegisterScreenImpl(
                 }
             )
 
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.confirmPassword,
                 onValueChange = {
                     onAction(RegisterAction.OnConfirmPasswordChanged(it))
@@ -222,9 +216,7 @@ fun RegisterScreenImpl(
                     Icon(imageVector = Icons.Default.Password, contentDescription = null)
                 },
                 singleLine = true,
-                label = {
-                    Text(text = "Confirm Password")
-                },
+                label = "Confirm Password",
                 visualTransformation = if (state.isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (state.isConfirmPasswordVisible)

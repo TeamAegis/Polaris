@@ -14,6 +14,10 @@ plugins {
 
 //    google-services
     alias(libs.plugins.google.services)
+
+//    sqldelight
+    alias(libs.plugins.sqldelight)
+
 }
 
 android {
@@ -33,10 +37,16 @@ android {
             path = "local.properties",
             propertyName = "GEMINI_LIVE_API_KEY"
         )
+        val mapsAppApiKey = project.loadLocalProperty(
+            path = "local.properties",
+            propertyName = "MAPS_API_KEY"
+        )
+
 
         buildConfigField("String", "SUPABASE_API_KEY", supabaseApiKey)
         buildConfigField("String", "SUPABASE_URL", supabaseUrl)
         buildConfigField("String", "GEMINI_LIVE_API_KEY", geminiLiveApiKey)
+        buildConfigField("String", "MAPS_APP_API_KEY", mapsAppApiKey)
 
         applicationId = "appcup.uom.polaris"
         minSdk = 31
@@ -49,7 +59,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -80,6 +90,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -88,7 +100,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.reflect)
-
+//    implementation("com.google.accompanist:accompanist-pager-indicators:0.34.0")
+// You likely have this for the indicator
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    // Make sure you also have this for the Pager itself
+    implementation("com.google.accompanist:accompanist-pager:0.36.0") // Use the same version as your indicators
 //    splashscreen
     implementation(libs.core.splashscreen)
 
@@ -109,6 +125,7 @@ dependencies {
 
 //    sqldelight
     implementation(libs.sqldelight.android)
+    implementation(libs.sqldelight.coroutines.extensions)
 
 //    koin
     implementation(platform(libs.koin.bom))
@@ -147,7 +164,10 @@ dependencies {
 //    maps
     implementation(libs.maps.compose)
     implementation(libs.places)
+    implementation(libs.places.compose)
     implementation(libs.play.services.maps)
+    implementation(libs.android.maps.utils)
+    implementation(libs.play.services.location)
 
 //    firebase ai
     implementation(platform(libs.firebase.bom))
@@ -159,6 +179,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
 
+//    barcode
+    implementation (libs.barcode.scanning)
 }
 
 kotlin {
@@ -190,4 +212,12 @@ fun Project.loadLocalProperty(
         throw GradleException("can not find property : $propertyName")
     }
 
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("appcup.uom.polaris")
+        }
+    }
 }

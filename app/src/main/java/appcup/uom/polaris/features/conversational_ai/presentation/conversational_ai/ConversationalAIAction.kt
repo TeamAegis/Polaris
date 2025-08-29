@@ -11,4 +11,5 @@ sealed class ConversationalAIAction {
     data class OnBotAudioLevel(val level: Float) : ConversationalAIAction()
     data class OnUserAudioLevel(val level: Float) : ConversationalAIAction()
     data class OnConnectionStateChanged(val state: ConversationalAIConnectionState) : ConversationalAIAction()
+    data class OnMuteStateChanged(val isMuted: Boolean) : ConversationalAIAction()
 }

@@ -1,13 +1,75 @@
 package appcup.uom.polaris.features.polaris.presentation.create_journey
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import appcup.uom.polaris.core.data.Constants
+import appcup.uom.polaris.core.domain.DataError
+import appcup.uom.polaris.core.domain.Result
+import appcup.uom.polaris.core.domain.RoutesResponse
+import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.GeneratedWaypoints
+import appcup.uom.polaris.features.polaris.domain.Journey
+import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.polaris.domain.WaypointType
+import appcup.uom.polaris.features.polaris.presentation.create_journey.CreateJourneyEvent.*
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
+import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.MarkerState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-class CreateJourneyViewModel: ViewModel() {
+@OptIn(ExperimentalUuidApi::class)
+class CreateJourneyViewModel(
+    locationManager: LocationManager,
+    private val polarisRepository: PolarisRepository
+) : ViewModel() {
     private val _state = MutableStateFlow(CreateJourneyState())
     val state = _state.asStateFlow()
+
+    private val _event = MutableSharedFlow<CreateJourneyEvent>()
+    val event = _event.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            locationManager.getAddressAndCoordinates { address, latitude, longitude ->
+                if (latitude != null && longitude != null) {
+                    _state.update {
+                        it.copy(
+                            startingWaypoint = _state.value.startingWaypoint.copy(
+                                latitude = latitude,
+                                longitude = longitude,
+                                address = address ?: "Unknown address"
+                            ),
+                            startingMarkerState = MarkerState(
+                                position = LatLng(
+                                    latitude,
+                                    longitude
+                                )
+                            ),
+                            cameraPositionState = CameraPositionState(
+                                position = CameraPosition.fromLatLngZoom(
+                                    LatLng(
+                                        latitude,
+                                        longitude
+                                    ), Constants.MAP_DEFAULT_ZOOM
+                                )
+                            )
+                        )
+                    }
+
+                }
+            }
+        }
+    }
 
     fun onAction(action: CreateJourneyAction) {
         when (action) {
@@ -34,20 +96,255 @@ class CreateJourneyViewModel: ViewModel() {
                     )
                 }
             }
-            is CreateJourneyAction.OnLiveAgentMessageChanged -> {
+
+            is CreateJourneyAction.OnJourneyNameChanged -> {
                 _state.update {
                     it.copy(
-                        liveAgentMessage = action.message
+                        journeyName = action.name
                     )
                 }
             }
 
-            CreateJourneyAction.OnSendMessageToLiveAgentClicked -> {
-
+            is CreateJourneyAction.OnJourneyDescriptionChanged -> {
+                _state.update {
+                    it.copy(
+                        journeyDescription = action.description
+                    )
+                }
             }
 
-            else -> {}
+            is CreateJourneyAction.OnPreferencesAdded -> {
+                _state.update {
+                    it.copy(
+                        selectedPreferences = it.selectedPreferences + action.preference
+                    )
+                }
+            }
+
+            is CreateJourneyAction.OnPreferencesRemoved -> {
+                _state.update {
+                    it.copy(
+                        selectedPreferences = it.selectedPreferences - action.preference
+                    )
+                }
+            }
+
+            is CreateJourneyAction.OnWaypointSelectorVisibilityChanged -> {
+                _state.update {
+                    it.copy(
+                        isWaypointSelectorVisible = action.isVisible,
+                        waypointType = action.waypointType
+                    )
+                }
+            }
+
+            is CreateJourneyAction.OnWaypointSelectorResult -> {
+                when (_state.value.waypointType) {
+                    WaypointType.START -> {
+                        _state.update {
+                            it.copy(
+                                startingWaypoint = action.waypoint,
+                                startingMarkerState = _state.value.startingMarkerState.apply {
+                                    position =
+                                        LatLng(action.waypoint.latitude, action.waypoint.longitude)
+                                },
+                            )
+                        }
+                    }
+
+                    WaypointType.INTERMEDIATE -> {
+                        _state.update {
+                            it.copy(
+                                intermediateWaypoints = it.intermediateWaypoints + action.waypoint,
+                                intermediateMarkerStates = it.intermediateMarkerStates + MarkerState(
+                                    position = LatLng(
+                                        action.waypoint.latitude,
+                                        action.waypoint.longitude
+                                    )
+
+                                )
+                            )
+                        }
+                    }
+
+                    WaypointType.END -> {
+                        _state.update {
+                            it.copy(
+                                endingWaypoint = action.waypoint,
+                                endingMarkerState = MarkerState(
+                                    position = LatLng(
+                                        action.waypoint.latitude,
+                                        action.waypoint.longitude
+                                    )
+                                ),
+                            )
+                        }
+                    }
+                    else -> {}
+                }
+                getJourneyPolyline()
+            }
+
+            is CreateJourneyAction.OnIntermediateWaypointRemoved -> {
+                _state.update {
+                    it.copy(
+                        intermediateWaypoints = it.intermediateWaypoints.filterIndexed { index, _ ->
+                            index != action.index
+                        },
+                        intermediateMarkerStates = it.intermediateMarkerStates.filterIndexed { index, _ ->
+                            index != action.index
+                        }
+                    )
+                }
+                getJourneyPolyline()
+            }
+
+            CreateJourneyAction.OnBackClicked -> {}
+            CreateJourneyAction.OnCreateJourneyClicked -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            isCreatingJourney = true
+                        )
+                    }
+                    val result = polarisRepository.createJourney(
+                        name = _state.value.journeyName,
+                        description = _state.value.journeyDescription,
+                        preferences = _state.value.selectedPreferences,
+                        encodedPolyline = PolyUtil.encode(state.value.polyline),
+                        startingWaypoint = _state.value.startingWaypoint,
+                        intermediaryWaypoints = _state.value.intermediateWaypoints,
+                        destinationWaypoint = _state.value.endingWaypoint
+                    )
+
+                    when (result) {
+                        is Result.Error<DataError.JourneyError> -> {
+                            _event.emit(OnError(result.error.message))
+                        }
+                        is Result.Success<Journey> -> {
+                            _event.emit(OnJourneyCreated(result.data))
+                        }
+                    }
+                    _state.update {
+                        it.copy(
+                            isCreatingJourney = false
+                        )
+                    }
+                }
+            }
+
+            CreateJourneyAction.OnIntermediateWaypointGenerate -> {
+                generateIntermediateWaypoints()
+            }
+
+            CreateJourneyAction.OnSuggestedDescriptionClicked -> {
+                _state.update {
+                    it.copy(
+                        journeyDescription = _state.value.suggestedDescription ?: "",
+                        suggestedDescription = null
+                    )
+                }
+            }
+            CreateJourneyAction.OnSuggestedNameClicked -> {
+                _state.update {
+                    it.copy(
+                        journeyName = _state.value.suggestedName ?: "",
+                        suggestedName = null
+                    )
+                }
+            }
         }
     }
 
+    fun generateIntermediateWaypoints() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (_state.value.endingWaypoint.latitude == 0.0 && _state.value.endingWaypoint.longitude == 0.0) {
+                _event.emit(OnError("End location not set"))
+                return@launch
+            }
+
+            _state.update {
+                it.copy(
+                    isGeneratingIntermediateWaypoints = true
+                )
+            }
+
+            val result = polarisRepository.generateIntermediateWaypoints(
+                name = _state.value.journeyName,
+                description = _state.value.journeyDescription,
+                preferences = _state.value.selectedPreferences,
+                encodedPolyline = PolyUtil.encode(state.value.polyline)
+            )
+
+            when (result) {
+                is Result.Error<DataError.JourneyError> -> {
+                    _event.emit(OnError(result.error.message))
+                }
+                is Result.Success<GeneratedWaypoints> -> {
+                    _state.update {
+                        it.copy(
+                            intermediateWaypoints = it.intermediateWaypoints + result.data.waypoints,
+                            intermediateMarkerStates = it.intermediateMarkerStates + result.data.waypoints.map { waypoint ->
+                                MarkerState(
+                                    position = LatLng(
+                                        waypoint.latitude,
+                                        waypoint.longitude
+                                    )
+                                )
+                            },
+                            suggestedName = result.data.title,
+                            suggestedDescription = result.data.description
+                        )
+                    }
+                }
+            }
+            _state.update {
+                it.copy(
+                    isGeneratingIntermediateWaypoints = false
+                )
+            }
+            getJourneyPolyline()
+        }
+    }
+
+    fun getJourneyPolyline() {
+        if (_state.value.endingWaypoint.id == Uuid.NIL) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = polarisRepository.getRoutePolyline(
+                startingWaypoint = _state.value.startingWaypoint,
+                intermediaryWaypoints = _state.value.intermediateWaypoints,
+                destinationWaypoint = _state.value.endingWaypoint
+            )
+            when (response) {
+                is Result.Error<DataError.JourneyError> -> {
+                    _event.emit(OnError(response.error.message))
+                }
+
+                is Result.Success<RoutesResponse> -> {
+                    if (response.data.routes.isEmpty()) return@launch
+                    val optimizedIntermediateWaypointsIndex = response.data.routes.first().optimizedIntermediateWaypointIndex
+
+                    if (optimizedIntermediateWaypointsIndex != null && optimizedIntermediateWaypointsIndex.size > 1) {
+                        _state.update {
+                            it.copy(
+                                polyline = PolyUtil.decode(response.data.routes.first().polyline.encodedPolyline),
+                                intermediateWaypoints = optimizedIntermediateWaypointsIndex.map { index ->
+                                    _state.value.intermediateWaypoints[index]
+                                },
+                                intermediateMarkerStates = optimizedIntermediateWaypointsIndex.map { index -> _state.value.intermediateMarkerStates[index] }
+                            )
+                        }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                polyline = PolyUtil.decode(response.data.routes.first().polyline.encodedPolyline)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+    }
 }

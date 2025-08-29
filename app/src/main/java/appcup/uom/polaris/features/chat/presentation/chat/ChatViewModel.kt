@@ -8,10 +8,13 @@ import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.features.chat.domain.ChatRepository
 import appcup.uom.polaris.features.chat.domain.Message
 import appcup.uom.polaris.features.chat.domain.Role
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -26,15 +29,16 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
     private val _event = MutableSharedFlow<ChatEvent>()
     val event = _event.asSharedFlow()
 
+    private var job: Job? = null
+
     init {
         viewModelScope.launch {
             chatRepository.initialize()
-
-            chatRepository.getChatHistory().collect { messages ->
+            job = chatRepository.getChatHistory().onEach { messages ->
                 _state.update {
                     it.copy(messages = messages, isLoading = false)
                 }
-            }
+            }.launchIn(this)
         }
     }
 
@@ -61,7 +65,7 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
                 viewModelScope.launch {
                     val result = chatRepository.sendMessage(action.message)
                     when (result) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.ChatError> -> {
                             _state.update {
                                 it.copy(isTyping = false)
                             }
@@ -84,7 +88,7 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
                     }
                     val result = chatRepository.clearChatHistory()
                     when (result) {
-                        is Result.Error<DataError.Local> -> {
+                        is Result.Error<DataError.ChatError> -> {
                             _event.emit(ChatEvent.Error(result.error.message))
                         }
 
@@ -107,5 +111,10 @@ class ChatViewModel(private val chatRepository: ChatRepository) : ViewModel() {
             else -> {}
         }
 
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        job?.cancel()
     }
 }

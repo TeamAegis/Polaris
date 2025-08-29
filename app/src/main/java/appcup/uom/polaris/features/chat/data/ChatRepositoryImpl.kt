@@ -1,6 +1,5 @@
 package appcup.uom.polaris.features.chat.data
 
-import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.StaticData
 import appcup.uom.polaris.core.domain.DataError
 import appcup.uom.polaris.core.domain.Result
@@ -15,16 +14,21 @@ import com.google.firebase.ai.type.content
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter.FilterOperation
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
-import io.github.jan.supabase.realtime.selectAsFlow
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresListDataFlow
+import io.github.jan.supabase.realtime.realtime
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ChatRepositoryImpl(
     private val supabaseClient: SupabaseClient,
@@ -33,11 +37,11 @@ class ChatRepositoryImpl(
     lateinit var chat: Chat
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun initialize(): Result<Unit, DataError.Local> {
+    override suspend fun initialize(): Result<Unit, DataError.ChatError> {
         try {
             val messages = supabaseClient.from("messages").select {
                 filter {
-                    Message::id eq StaticData.user.id
+                    Message::userId eq StaticData.user.id
                 }
             }.decodeList<Message>()
 
@@ -51,21 +55,38 @@ class ChatRepositoryImpl(
 
             return Result.Success(Unit)
         } catch (_: Exception) {
-            return Result.Error(DataError.Local.UNKNOWN)
+            return Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class, SupabaseExperimental::class)
-    override suspend fun getChatHistory(): Flow<List<Message>> {
-        return supabaseClient.from("messages").selectAsFlow(
-            Message::id,
-            filter = FilterOperation("user_id", FilterOperator.EQ, StaticData.user.id)
+    override fun getChatHistory(): Flow<List<Message>> = callbackFlow {
+        val channel = supabaseClient.channel("chat_channel_${StaticData.user.id}_${Uuid.random()}")
+        val messageFlow = channel.postgresListDataFlow(
+            schema = "public",
+            table = "messages",
+            primaryKey = Message::id
         )
+        channel.subscribe()
+
+        val job = launch {
+            messageFlow.collect { messages ->
+                trySend(messages)
+            }
+        }
+
+        awaitClose {
+            job.cancel()
+            runBlocking {
+                supabaseClient.realtime.removeChannel(channel)
+            }
+        }
     }
 
+
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
-    override suspend fun sendMessage(message: String): Result<Unit, DataError.Local> {
-        if (message.isBlank()) return Result.Error(DataError.Local.MESSAGE_EMPTY)
+    override suspend fun sendMessage(message: String): Result<Unit, DataError.ChatError> {
+        if (message.isBlank()) return Result.Error(DataError.ChatError.MESSAGE_EMPTY)
 
         return try {
             // Send the message to the chat model
@@ -131,28 +152,27 @@ class ChatRepositoryImpl(
                     )
                 )
             } else {
-                Result.Error(DataError.Local.UNKNOWN)
+                Result.Error(DataError.ChatError.UNKNOWN)
             }
 
             Result.Success(Unit)
         } catch (_: Exception) {
-            Result.Error(DataError.Local.UNKNOWN)
+            Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun clearChatHistory(): Result<Unit, DataError.Local> {
+    override suspend fun clearChatHistory(): Result<Unit, DataError.ChatError> {
         return try {
             supabaseClient.from("messages").delete {
                 filter {
                     Message::userId eq StaticData.user.id
                 }
             }
-            initialize()
+            chat = generativeModel.startChat()
             Result.Success(Unit)
         } catch (e: Exception) {
-            println(Constants.DEBUG_VALUE + e.message)
-            Result.Error(DataError.Local.UNKNOWN)
+            Result.Error(DataError.ChatError.UNKNOWN)
         }
     }
 

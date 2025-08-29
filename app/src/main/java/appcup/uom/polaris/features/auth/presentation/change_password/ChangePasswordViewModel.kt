@@ -57,8 +57,8 @@ class ChangePasswordViewModel(
                         it.copy(isLoading = false)
                     }
                     when(res) {
-                        is Result.Error<DataError.Local> -> {
-                            if (res.error.message == DataError.Local.REAUTHENTICATION_REQUIRED.message) {
+                        is Result.Error<DataError.AuthError> -> {
+                            if (res.error.message == DataError.AuthError.REAUTHENTICATION_REQUIRED.message) {
                                 _event.emit(ChangePasswordEvent.ReauthenticationRequired)
                             } else {
                                 _event.emit(ChangePasswordEvent.Error(res.error.message))

@@ -1,19 +1,21 @@
 package appcup.uom.polaris.core.presentation.app
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.ui.graphics.vector.ImageVector
 import appcup.uom.polaris.core.presentation.components.FilterFocus
 import appcup.uom.polaris.core.presentation.components.Robot
 
 data class AppState(
-    val isAuthenticated: Boolean = false,
     val isFabMenuExpanded: Boolean = false,
-    val hasCameraPermission: Boolean = false
+    val hasCameraPermission: Boolean = false,
+    val hasLocationPermission: Boolean = false,
+
+    val isControlPanelExpanded: Boolean = true
 )
 
 enum class FabMenuItem(val imageVector: ImageVector, val label: String) {
-    LiveTranslate(FilterFocus, "Live Translate"),
+    AI_CAMERA(FilterFocus, "AI Camera"),
     VoiceAssistant(Robot, "Voice Assistant"),
-    CreateJourney(Icons.Default.Add, "Create Journey"),
+    CreateFragment(Icons.Default.Public, "Create Fragment"),
 }

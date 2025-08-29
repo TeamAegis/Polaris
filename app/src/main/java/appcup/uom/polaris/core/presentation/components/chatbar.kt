@@ -1,14 +1,21 @@
 package appcup.uom.polaris.core.presentation.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,10 +28,10 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
-
+val roundness = 10.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Chatbar(
+fun ChatBar(
     query: String,
     onQueryChange: (String) -> Unit,
     placeHolder: String,
@@ -32,9 +39,9 @@ fun Chatbar(
 ) {
     Box(
         modifier = modifier
-            .padding(top= 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 16.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
             .dropShadow(
-                shape = RoundedCornerShape(30.dp),
+                shape = RoundedCornerShape(roundness),
                 shadow = Shadow(
                     10.dp,
                     alpha = 0.25f,
@@ -42,7 +49,7 @@ fun Chatbar(
                 )
             )
     ) {
-        CustomChatbar(
+        CustomChatBar(
             query = query,
             onQueryChange = onQueryChange,
             placeHolder = placeHolder,
@@ -53,7 +60,7 @@ fun Chatbar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomChatbar(
+fun CustomChatBar(
     query: String,
     onQueryChange: (String) -> Unit,
     placeHolder: String,
@@ -65,23 +72,40 @@ fun CustomChatbar(
         placeholder = { Text(placeHolder, color = Color.Gray) },
 
         trailingIcon = {
-            Row (
+            Row(
                 modifier = Modifier
                     .padding(end = 5.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                // Send to chat Button
+                IconButton(
+                    onClick = {
+                        // code here
+
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowUpward,
+                        contentDescription = "send chat icon",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                // Audio Button
+                IconButton(
+                    onClick = {
+                        // Code here
+                    }
+                ) {
+                    Icon(
+                        imageVector = AudioWaves,
+                        modifier = Modifier
+                            .size(24.dp),
+                        contentDescription = "Audio Chat",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         },
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(roundness),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,

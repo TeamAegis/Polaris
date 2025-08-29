@@ -53,6 +53,7 @@ fun ConversationalAI(
                 ConversationalAIEvent.RecordAudioPermissionDeniedPermanently -> {
                     snackbarHostState.showSnackbar("Record audio permission denied. Please enable it from settings.")
                 }
+                else -> {}
             }
         }
     }
@@ -157,12 +158,11 @@ fun ConversationalAIImpl(
                     onAction(ConversationalAIAction.StartRecording)
                 }
             }
-            .size(96.dp)
-            .absoluteOffset(x = 16.dp, y = 16.dp),
+            .size(48.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val baseRadius = size.minDimension / 4f
+            val baseRadius = size.minDimension / 2.5f
 
             val innerCircleScaledRadius = baseRadius * 0.65f * (1f + 0.5f * idleAlpha)
 

@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class appcup.uom.polaris.core.domain.** { *; }
+-keep class appcup.uom.polaris.core.extras.navigation.** { *; }
+-keep class appcup.uom.polaris.core.extras.transport.** { *; }
+-keep class appcup.uom.polaris.features.auth.presentation.otp_confirm_registration.OtpConfirmRegistrationNavArgs
+-keep class appcup.uom.polaris.features.auth.presentation.otp_reauthenticate.OtpReauthenticateNavArgs
+-keep class appcup.uom.polaris.features.chat.domain.** { *; }
+-keep class appcup.uom.polaris.features.conversational_ai.domain.** { *; }
+-keep class appcup.uom.polaris.features.polaris.domain.** { *; }
+-keep class appcup.uom.polaris.features.qr_code_analyzer.** { *; }
+-keep class appcup.uom.polaris.features.quest.domain.** { *; }

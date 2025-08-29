@@ -6,5 +6,7 @@ import kotlin.uuid.Uuid
 data class User @OptIn(ExperimentalUuidApi::class) constructor(
     val id: Uuid,
     val name: String,
-    val email: String
+    val email: String,
+    val experience: Int,
+    val points: Int,
 )

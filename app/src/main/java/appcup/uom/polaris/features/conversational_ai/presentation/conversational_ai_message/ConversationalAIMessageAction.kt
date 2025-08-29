@@ -4,4 +4,5 @@ sealed interface ConversationalAIMessageAction {
     data class OnMessageChanged(val message: String) : ConversationalAIMessageAction
     object SendMessage : ConversationalAIMessageAction
     object OnReset : ConversationalAIMessageAction
+    data class OnWaypointUnlocked(val message: String): ConversationalAIMessageAction
 }

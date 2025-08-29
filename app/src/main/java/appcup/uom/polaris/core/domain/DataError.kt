@@ -10,16 +10,38 @@ sealed interface DataError: Error {
         UNKNOWN("An unknown error occurred. Please try again.")
     }
 
-    enum class Local(val message: String) : DataError {
+    enum class GenericError(val message: String) : DataError {
         UNKNOWN("An unknown error occurred."),
         EMPTY_FIELD("Please fill in all fields."),
+    }
+
+    enum class JourneyError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        NAME_EMPTY("Please enter a name for your journey."),
+        DESCRIPTION_EMPTY("Please enter a description for your journey."),
+        END_LOCATION_NOT_SET("Please set an end location for your journey."),
+    }
+
+    enum class FragmentError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        IMAGE_MESSAGE_EMPTY("Either image or message must be provided."),
+    }
+
+    enum class ChatError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
         MESSAGE_EMPTY("Message cannot be empty."),
+    }
+
+    enum class AuthError(val message: String) : DataError {
+        UNKNOWN("An unknown error occurred."),
+        EMPTY_FIELD("Please fill in all fields."),
         ACCOUNT_EXISTS("An account with this email already exists."),
         REAUTHENTICATION_REQUIRED("Please reauthenticate to continue."),
         INVALID_LOGIN_CREDENTIALS("Invalid login credentials."),
         INVALID_OTP("Invalid OTP."),
         INVALID_EMAIL("Please enter a valid email address."),
         PASSWORD_TOO_SHORT("Password must be at least 8 characters long."),
-        PASSWORD_MISMATCH("Passwords do not match.")
+        PASSWORD_MISMATCH("Passwords do not match."),
+        INSUFFICIENT_POINTS("Insufficient points to complete this action."),
     }
 }

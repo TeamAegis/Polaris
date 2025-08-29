@@ -1,11 +1,11 @@
 package appcup.uom.polaris.core.presentation.components
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.StrokeCap
 
 val Robot: ImageVector
     get() {
@@ -167,8 +167,6 @@ val FilterFocus: ImageVector
 private var _Filter_center_focus: ImageVector? = null
 
 
-
-
 val PhotoPrints: ImageVector
     get() {
         if (_Photo_prints != null) return _Photo_prints!!
@@ -282,31 +280,19 @@ val PhotoPrints: ImageVector
 private var _Photo_prints: ImageVector? = null
 
 val AudioWaves: ImageVector
-    get(){
+    get() {
         if (_audio_waves != null) return _audio_waves!!
+
         _audio_waves = ImageVector.Builder(
-            name = "audio_waves",
+            name = "Robot",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
-            viewportWidth = 960f,
-            viewportHeight = 960f
-        ).apply{
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
             path(
-                fill = SolidColor(Color(0xFF000000))
-            ) {
-                moveTo(12f, 0f)
-                horizontalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 24f, 12f)
-                verticalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 12f, 24f)
-                horizontalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 0f, 12f)
-                verticalLineTo(12f)
-                arcTo(12f, 12f, 0f, false, true, 12f, 0f)
-                close()
-            }
-            path(
-                fill = SolidColor(Color(0xFFFFFFFF))
+                fill = SolidColor(Color(0xFF000000)),
+                pathFillType = PathFillType.NonZero
             ) {
                 moveTo(8.80195f, 18.1f)
                 verticalLineTo(4.89998f)
@@ -344,4 +330,197 @@ val AudioWaves: ImageVector
         }.build()
         return _audio_waves!!
     }
-private var _audio_waves: ImageVector? = null;
+private var _audio_waves: ImageVector? = null
+
+val Journals: ImageVector
+    get() {
+        if (_Journals != null) return _Journals!!
+
+        _Journals = ImageVector.Builder(
+            name = "Journals",
+            defaultWidth = 16.dp,
+            defaultHeight = 16.dp,
+            viewportWidth = 16f,
+            viewportHeight = 16f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black)
+            ) {
+                moveTo(5f, 0f)
+                horizontalLineToRelative(8f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+                verticalLineToRelative(10f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+                horizontalLineTo(3f)
+                arcToRelative(2f, 2f, 0f, false, true, -2f, -2f)
+                horizontalLineToRelative(1f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, 1f)
+                horizontalLineToRelative(8f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, -1f)
+                verticalLineTo(4f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, -1f)
+                horizontalLineTo(3f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, 1f)
+                horizontalLineTo(1f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+                horizontalLineToRelative(8f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+                verticalLineToRelative(9f)
+                arcToRelative(1f, 1f, 0f, false, false, 1f, -1f)
+                verticalLineTo(2f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, -1f)
+                horizontalLineTo(5f)
+                arcToRelative(1f, 1f, 0f, false, false, -1f, 1f)
+                horizontalLineTo(3f)
+                arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+            }
+            path(
+                fill = SolidColor(Color.Black)
+            ) {
+                moveTo(1f, 6f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 1f, 0f)
+                verticalLineTo(6f)
+                horizontalLineToRelative(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, 1f)
+                horizontalLineToRelative(-2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, -1f)
+                close()
+                moveToRelative(0f, 3f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 1f, 0f)
+                verticalLineTo(9f)
+                horizontalLineToRelative(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, 1f)
+                horizontalLineToRelative(-2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, true, 0f, -1f)
+                close()
+                moveToRelative(0f, 2.5f)
+                verticalLineToRelative(0.5f)
+                horizontalLineTo(0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, 0f, 1f)
+                horizontalLineToRelative(2f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, 0f, -1f)
+                horizontalLineTo(2f)
+                verticalLineToRelative(-0.5f)
+                arcToRelative(0.5f, 0.5f, 0f, false, false, -1f, 0f)
+            }
+        }.build()
+
+        return _Journals!!
+    }
+
+private var _Journals: ImageVector? = null
+
+val Journey: ImageVector
+    get() {
+        if (_Journey != null) return _Journey!!
+
+        _Journey = ImageVector.Builder(
+            name = "Airline_stops",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 960f,
+            viewportHeight = 960f
+        ).apply {
+            path(
+                fill = SolidColor(Color(0xFF000000))
+            ) {
+                moveTo(360f, 760f)
+                verticalLineToRelative(-80f)
+                horizontalLineToRelative(80f)
+                quadToRelative(-15f, -138f, -118f, -229f)
+                reflectiveQuadTo(80f, 360f)
+                verticalLineToRelative(-80f)
+                quadToRelative(129f, 0f, 237f, 68f)
+                reflectiveQuadToRelative(163f, 184f)
+                quadToRelative(38f, -81f, 100f, -143.5f)
+                reflectiveQuadTo(719f, 280f)
+                horizontalLineTo(560f)
+                verticalLineToRelative(-80f)
+                horizontalLineToRelative(280f)
+                verticalLineToRelative(280f)
+                horizontalLineToRelative(-80f)
+                verticalLineToRelative(-132f)
+                quadToRelative(-93f, 57f, -160f, 141f)
+                reflectiveQuadToRelative(-80f, 191f)
+                horizontalLineToRelative(80f)
+                verticalLineToRelative(80f)
+                close()
+            }
+        }.build()
+
+        return _Journey!!
+    }
+
+private var _Journey: ImageVector? = null
+
+
+val Camera: ImageVector
+    get() {
+        if (_Camera != null) return _Camera!!
+
+        _Camera = ImageVector.Builder(
+            name = "Camera",
+            defaultWidth = 15.dp,
+            defaultHeight = 15.dp,
+            viewportWidth = 15f,
+            viewportHeight = 15f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.EvenOdd
+            ) {
+                moveTo(2f, 3f)
+                curveTo(1.44772f, 3f, 1f, 3.44772f, 1f, 4f)
+                verticalLineTo(11f)
+                curveTo(1f, 11.5523f, 1.44772f, 12f, 2f, 12f)
+                horizontalLineTo(13f)
+                curveTo(13.5523f, 12f, 14f, 11.5523f, 14f, 11f)
+                verticalLineTo(4f)
+                curveTo(14f, 3.44772f, 13.5523f, 3f, 13f, 3f)
+                horizontalLineTo(2f)
+                close()
+                moveTo(0f, 4f)
+                curveTo(0f, 2.89543f, 0.895431f, 2f, 2f, 2f)
+                horizontalLineTo(13f)
+                curveTo(14.1046f, 2f, 15f, 2.89543f, 15f, 4f)
+                verticalLineTo(11f)
+                curveTo(15f, 12.1046f, 14.1046f, 13f, 13f, 13f)
+                horizontalLineTo(2f)
+                curveTo(0.895431f, 13f, 0f, 12.1046f, 0f, 11f)
+                verticalLineTo(4f)
+                close()
+                moveTo(2f, 4.25f)
+                curveTo(2f, 4.11193f, 2.11193f, 4f, 2.25f, 4f)
+                horizontalLineTo(4.75f)
+                curveTo(4.88807f, 4f, 5f, 4.11193f, 5f, 4.25f)
+                verticalLineTo(5.75454f)
+                curveTo(5f, 5.89261f, 4.88807f, 6.00454f, 4.75f, 6.00454f)
+                horizontalLineTo(2.25f)
+                curveTo(2.11193f, 6.00454f, 2f, 5.89261f, 2f, 5.75454f)
+                verticalLineTo(4.25f)
+                close()
+                moveTo(12.101f, 7.58421f)
+                curveTo(12.101f, 9.02073f, 10.9365f, 10.1853f, 9.49998f, 10.1853f)
+                curveTo(8.06346f, 10.1853f, 6.89893f, 9.02073f, 6.89893f, 7.58421f)
+                curveTo(6.89893f, 6.14769f, 8.06346f, 4.98315f, 9.49998f, 4.98315f)
+                curveTo(10.9365f, 4.98315f, 12.101f, 6.14769f, 12.101f, 7.58421f)
+                close()
+                moveTo(13.101f, 7.58421f)
+                curveTo(13.101f, 9.57302f, 11.4888f, 11.1853f, 9.49998f, 11.1853f)
+                curveTo(7.51117f, 11.1853f, 5.89893f, 9.57302f, 5.89893f, 7.58421f)
+                curveTo(5.89893f, 5.5954f, 7.51117f, 3.98315f, 9.49998f, 3.98315f)
+                curveTo(11.4888f, 3.98315f, 13.101f, 5.5954f, 13.101f, 7.58421f)
+                close()
+            }
+        }.build()
+
+        return _Camera!!
+    }
+
+private var _Camera: ImageVector? = null
+
+
+

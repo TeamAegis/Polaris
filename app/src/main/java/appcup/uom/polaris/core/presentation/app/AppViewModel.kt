@@ -2,15 +2,13 @@ package appcup.uom.polaris.core.presentation.app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import appcup.uom.polaris.core.data.StaticData
-import appcup.uom.polaris.features.auth.domain.User
+import appcup.uom.polaris.core.domain.DataError
+import appcup.uom.polaris.core.domain.Result
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionResultCallback
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.status.SessionSource
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.user.UserInfo
+import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.FragmentsRepository
+import appcup.uom.polaris.features.polaris.domain.PublicWaypoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,11 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class AppViewModel(
-    private val supabaseClient: SupabaseClient,
-    private val permissionBridge: PermissionBridge
+    private val permissionBridge: PermissionBridge,
+    private val fragmentsRepository: FragmentsRepository,
+    private val locationManager: LocationManager
 ) : ViewModel() {
     private val _state = MutableStateFlow(AppState())
     val state = _state.asStateFlow()
@@ -33,42 +31,14 @@ class AppViewModel(
     init {
         _state.update {
             it.copy(
-                hasCameraPermission = permissionBridge.isCameraPermissionGranted()
+                hasCameraPermission = permissionBridge.isCameraPermissionGranted(),
+                hasLocationPermission = permissionBridge.isFineLocationPermissionGranted()
             )
         }
 
-        viewModelScope.launch {
-            supabaseClient.auth.sessionStatus.collect { status ->
-                when (status) {
-                    is SessionStatus.Authenticated -> {
-                        when (status.source) {
-                            SessionSource.External -> {}
-                            else -> {
-                                if (!_state.value.isAuthenticated) {
-                                    _event.emit(AppEvent.Authenticated)
-                                    _state.update {
-                                        it.copy(isAuthenticated = true)
-                                    }
-                                }
-                                setUser(status.session.user!!)
-                            }
-                        }
-                    }
-
-                    is SessionStatus.NotAuthenticated -> {
-                        _event.emit(AppEvent.Unauthenticated)
-                        _state.update {
-                            it.copy(isAuthenticated = false)
-                        }
-                    }
-
-                    is SessionStatus.Initializing -> {}
-                    is SessionStatus.RefreshFailure -> {}
-                }
-            }
-        }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     fun onAction(action: AppAction) {
         when (action) {
             is AppAction.OnFabMenuExpanded -> {
@@ -107,18 +77,72 @@ class AppViewModel(
                     }
                 })
             }
+
+            AppAction.RequestLocationPermission -> {
+                permissionBridge.requestFineLocationPermission(object : PermissionResultCallback {
+                    override fun onPermissionGranted() {
+                        viewModelScope.launch {
+                            _event.emit(AppEvent.LocationPermissionGranted)
+                        }
+                        _state.update {
+                            it.copy(hasLocationPermission = true)
+                        }
+                    }
+
+                    override fun onPermissionDenied(isPermanentDenied: Boolean) {
+                        if (isPermanentDenied) {
+                            viewModelScope.launch {
+                                _event.emit(AppEvent.LocationPermissionDeniedPermanent)
+                            }
+                        } else {
+                            viewModelScope.launch {
+                                _event.emit(AppEvent.LocationPermissionDenied)
+                            }
+                        }
+                        _state.update {
+                            it.copy(
+                                hasLocationPermission = false
+                            )
+                        }
+                    }
+                })
+            }
+
+            AppAction.OnControlPanelExpandedChanged -> {
+                _state.update {
+                    it.copy(isControlPanelExpanded = !it.isControlPanelExpanded)
+                }
+            }
+
+            is AppAction.OnCreatePublicWaypointClicked -> {
+                locationManager.getAddressAndCoordinates { address, latitude, longitude ->
+                    if (latitude == null || longitude == null)
+                        return@getAddressAndCoordinates
+
+                    viewModelScope.launch {
+                        val result = fragmentsRepository.createPublicWaypoint(
+                            waypoint = PublicWaypoint(
+                                id = null,
+                                address = address,
+                                longitude = longitude,
+                                latitude = latitude
+                            )
+                        )
+                        when (result) {
+                            is Result.Error<DataError.FragmentError> -> {
+                                _event.emit(AppEvent.OnError(result.error.message))
+                            }
+
+                            is Result.Success<PublicWaypoint> -> {
+                                _event.emit(AppEvent.PublicWaypointCreated(result.data))
+                            }
+                        }
+                    }
+                }
+
+
+            }
         }
     }
-
-    @OptIn(ExperimentalUuidApi::class)
-    private fun setUser(user: UserInfo) {
-        StaticData.user = User(
-            id = Uuid.parse(user.id),
-            name = user.userMetadata!!.getOrElse("name") { "" }.toString()
-                .removeSurrounding("\""),
-            email = user.email!!
-        )
-    }
-
 
 }

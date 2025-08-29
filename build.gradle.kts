@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
 
 //    sqldelight
-//    alias(libs.plugins.sqldelight) apply true
+    alias(libs.plugins.sqldelight) apply false
 
 //    google-services
     alias(libs.plugins.google.services) apply false

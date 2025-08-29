@@ -3,10 +3,8 @@ package appcup.uom.polaris.features.conversational_ai.utils.function_call
 
 import androidx.navigation3.runtime.NavBackStack
 import appcup.uom.polaris.core.data.EventBus
-import appcup.uom.polaris.core.domain.Event.OnAmoledModeChange
-import appcup.uom.polaris.core.domain.Event.OnSeedColorChange
+import appcup.uom.polaris.core.domain.Event
 import appcup.uom.polaris.core.domain.Event.OnThemeChange
-import appcup.uom.polaris.core.extras.theme.SeedColor
 import appcup.uom.polaris.core.presentation.settings.AppTheme
 import appcup.uom.polaris.features.conversational_ai.domain.Value
 
@@ -24,7 +22,7 @@ class FunctionCallHandler(
                 functionCallNavigationHandler.getCurrentScreenDetails(args, onResult)
             }
 
-            FunctionCallAction.GET_CURRENT_LOCATION -> {
+            FunctionCallAction.GET_CURRENT_LOCATION_IN_APP -> {
                 functionCallNavigationHandler.getCurrentLocation(onResult)
             }
 
@@ -40,12 +38,29 @@ class FunctionCallHandler(
                 changeTheme(args, onResult)
             }
 
-            FunctionCallAction.CHANGE_SEED_COLOR -> {
-                changeSeedColor(args, onResult)
+            FunctionCallAction.SEARCH_PLACES -> {
+                onSearchPlaces(args, onResult)
             }
 
-            FunctionCallAction.ENABLE_AMOLED_MODE -> {
-                enableAmoledMode(args, onResult)
+            FunctionCallAction.SEARCH_NEARBY_PLACES -> {
+                onSearchNearbyPlaces(args, onResult)
+            }
+
+            FunctionCallAction.GET_USER_LOCATION -> {
+                onGetUserLocation(onResult)
+            }
+
+            FunctionCallAction.SEND_WAYPOINT -> {
+                onSendWaypoint(args, onResult)
+            }
+            FunctionCallAction.GET_AVAILABLE_JOURNEYS -> {
+                onGetAvailableJourneys(onResult)
+            }
+            FunctionCallAction.START_JOURNEY -> {
+                onStartJourney(args, onResult)
+            }
+            FunctionCallAction.STOP_JOURNEY -> {
+                onStopJourney(onResult)
             }
         }
     }
@@ -59,43 +74,106 @@ class FunctionCallHandler(
                         onResult
                     )
                 )
+            } else {
+                onResult(mapOf("result" to Value.Str("failure")))
             }
         } catch (_: IllegalArgumentException) {
             onResult(mapOf("result" to Value.Str("failure")))
         }
     }
 
-    private suspend fun changeSeedColor(args: Value.Object, onResult: (Map<String, Value>) -> Unit) {
+    private suspend fun onSearchPlaces(args: Value.Object, onResult: (Map<String, Value>) -> Unit) {
         try {
-            if (args.value.containsKey("seed_color") && args.value["seed_color"] is Value.Str) {
+            if (args.value.containsKey("search_query") && args.value["search_query"] is Value.Str) {
                 EventBus.emit(
-                    OnSeedColorChange(
-                        SeedColor.valueOf((args.value["seed_color"] as Value.Str).value),
+                    Event.OnSearchPlaces((args.value["search_query"] as Value.Str).value, onResult)
+                )
+            } else {
+                onResult(mapOf("result" to Value.Str("failure")))
+            }
+        } catch (_: IllegalArgumentException) {
+            onResult(mapOf("result" to Value.Str("failure")))
+        }
+    }
+
+    private suspend fun onSearchNearbyPlaces(
+        args: Value.Object,
+        onResult: (Map<String, Value>) -> Unit
+    ) {
+        try {
+            if (args.value.containsKey("radius") && args.value["radius"] is Value.Number) {
+                EventBus.emit(
+                    Event.OnSearchNearbyPlaces(
+                        (args.value["radius"] as Value.Number).value,
                         onResult
                     )
                 )
+            } else {
+                onResult(mapOf("result" to Value.Str("failure")))
             }
         } catch (_: IllegalArgumentException) {
             onResult(mapOf("result" to Value.Str("failure")))
         }
     }
 
-    private suspend fun enableAmoledMode(args: Value.Object, onResult: (Map<String, Value>) -> Unit) {
+    private suspend fun onGetUserLocation(
+        onResult: (Map<String, Value>) -> Unit
+    ) {
         try {
-            if (args.value.containsKey("enable") && args.value["enable"] is Value.Bool) {
+            EventBus.emit(
+                Event.OnGetUserLocation(onResult)
+            )
+        } catch (_: IllegalArgumentException) {
+            onResult(mapOf("result" to Value.Str("failure")))
+        }
+    }
+
+    private suspend fun onSendWaypoint(args: Value.Object, onResult: (Map<String, Value>) -> Unit) {
+        try {
+            if (args.value.containsKey("place_id") && args.value["place_id"] is Value.Str) {
                 EventBus.emit(
-                    OnAmoledModeChange(
-                        (args.value["enable"] as Value.Bool).value,
-                        onResult
-                    )
+                    Event.OnSendWaypoint((args.value["place_id"] as Value.Str).value, onResult)
                 )
+            } else {
+                onResult(mapOf("result" to Value.Str("failure")))
             }
         } catch (_: IllegalArgumentException) {
             onResult(mapOf("result" to Value.Str("failure")))
         }
-
     }
 
+    private suspend fun onGetAvailableJourneys(onResult: (Map<String, Value>) -> Unit) {
+        try {
+            EventBus.emit(
+                Event.OnGetAvailableJourneys(onResult)
+            )
+        } catch (_: IllegalArgumentException) {
+            onResult(mapOf("result" to Value.Str("failure")))
+        }
+    }
 
+    private suspend fun onStartJourney(args: Value.Object, onResult: (Map<String, Value>) -> Unit) {
+        try {
+            if (args.value.containsKey("journey_id") && args.value["journey_id"] is Value.Str) {
+                EventBus.emit(
+                    Event.OnStartJourney((args.value["journey_id"] as Value.Str).value, onResult)
+                    )
+            } else {
+                onResult(mapOf("result" to Value.Str("failure")))
+            }
+        } catch (_: IllegalArgumentException) {
+            onResult(mapOf("result" to Value.Str("failure")))
+        }
+    }
+
+    private suspend fun onStopJourney(onResult: (Map<String, Value>) -> Unit) {
+        try {
+            EventBus.emit(
+                Event.OnStopJourney(onResult)
+            )
+        } catch (_: IllegalArgumentException) {
+            onResult(mapOf("result" to Value.Str("failure")))
+        }
+    }
 }
 

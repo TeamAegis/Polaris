@@ -9,4 +9,6 @@ object AppSecrets {
         get() = BuildConfig.SUPABASE_API_KEY
     val geminiLiveApiKey: String
         get() = BuildConfig.GEMINI_LIVE_API_KEY
+    val mapsApiKey: String
+        get() = BuildConfig.MAPS_APP_API_KEY
 }

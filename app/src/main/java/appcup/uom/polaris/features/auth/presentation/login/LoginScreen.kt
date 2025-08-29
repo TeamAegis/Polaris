@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import appcup.uom.polaris.core.presentation.components.PolarisIconButton
+import appcup.uom.polaris.core.presentation.components.PolarisInputField
 import appcup.uom.polaris.core.presentation.components.PolarisLargeTopAppBar
 import appcup.uom.polaris.core.presentation.components.polarisDropShadow
 import appcup.uom.polaris.features.auth.presentation.components.LoadingOverlay
@@ -138,7 +138,7 @@ fun LoginScreenImpl(
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.email,
                 onValueChange = {
                     onAction(LoginAction.OnEmailChanged(email = it))
@@ -154,12 +154,10 @@ fun LoginScreenImpl(
 
                     Icon(imageVector = Icons.Default.Email, contentDescription = null)
                 },
-                label = {
-                    Text(text = "Email")
-                },
+                label = "Email",
                 singleLine = true
             )
-            OutlinedTextField(
+            PolarisInputField(
                 value = state.password,
                 onValueChange = {
                     onAction(LoginAction.OnPasswordChanged(password = it))
@@ -175,9 +173,7 @@ fun LoginScreenImpl(
                     Icon(imageVector = Icons.Default.Password, contentDescription = null)
                 },
                 singleLine = true,
-                label = {
-                    Text(text = "Password")
-                },
+                label = "Password",
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (state.isPasswordVisible)

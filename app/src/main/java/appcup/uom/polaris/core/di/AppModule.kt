@@ -1,19 +1,26 @@
 package appcup.uom.polaris.core.di
 
+import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import appcup.uom.polaris.Database
 import appcup.uom.polaris.core.data.AppSecrets
 import appcup.uom.polaris.core.data.Constants
 import appcup.uom.polaris.core.data.createPreferencesDataStore
+import appcup.uom.polaris.core.domain.MemoryRepository
 import appcup.uom.polaris.core.presentation.app.AppViewModel
-import appcup.uom.polaris.core.presentation.home.HomeViewModel
 import appcup.uom.polaris.core.presentation.map.MapViewModel
 import appcup.uom.polaris.core.presentation.memories.MemoriesViewModel
 import appcup.uom.polaris.core.presentation.more.MoreViewModel
 import appcup.uom.polaris.core.presentation.settings.SettingsViewModel
 import appcup.uom.polaris.features.auth.domain.UserRepository
 import appcup.uom.polaris.features.conversational_ai.utils.PermissionBridge
-import io.github.jan.supabase.SupabaseClient
+import appcup.uom.polaris.features.polaris.data.LocationManager
+import appcup.uom.polaris.features.polaris.domain.FragmentsRepository
+import appcup.uom.polaris.features.polaris.domain.PolarisRepository
+import appcup.uom.polaris.features.qr_code_analyzer.QRScannerViewModel
+import appcup.uom.polaris.features.quest.domain.QuestRepository
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -47,28 +54,52 @@ class AppModule {
         install(Storage)
     }
 
-    @KoinViewModel
-    fun appViewModel(supabaseClient: SupabaseClient, permissionBridge: PermissionBridge) =
-        AppViewModel(supabaseClient = supabaseClient, permissionBridge = permissionBridge)
+    @Single
+    fun provideDatabase(
+        context: Context
+    ) = Database(AndroidSqliteDriver(Database.Schema, context, "polaris.db"))
 
     @KoinViewModel
-    fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>) =
-        SettingsViewModel(userRepository = userRepository, prefs = prefs)
+    fun appViewModel(
+        permissionBridge: PermissionBridge,
+        fragmentsRepository: FragmentsRepository,
+        locationManager: LocationManager
+    ) =
+        AppViewModel(
+            permissionBridge = permissionBridge,
+            fragmentsRepository = fragmentsRepository,
+            locationManager = locationManager
+        )
 
     @KoinViewModel
-    fun homeViewModel(userRepository: UserRepository) =
-        HomeViewModel(userRepository = userRepository)
+    fun settingsViewModel(userRepository: UserRepository, prefs: DataStore<Preferences>, questRepository: QuestRepository) =
+        SettingsViewModel(userRepository = userRepository, prefs = prefs, questRepository = questRepository)
 
     @KoinViewModel
-    fun mapViewModel(userRepository: UserRepository) =
-        MapViewModel(userRepository = userRepository)
+    fun mapViewModel(
+        locationManager: LocationManager,
+        polarisRepository: PolarisRepository,
+        questRepository: QuestRepository,
+    ) =
+        MapViewModel(
+            locationManager = locationManager,
+            polarisRepository = polarisRepository,
+            questRepository = questRepository
+        )
 
     @KoinViewModel
-    fun memoriesViewModel(userRepository: UserRepository) =
-        MemoriesViewModel(userRepository = userRepository)
+    fun memoriesViewModel(memoryRepository: MemoryRepository) =
+        MemoriesViewModel(memoryRepository = memoryRepository)
 
     @KoinViewModel
-    fun moreViewModel(userRepository: UserRepository) =
-        MoreViewModel(userRepository = userRepository)
+    fun moreViewModel(questRepository: QuestRepository) =
+        MoreViewModel(questRepository = questRepository)
+
+    @KoinViewModel
+    fun qrScannerViewModel(
+        userRepository: UserRepository
+    ) = QRScannerViewModel(
+        userRepository = userRepository
+    )
 
 }
